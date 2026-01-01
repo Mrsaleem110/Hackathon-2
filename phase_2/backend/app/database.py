@@ -9,10 +9,10 @@ from app.models.item import Item
 from app.models.session import Session
 
 # Create the database engine
-if settings.database_url.startswith("sqlite"):
+if settings.DATABASE_URL.startswith("sqlite"):
     # SQLite specific configuration
     engine = create_engine(
-        settings.database_url,
+        settings.DATABASE_URL,
         echo=False,  # Set to False in production
         pool_pre_ping=True,
         pool_recycle=300,
@@ -20,7 +20,7 @@ if settings.database_url.startswith("sqlite"):
 else:
     # PostgreSQL/NeonDB specific configuration
     engine = create_engine(
-        settings.database_url,
+        settings.DATABASE_URL,
         echo=False,  # Set to False in production
         pool_pre_ping=True,
         pool_recycle=300,
