@@ -6,16 +6,34 @@
 
 
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import users, items, auth
+from app.config import get_settings
+
+# Import database functions without triggering settings validation at import time
 from app.database_init import create_db_and_tables
 
-# Create FastAPI app instance
+# Create FastAPI app instance with lifespan to handle startup events properly
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup - only run if settings are available
+    try:
+        settings = get_settings()  # This will raise an exception if required env vars are missing
+        create_db_and_tables()
+    except Exception as e:
+        print(f"Warning: Could not initialize database: {e}")
+        # In serverless environments, database initialization might not be possible during cold start
+        pass
+    yield
+    # Shutdown (if needed)
+
 app = FastAPI(
     title="Next.js/FastAPI Application API",
     description="API for the full-stack Next.js/FastAPI application",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
@@ -36,11 +54,19 @@ app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 def read_root():
     return {"message": "Welcome to the Next.js/FastAPI Application API"}
 
-@app.on_event("startup")
-async def on_startup():
-    create_db_and_tables()
-
-
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "message": "API is running"}
+
+# For compatibility with Vercel serverless functions
+try:
+    # Import for Vercel
+    from mangum import Mangum
+    handler = Mangum(app)
+except ImportError:
+    # For local development
+    import uvicorn
+    if __name__ == "__main__":
+        import os
+        port = int(os.getenv("PORT", 8000))
+        uvicorn.run(app, host="0.0.0.0", port=port)
