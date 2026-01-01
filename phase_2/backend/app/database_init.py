@@ -1,10 +1,11 @@
-from .database import engine, Base
+from .database import engine
+from sqlmodel import SQLModel
 
 
 def create_db_and_tables():
     """Create database tables"""
     print("Creating database tables...")
-    Base.create_all(bind=engine)
+    SQLModel.metadata.create_all(bind=engine)
     print("Database tables created successfully!")
 
 

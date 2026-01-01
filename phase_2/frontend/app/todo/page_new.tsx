@@ -32,28 +32,6 @@ declare global {
   }
 }
 
-// Helper function to highlight search terms in text
-const highlightText = (text: string, searchTerm: string) => {
-  if (!searchTerm.trim()) return <span>{text}</span>;
-
-  const regex = new RegExp(`(${searchTerm})`, 'gi');
-  const parts = text.split(regex);
-
-  return (
-    <>
-      {parts.map((part, index) =>
-        regex.test(part) ? (
-          <mark key={index} className="bg-yellow-200 text-gray-900 dark:bg-yellow-500 dark:text-gray-900">
-            {part}
-          </mark>
-        ) : (
-          <span key={index}>{part}</span>
-        )
-      )}
-    </>
-  );
-};
-
 export default function TodoPage() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [title, setTitle] = useState('');
@@ -72,9 +50,9 @@ export default function TodoPage() {
   const [editDueDate, setEditDueDate] = useState<string>('');
   const [editRecurring, setEditRecurring] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCompleted, setFilterCompleted] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterCompleted, setFilterCompleted] = useState<string>('all'); // 'all', 'completed', 'pending'
+  const [filterPriority, setFilterPriority] = useState<string>('all'); // 'all', 'low', 'medium', 'high'
+  const [filterCategory, setFilterCategory] = useState<string>('all'); // 'all', or specific category
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -86,15 +64,18 @@ export default function TodoPage() {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) {
+      // No token, redirect to home page for authentication
       router.push('/');
       return;
     }
 
+    // Fetch current user
     fetchCurrentUser(token);
   }, [router]);
 
   // Handle recurring tasks and reminders
   useEffect(() => {
+    // Check for due date reminders
     const checkReminders = () => {
       todos.forEach(todo => {
         if (todo.due_date && !todo.completed) {
@@ -103,7 +84,9 @@ export default function TodoPage() {
           const timeDiff = dueDate.getTime() - now.getTime();
           const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
+          // Show reminder if task is due within 5 minutes
           if (minutesDiff >= 0 && minutesDiff <= 5) {
+            // Check if notification is already shown to avoid spam
             const notificationKey = `reminder_${todo.id}_${dueDate.getTime()}`;
             if (!localStorage.getItem(notificationKey)) {
               if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -125,6 +108,7 @@ export default function TodoPage() {
                   });
                 }
               } else {
+                // Fallback to alert if notifications are not supported
                 alert(`Reminder: Task "${todo.title}" is due now!`);
               }
             }
@@ -133,6 +117,7 @@ export default function TodoPage() {
       });
     };
 
+    // Check for recurring tasks
     const processRecurringTasks = () => {
       todos.forEach(todo => {
         if (todo.recurring && todo.completed && todo.due_date) {
@@ -181,6 +166,7 @@ export default function TodoPage() {
           }
 
           if (shouldCreateNew) {
+            // Create a new instance of the recurring task
             const newTask = {
               title: todo.title,
               description: todo.description,
@@ -202,6 +188,7 @@ export default function TodoPage() {
                 body: JSON.stringify(newTask),
               }).then(response => {
                 if (response.ok) {
+                  // Refresh the todo list
                   fetchTodos(token);
                 }
               });
@@ -211,11 +198,13 @@ export default function TodoPage() {
       });
     };
 
+    // Run checks every minute
     const interval = setInterval(() => {
       checkReminders();
       processRecurringTasks();
-    }, 60000);
+    }, 60000); // 60 seconds
 
+    // Initial check
     checkReminders();
     processRecurringTasks();
 
@@ -235,6 +224,7 @@ export default function TodoPage() {
         setCurrentUser(user);
         fetchTodos(token);
       } else {
+        // Token might be invalid, clear it and redirect to login
         localStorage.removeItem('access_token');
         router.push('/');
       }
@@ -249,6 +239,7 @@ export default function TodoPage() {
   const fetchTodos = async (token: string) => {
     try {
       setLoading(true);
+      // Build query parameters
       const params = new URLSearchParams();
       params.append('skip', '0');
       params.append('limit', '100');
@@ -472,6 +463,7 @@ export default function TodoPage() {
     );
   }
 
+  // The main return statement
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -923,7 +915,7 @@ export default function TodoPage() {
                                 ? 'text-green-600 dark:text-green-400 line-through'
                                 : 'text-gray-900 dark:text-white'
                             }`}>
-                              {highlightText(todo.title, searchTerm)}
+                              {todo.title}
                             </h3>
                             {todo.completed && (
                               <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full dark:bg-green-900/30 dark:text-green-300">
@@ -933,7 +925,7 @@ export default function TodoPage() {
                           </div>
 
                           <p className={`mt-2 ${todo.completed ? 'text-gray-500 dark:text-gray-500 line-through' : 'text-gray-600 dark:text-gray-300'}`}>
-                            {highlightText(todo.description, searchTerm)}
+                            {todo.description}
                           </p>
 
                           {/* Priority, Category, Due Date, and Recurring info */}
