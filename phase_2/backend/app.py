@@ -1,23 +1,8 @@
-import os
-
-# Set environment variables BEFORE any imports that might use them
-os.environ.setdefault('DATABASE_URL', 'sqlite:///./todo_app.db')
-os.environ.setdefault('SECRET_KEY', 'fallback-secret-key-for-vercel')
-os.environ.setdefault('ALGORITHM', 'HS256')
-os.environ.setdefault('ACCESS_TOKEN_EXPIRE_MINUTES', '30')
-
-# Force reload of settings module after environment variables are set
-import sys
-if 'app.config' in sys.modules:
-    del sys.modules['app.config']
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from mangum import Mangum
-
-# Now import the rest of your application
 from app.api.v1 import users, items, auth
 from app.database_init import create_db_and_tables
+import os
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -29,7 +14,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust for production
+    allow_origins=["*"],  # Hugging Face Spaces URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,13 +37,7 @@ async def on_startup():
 def health_check():
     return {"status": "healthy", "message": "API is running"}
 
-# Add Mangum adapter for Vercel compatibility
-handler = Mangum(app)
-
-# For Vercel Python runtime
-def main(event, context):
-    return handler(event, context)
-
+# For Hugging Face Space
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 7860)))
