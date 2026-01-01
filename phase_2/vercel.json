@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/api.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python3.11"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "backend/api.py"
+    }
+  ],
+  "functions": {
+    "backend/api.py": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}

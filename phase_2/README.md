@@ -161,6 +161,20 @@ FastAPI automatically generates API documentation at:
 - http://localhost:8000/docs - Interactive API documentation (Swagger UI)
 - http://localhost:8000/redoc - Alternative API documentation (ReDoc)
 
+## Deployment
+
+### Railway (Legacy)
+This project was previously configured for deployment on Railway. The backend contains the following configuration:
+- Procfile for process management
+- runtime.txt for Python version specification
+- Environment variables for database and authentication
+
+### Vercel (Current)
+This project is now configured for deployment on Vercel. The backend is set up with the following:
+- api.py as the serverless entry point using Mangum
+- vercel.json for Vercel configuration
+- Updated requirements.txt with Mangum dependency
+
 ## Contributing
 
 1. Fork the repository
