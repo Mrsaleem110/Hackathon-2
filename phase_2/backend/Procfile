@@ -1,1 +1,3 @@
-web: uvicorn api:app --host=0.0.0.0 --port=${PORT:-8000}
+# Vercel deployment configuration - this file is for Railway but Vercel uses vercel.json
+# For Vercel, the api.py file with Mangum handler is used directly
+web: uvicorn api:app --host=0.0.0.0 --port=${PORT:-8000}  # Keep for Railway compatibility if needed

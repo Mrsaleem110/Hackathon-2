@@ -11,14 +11,22 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/v1/(.*)",
+      "dest": "api.py"
+    },
+    {
+      "src": "/health",
+      "dest": "api.py"
+    },
+    {
+      "src": "/",
       "dest": "api.py"
     }
   ],
   "functions": {
     "api.py": {
       "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 29
     }
   }
 }

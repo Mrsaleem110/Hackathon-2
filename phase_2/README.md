@@ -163,17 +163,55 @@ FastAPI automatically generates API documentation at:
 
 ## Deployment
 
-### Railway (Legacy)
-This project was previously configured for deployment on Railway. The backend contains the following configuration:
-- Procfile for process management
-- runtime.txt for Python version specification
-- Environment variables for database and authentication
+### Vercel (Recommended)
+This project is configured for deployment on Vercel. Follow these steps to deploy:
 
-### Vercel (Current)
-This project is now configured for deployment on Vercel. The backend is set up with the following:
-- api.py as the serverless entry point using Mangum
-- vercel.json for Vercel configuration
-- Updated requirements.txt with Mangum dependency
+1. **Prepare your environment variables**:
+   - Create a PostgreSQL database (e.g., using Neon, Supabase, or AWS RDS)
+   - Generate a secure `SECRET_KEY` (use a tool like `openssl rand -hex 32`)
+   - Prepare your database connection string
+
+2. **Deploy to Vercel**:
+   - Go to [vercel.com](https://vercel.com) and create an account
+   - Click "New Project" and import your repository
+   - Select the root directory of your project
+   - Vercel will automatically detect it's a Next.js project
+   - For the build command, use: `cd backend && pip install -r requirements.txt && cd ../frontend && npm install && npm run build`
+   - For the output directory, use: `frontend/out`
+   - Set the following environment variables in the Vercel dashboard:
+     - `DATABASE_URL`: Your PostgreSQL database connection string
+     - `SECRET_KEY`: Your JWT secret key
+     - `ALGORITHM`: `HS256` (default)
+     - `ACCESS_TOKEN_EXPIRE_MINUTES`: `30` (default)
+     - `NEXT_PUBLIC_API_URL`: Your Vercel deployment URL (e.g., `https://your-app.vercel.app/api/v1`)
+
+3. **Configure the backend API**:
+   - The backend will be deployed as a serverless function
+   - API endpoints will be available at `https://your-app.vercel.app/api/v1/*`
+   - Health check endpoint: `https://your-app.vercel.app/health`
+
+4. **Alternative backend-only deployment**:
+   - If you want to deploy only the FastAPI backend to Vercel:
+     - Import the repository directly from the `backend` directory
+     - Vercel will use the `api.py` file with Mangum handler
+     - Use the `vercel.json` configuration in the backend directory
+
+### Environment Variables for Vercel
+Required environment variables to set in Vercel dashboard:
+```
+DATABASE_URL=postgresql://username:password@your-db-host:5432/your_database_name
+SECRET_KEY=your-super-secret-and-long-random-string-here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+NEXT_PUBLIC_API_URL=https://your-app.vercel.app/api/v1
+```
+
+### Notes for Production
+- Use a production-ready PostgreSQL database (not SQLite)
+- Generate a strong, random `SECRET_KEY` for JWT tokens
+- Set `DEBUG=False` in production
+- Consider using a connection pooling service for database connections in serverless environments
+- For better performance, consider using a managed database service like Neon or Supabase
 
 ## Contributing
 
