@@ -213,6 +213,14 @@ NEXT_PUBLIC_API_URL=https://your-app.vercel.app/api/v1
 - Consider using a connection pooling service for database connections in serverless environments
 - For better performance, consider using a managed database service like Neon or Supabase
 
+## Project Phases
+
+This project is organized into multiple phases:
+
+- **main**: Main branch with the latest stable code
+- **phase1**: Initial project setup and basic functionality
+- **phase2**: Backend with Vercel deployment (current development)
+
 ## Contributing
 
 1. Fork the repository
