@@ -6,6 +6,7 @@
 
 
 
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,13 +22,16 @@ async def lifespan(app: FastAPI):
     # Startup - only run if settings are available
     try:
         settings = get_settings()  # This will raise an exception if required env vars are missing
-        create_db_and_tables()
+        # In serverless environments, avoid heavy initialization during cold start
+        # Database initialization should be handled separately or in individual functions
+        print("Application startup complete")
     except Exception as e:
-        print(f"Warning: Could not initialize database: {e}")
+        print(f"Warning: Could not initialize during startup: {e}")
         # In serverless environments, database initialization might not be possible during cold start
         pass
     yield
     # Shutdown (if needed)
+    print("Application shutdown")
 
 app = FastAPI(
     title="Next.js/FastAPI Application API",
@@ -58,15 +62,16 @@ def read_root():
 def health_check():
     return {"status": "healthy", "message": "API is running"}
 
-# For compatibility with Vercel serverless functions
+# For Vercel serverless deployment
 try:
     # Import for Vercel
     from mangum import Mangum
-    handler = Mangum(app)
+
+    # Create the Mangum handler with specific configuration for better performance
+    handler = Mangum(app, lifespan="off")
 except ImportError:
     # For local development
     import uvicorn
     if __name__ == "__main__":
-        import os
         port = int(os.getenv("PORT", 8000))
         uvicorn.run(app, host="0.0.0.0", port=port)

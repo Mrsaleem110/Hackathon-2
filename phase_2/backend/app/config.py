@@ -21,18 +21,16 @@ def get_settings():
     """Lazy load settings to avoid import-time validation errors in serverless environments"""
     try:
         return Settings()
-    except Exception:
+    except Exception as e:
         # If settings validation fails (e.g., missing env vars), provide defaults for serverless
         # This allows the app to start even if environment variables aren't available at import time
+        print(f"Warning: Could not load settings from environment: {e}")
         return Settings(
             DATABASE_URL=os.getenv("DATABASE_URL", "sqlite:///./test.db"),
             SECRET_KEY=os.getenv("SECRET_KEY", "fallback-secret-key-for-serverless")
         )
 
 
-# Create settings instance only when needed to avoid import-time validation
-try:
-    settings = Settings()
-except Exception:
-    # In serverless environments where env vars might not be available at import time
-    settings = None
+# Avoid creating settings instance at module import time in serverless environments
+# Use the get_settings() function instead to create settings when needed
+settings = None
