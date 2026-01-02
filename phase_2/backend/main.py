@@ -43,7 +43,14 @@ app = FastAPI(
 # Add CORS middleware
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")  # Default for local development
 vercel_url = os.getenv("VERCEL_URL", "")  # Vercel provides this automatically for deployments
-allowed_origins = [frontend_url, "http://localhost:3000", "https://localhost:3000", "http://127.0.0.1:3000", "https://*.vercel.app"]
+allowed_origins = [
+    frontend_url,
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://*.vercel.app",
+    "https://hackathon-2-phase-2-gray.vercel.app",  # Your deployed frontend
+]
 if vercel_url:
     allowed_origins.append(f"https://{vercel_url}")
 
