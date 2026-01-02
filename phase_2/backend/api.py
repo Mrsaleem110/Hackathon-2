@@ -32,10 +32,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+import os
+
 # Add CORS middleware
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")  # Default for local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=[frontend_url, "http://localhost:3000", "https://localhost:3000", "http://127.0.0.1:3000", "https://*.vercel.app"],  # Allow your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

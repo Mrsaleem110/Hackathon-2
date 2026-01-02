@@ -203,7 +203,12 @@ DATABASE_URL=postgresql://username:password@your-db-host:5432/your_database_name
 SECRET_KEY=your-super-secret-and-long-random-string-here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-NEXT_PUBLIC_API_URL=https://your-app.vercel.app/api/v1
+FRONTEND_URL=https://your-frontend-domain.vercel.app  # For CORS configuration
+```
+
+For the frontend deployment, set:
+```
+NEXT_PUBLIC_API_URL=https://your-backend-domain.vercel.app/api/v1
 ```
 
 ### Notes for Production
