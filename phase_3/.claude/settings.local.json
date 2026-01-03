@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl http://127.0.0.1:8000/health)",
+      "Bash(curl -X POST \"http://127.0.0.1:8000/api/v1/auth/token\" -H \"Content-Type: application/x-www-form-urlencoded\" -d \"username=MUHAMMAD&password=password123\")",
+      "Bash(pip install --only-binary=all fastapi uvicorn sqlmodel pydantic pydantic-settings python-jose python-multipart alembic python-dotenv pytest httpx passlib[bcrypt])",
+      "Bash(timeout 5 ping -n 1 127.0.0.)"
+    ]
+  }
+}
