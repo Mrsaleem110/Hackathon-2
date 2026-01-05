@@ -14,8 +14,8 @@ class Session(SessionBase, table=True):
     user_id: int = Field(foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # Relationship to user
-    user: User = Relationship(back_populates="sessions")
+    # Relationship to user - using string reference to avoid circular import
+    user: "User" = Relationship(back_populates="sessions")
 
 
 class SessionCreate(SessionBase):

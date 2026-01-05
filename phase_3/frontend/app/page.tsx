@@ -30,8 +30,8 @@ export default function Home() {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
-      // Token exists, redirect to todo page
-      router.push('/todo');
+      // Token exists, redirect to chat page for Phase 3
+      router.push('/chat');
     } else {
       // No token, show auth page
       setLoading(false);
@@ -58,7 +58,7 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('access_token', data.access_token);
-        router.push('/todo');
+        router.push('/chat');
         setError(null);
       } else {
         const errorData = await response.json();
@@ -117,7 +117,7 @@ export default function Home() {
         if (loginResponse.ok) {
           const data = await loginResponse.json();
           localStorage.setItem('access_token', data.access_token);
-          router.push('/todo');
+          router.push('/chat');
           setError(null);
         } else {
           const errorData = await loginResponse.json();

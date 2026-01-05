@@ -1,15 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
 
-from app.database import get_db
-from app.models.user import User as UserModel
-from app.schemas.user import UserCreate, UserRead, Token, TokenData, UserLogin
-from app.config import get_settings
+from ...db.database import get_session
+from ...models.user import User as UserModel, UserCreate, UserRead
+from pydantic import BaseModel
+from ...config import get_settings
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
 
 router = APIRouter()
 
@@ -27,14 +36,14 @@ def get_password_hash(password: str) -> str:
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
-def authenticate_user(db: Session, username: str, password: str):
-    user = db.query(UserModel).filter(UserModel.username == username).first()
+def authenticate_user(session: Session, username: str, password: str):
+    statement = select(UserModel).where(UserModel.username == username)
+    user = session.exec(statement).first()
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    settings = get_settings()
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -44,7 +53,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+async def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)):
     settings = get_settings()
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,7 +68,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = db.query(UserModel).filter(UserModel.username == token_data.username).first()
+    statement = select(UserModel).where(UserModel.username == token_data.username)
+    user = session.exec(statement).first()
     if user is None:
         raise credentials_exception
     return user
@@ -67,9 +77,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 @router.post("/auth/token", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    session: Session = Depends(get_session)
 ):
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_user(session, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -83,12 +93,13 @@ async def login_for_access_token(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.post("/auth/register")
-async def register_user(user: UserCreate, db: Session = Depends(get_db)):
+@router.post("/auth/register", response_model=UserRead)
+async def register_user(user: UserCreate, session: Session = Depends(get_session)):
     # Check if user already exists
-    existing_user = db.query(UserModel).filter(
+    existing_user_statement = select(UserModel).where(
         (UserModel.username == user.username) | (UserModel.email == user.email)
-    ).first()
+    )
+    existing_user = session.exec(existing_user_statement).first()
 
     if existing_user:
         raise HTTPException(
@@ -106,21 +117,11 @@ async def register_user(user: UserCreate, db: Session = Depends(get_db)):
         hashed_password=hashed_password
     )
 
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
 
-    # Return user data as dictionary to avoid serialization issues
-    return {
-        "id": db_user.id,
-        "email": db_user.email,
-        "username": db_user.username,
-        "first_name": db_user.first_name,
-        "last_name": db_user.last_name,
-        "is_active": db_user.is_active,
-        "created_at": db_user.created_at,
-        "updated_at": db_user.updated_at
-    }
+    return db_user
 
 @router.get("/auth/me", response_model=UserRead)
 async def read_users_me(current_user: UserModel = Depends(get_current_user)):

@@ -233,6 +233,10 @@ export default function TodoPage() {
       if (response.ok) {
         const user = await response.json();
         setCurrentUser(user);
+
+        // Store user ID in localStorage for chat functionality
+        localStorage.setItem('user_id', user.id.toString());
+
         fetchTodos(token);
       } else {
         localStorage.removeItem('access_token');
@@ -331,6 +335,9 @@ export default function TodoPage() {
         setDueDate('');
         setRecurring('');
         setError(null);
+
+        // Send creation notification to chat
+        await sendTodoUpdateToChat(`I've added a new todo: "${title}". Description: "${description || 'No description'}".`);
       } else {
         const errorData = await response.json();
         setError(errorData.detail || 'Failed to create todo');
@@ -338,6 +345,39 @@ export default function TodoPage() {
     } catch (err) {
       setError('Error creating todo');
       console.error(err);
+    }
+  };
+
+  // Send a message to the chat to indicate the todo update
+  const sendTodoUpdateToChat = async (message: string) => {
+    try {
+      // Get user ID from localStorage (same as used in chat)
+      const storedUserId = localStorage.getItem('user_id');
+      if (!storedUserId) {
+        console.error('User ID not found in localStorage');
+        return;
+      }
+
+      const chatMessage = {
+        message: message
+      };
+
+      // Use the correct API endpoint for chat - should be /api/{user_id}/chat
+      const baseUrl = API_BASE_URL.replace('/api/v1', '');
+      const chatApiUrl = `${baseUrl}/api/${storedUserId}/chat`;
+      const response = await fetch(chatApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(chatMessage),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to send update to chat:', await response.text());
+      }
+    } catch (err) {
+      console.error('Error sending update to chat:', err);
     }
   };
 
@@ -378,6 +418,9 @@ export default function TodoPage() {
         ));
         setEditingId(null);
         setError(null);
+
+        // Send update notification to chat
+        await sendTodoUpdateToChat(`I've updated the todo: "${editTitle}". Description: "${editDescription || 'No description'}".`);
       } else {
         const errorData = await response.json();
         setError(errorData.detail || 'Failed to update todo');
@@ -396,6 +439,9 @@ export default function TodoPage() {
       return;
     }
 
+    // Find the todo being deleted to get its title
+    const deletedTodo = todos.find(todo => todo.id === id);
+
     try {
       const response = await fetch(`${API_BASE_URL}/items/${id}`, {
         method: 'DELETE',
@@ -407,6 +453,11 @@ export default function TodoPage() {
       if (response.ok) {
         setTodos(todos.filter(todo => todo.id !== id));
         setError(null);
+
+        // Send delete notification to chat
+        if (deletedTodo) {
+          await sendTodoUpdateToChat(`I've deleted the todo: "${deletedTodo.title}".`);
+        }
       } else {
         const errorData = await response.json();
         setError(errorData.detail || 'Failed to delete todo');
@@ -432,6 +483,9 @@ export default function TodoPage() {
       return;
     }
 
+    // Find the todo being toggled to get its title
+    const todoToToggle = todos.find(todo => todo.id === id);
+
     try {
       const response = await fetch(`${API_BASE_URL}/items/${id}/toggle-completed`, {
         method: 'PATCH',
@@ -446,6 +500,12 @@ export default function TodoPage() {
           todo.id === id ? updatedTodo : todo
         ));
         setError(null);
+
+        // Send completion status update to chat
+        if (todoToToggle) {
+          const status = updatedTodo.completed ? 'completed' : 'marked as pending';
+          await sendTodoUpdateToChat(`I've ${status} the todo: "${todoToToggle.title}".`);
+        }
       } else {
         const errorData = await response.json();
         setError(errorData.detail || 'Failed to update todo status');

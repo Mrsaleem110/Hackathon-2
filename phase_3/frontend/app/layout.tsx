@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Next.js/FastAPI Application',
   description: 'Full-stack application using Next.js and FastAPI',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

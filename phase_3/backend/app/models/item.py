@@ -27,8 +27,8 @@ class Item(ItemBase, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # Relationship to owner
-    owner: User = Relationship(back_populates="items")
+    # Relationship to owner - using string reference to avoid circular import
+    owner: "User" = Relationship(back_populates="items")
 
 
 class ItemCreate(ItemBase):

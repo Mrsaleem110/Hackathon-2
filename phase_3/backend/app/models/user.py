@@ -23,9 +23,9 @@ class User(UserBase, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # Relationship to items
+    # Relationship to items - using string reference to avoid circular import
     items: List["Item"] = Relationship(back_populates="owner")
-    # Relationship to sessions
+    # Relationship to sessions - using string reference to avoid circular import
     sessions: List["Session"] = Relationship(back_populates="user")
 
 
