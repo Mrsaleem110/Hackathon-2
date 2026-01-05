@@ -2,42 +2,47 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import users, items, auth
-from app.config import get_settings
+from dotenv import load_dotenv
 
-# Import database functions without triggering settings validation at import time
-from app.database_init import create_db_and_tables
+# Load environment variables
+load_dotenv()
 
-# Create FastAPI app instance with lifespan to handle startup events properly
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup - only run if settings are available
-    try:
-        settings = get_settings()  # This will raise an exception if required env vars are missing
-        # In serverless environments, avoid heavy initialization during cold start
-        # Database initialization should be handled separately or in individual functions
-        print("Application startup complete")
-    except Exception as e:
-        print(f"Warning: Could not initialize during startup: {e}")
-        # In serverless environments, database initialization might not be possible during cold start
-        pass
-    yield
-    # Shutdown (if needed)
-    print("Application shutdown")
+# Create FastAPI app with proper structure for your current application
+from fastapi import Depends
+from sqlmodel import Session
+from app.db.database import get_session
+from app.api.v1.auth import router as auth_router
+from app.chat.routes import router as chat_router
+from app.models.conversation import Conversation, Message
+from app.models.item import Item, ItemCreate, ItemUpdate, Priority
+from app.models.user import User
+from sqlmodel import SQLModel
+from app.db.database import engine
 
-app = FastAPI(
-    title="Next.js/FastAPI Application API",
-    description="API for the full-stack Next.js/FastAPI application",
-    version="1.0.0",
-    lifespan=lifespan
-)
+# Create FastAPI app
+app = FastAPI(title="Todo AI Chat API", version="1.0.0")
 
-import os
+# Create database tables
+@app.on_event("startup")
+def on_startup():
+    # Import all models to ensure they are registered with SQLModel
+    from app.models.conversation import Conversation, Message
+    from app.models.item import Item
+    from app.models.user import User
+    from app.models.session import Session
+    from app.models.task import Task
+    SQLModel.metadata.create_all(engine)
 
-# Add CORS middleware
+# Add CORS middleware for deployment
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")  # Default for local development
 vercel_url = os.getenv("VERCEL_URL", "")  # Vercel provides this automatically for deployments
-allowed_origins = [frontend_url, "http://localhost:3000", "https://localhost:3000", "http://127.0.0.1:3000", "https://*.vercel.app"]
+allowed_origins = [
+    frontend_url,
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://*.vercel.app"
+]
 if vercel_url:
     allowed_origins.append(f"https://{vercel_url}")
 
@@ -49,14 +54,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routes
-app.include_router(users.router, prefix="/api/v1", tags=["users"])
-app.include_router(items.router, prefix="/api/v1", tags=["items"])
-app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
+# Include your current API routes
+app.include_router(auth_router)
+app.include_router(chat_router)
 
+# Health check and root endpoints
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Next.js/FastAPI Application API"}
+    return {"message": "Todo AI Chat API is running!"}
 
 @app.get("/health")
 def health_check():
