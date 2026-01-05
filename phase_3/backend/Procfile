@@ -1,3 +1,0 @@
-# This Procfile is for Railway deployment
-# For Vercel deployment, use the api.py file with vercel.json configuration
-web: uvicorn api:app --host=0.0.0.0 --port=${PORT:-8000}
