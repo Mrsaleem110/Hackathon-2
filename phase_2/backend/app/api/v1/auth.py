@@ -9,7 +9,7 @@ import bcrypt
 from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.user import UserCreate, UserRead, Token, TokenData, UserLogin
-from app.config import settings
+from app.config import get_settings
 
 router = APIRouter()
 
@@ -34,6 +34,7 @@ def authenticate_user(db: Session, username: str, password: str):
     return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    settings = get_settings()
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -44,6 +45,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    settings = get_settings()
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -74,6 +76,7 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    settings = get_settings()
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires

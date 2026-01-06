@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python3.11"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/v1/(.*)",
+      "dest": "api.py"
+    },
+    {
+      "src": "/health",
+      "dest": "api.py"
+    },
+    {
+      "src": "/",
+      "dest": "api.py"
+    }
+  ],
+  "functions": {
+    "api.py": {
+      "memory": 1024,
+      "maxDuration": 29
+    }
+  }
+}
