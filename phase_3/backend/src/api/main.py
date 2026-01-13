@@ -38,6 +38,13 @@ def read_root():
 def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
-# Include the chat router
+# Include the auth, chat, chatkit, and chatkit_agent routers
+from .auth import router as auth_router
 from .chat import router as chat_router
+from .chatkit import router as chatkit_router
+from .chatkit_agent import router as chatkit_agent_router
+
+app.include_router(auth_router)
 app.include_router(chat_router)
+app.include_router(chatkit_router)
+app.include_router(chatkit_agent_router)

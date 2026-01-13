@@ -1,440 +1,118 @@
 """
-MCP tools for task operations in the AI-Powered Todo Chatbot using the mock MCP SDK.
+Task Operations for Official MCP Server
+This module provides tools for managing and executing tasks
 """
+
 import asyncio
-from typing import Dict, Any, List
-from datetime import datetime
-import uuid
-from pydantic import BaseModel
-from sqlmodel import create_engine, Session, select
-from ..config import DATABASE_URL
-import sys
-import os
-# Add the backend directory to the path so we can import the models and services
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "backend"))
+import json
+from typing import Dict, Any, Optional, List
+from pathlib import Path
 
-from src.models.task import Task, TaskCreate, TaskUpdate
-from src.models.conversation import Conversation
-from src.models.message import Message, MessageRole
-from src.services.task_service import TaskService
 
-# Create database engine
-engine = create_engine(DATABASE_URL)
+class TaskOperations:
+    """Provides operations for managing tasks and workflows."""
 
-class AddTaskParams(BaseModel):
-    user_id: str
-    title: str
-    description: str = ""
+    def __init__(self):
+        self.tasks = {}
+        self.task_counter = 0
 
-class ListTasksParams(BaseModel):
-    user_id: str
+    async def create_task(self, name: str, description: str, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Create a new task."""
+        if parameters is None:
+            parameters = {}
 
-class CompleteTaskParams(BaseModel):
-    user_id: str
-    task_id: str  # This will be the UUID string
+        self.task_counter += 1
+        task_id = f"task_{self.task_counter:04d}"
 
-class DeleteTaskParams(BaseModel):
-    user_id: str
-    task_id: str  # This will be the UUID string
-
-class UpdateTaskParams(BaseModel):
-    user_id: str
-    task_id: str  # This will be the UUID string
-    title: str = ""
-    description: str = ""
-
-async def add_task(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Add a new task for a user using the mock MCP SDK."""
-    try:
-        user_id = params.get("user_id")
-        title = params.get("title", "")
-        description = params.get("description", "")
-
-        if not user_id or not title:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Error: Missing required parameters (user_id and title are required)"
-                    }
-                ],
-                "is_error": True
-            }
-
-        # Create the task using the service
-        task_create = TaskCreate(
-            title=title,
-            description=description,
-            user_id=user_id
-        )
-
-        with Session(engine) as session:
-            task = TaskService.create_task(session, task_create)
-
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Task '{task.title}' added successfully."
-                }
-            ]
-        }
-    except Exception as e:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Error adding task: {str(e)}"
-                }
-            ],
-            "is_error": True
+        task = {
+            "id": task_id,
+            "name": name,
+            "description": description,
+            "parameters": parameters,
+            "status": "created",
+            "created_at": asyncio.get_event_loop().time(),
+            "progress": 0
         }
 
-async def list_tasks(params: Dict[str, Any]) -> Dict[str, Any]:
-    """List all tasks for a user using the mock MCP SDK."""
-    try:
-        user_id = params.get("user_id")
+        self.tasks[task_id] = task
+        return task
 
-        if not user_id:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Error: Missing required parameter (user_id is required)"
-                    }
-                ],
-                "is_error": True
-            }
+    async def get_task(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific task by ID."""
+        return self.tasks.get(task_id)
 
-        with Session(engine) as session:
-            tasks = TaskService.get_tasks_by_user(session, user_id)
+    async def list_tasks(self) -> List[Dict[str, Any]]:
+        """List all tasks."""
+        return list(self.tasks.values())
 
-        if not tasks:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "You have no tasks."
-                    }
-                ]
-            }
+    async def update_task_status(self, task_id: str, status: str, progress: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """Update the status of a task."""
+        if task_id not in self.tasks:
+            return None
 
-        task_list = []
-        for task in tasks:
-            status = "✓" if task.completed else "○"
-            task_list.append(f"{status} {task.title}")
+        task = self.tasks[task_id]
+        task["status"] = status
+        if progress is not None:
+            task["progress"] = progress
 
-        task_str = "\n".join([f"- {task}" for task in task_list])
+        return task
 
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Your tasks:\n{task_str}"
-                }
-            ]
-        }
-    except Exception as e:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Error listing tasks: {str(e)}"
-                }
-            ],
-            "is_error": True
-        }
+    async def execute_task(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """Execute a task."""
+        if task_id not in self.tasks:
+            return None
 
-async def complete_task(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Mark a task as completed using the mock MCP SDK."""
-    try:
-        user_id = params.get("user_id")
-        task_id_str = params.get("task_id")
+        task = self.tasks[task_id]
+        task["status"] = "executing"
+        task["started_at"] = asyncio.get_event_loop().time()
 
-        if not user_id or not task_id_str:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Error: Missing required parameters (user_id and task_id are required)"
-                    }
-                ],
-                "is_error": True
-            }
+        # Simulate task execution
+        # In a real implementation, this would perform the actual task
+        await asyncio.sleep(0.1)  # Simulate some work
 
-        try:
-            task_id = uuid.UUID(task_id_str)
-        except ValueError:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Error: Invalid task ID format: {task_id_str}"
-                    }
-                ],
-                "is_error": True
-            }
+        task["status"] = "completed"
+        task["completed_at"] = asyncio.get_event_loop().time()
+        task["progress"] = 100
 
-        with Session(engine) as session:
-            # Verify that the task belongs to the user
-            task = session.get(Task, task_id)
-            if not task:
-                return {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"Error: Task with ID {task_id_str} not found"
-                        }
-                    ],
-                    "is_error": True
-                }
+        return task
 
-            if task.user_id != user_id:
-                return {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Error: You don't have permission to modify this task"
-                        }
-                    ],
-                    "is_error": True
-                }
+    async def delete_task(self, task_id: str) -> bool:
+        """Delete a task."""
+        if task_id in self.tasks:
+            del self.tasks[task_id]
+            return True
+        return False
 
-            # Complete the task
-            completed_task = TaskService.complete_task(session, task_id)
 
-        if completed_task:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Task '{completed_task.title}' marked as completed."
-                    }
-                ]
-            }
-        else:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Error: Could not complete task with ID {task_id_str}"
-                    }
-                ],
-                "is_error": True
-            }
-    except Exception as e:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Error completing task: {str(e)}"
-                }
-            ],
-            "is_error": True
-        }
+# Example usage and testing
+async def main():
+    """Test the TaskOperations module."""
+    task_ops = TaskOperations()
 
-async def delete_task(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Delete a task using the mock MCP SDK."""
-    try:
-        user_id = params.get("user_id")
-        task_id_str = params.get("task_id")
+    # Create a sample task
+    task = await task_ops.create_task(
+        name="example_task",
+        description="This is an example task",
+        parameters={"param1": "value1", "param2": "value2"}
+    )
+    print(f"Created task: {task}")
 
-        if not user_id or not task_id_str:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Error: Missing required parameters (user_id and task_id are required)"
-                    }
-                ],
-                "is_error": True
-            }
+    # Get the task
+    retrieved_task = await task_ops.get_task(task["id"])
+    print(f"Retrieved task: {retrieved_task}")
 
-        try:
-            task_id = uuid.UUID(task_id_str)
-        except ValueError:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Error: Invalid task ID format: {task_id_str}"
-                    }
-                ],
-                "is_error": True
-            }
+    # List all tasks
+    all_tasks = await task_ops.list_tasks()
+    print(f"All tasks: {all_tasks}")
 
-        with Session(engine) as session:
-            # Verify that the task belongs to the user
-            task = session.get(Task, task_id)
-            if not task:
-                return {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"Error: Task with ID {task_id_str} not found"
-                        }
-                    ],
-                    "is_error": True
-                }
+    # Execute the task
+    executed_task = await task_ops.execute_task(task["id"])
+    print(f"Executed task: {executed_task}")
 
-            if task.user_id != user_id:
-                return {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Error: You don't have permission to delete this task"
-                        }
-                    ],
-                    "is_error": True
-                }
+    # List all tasks after execution
+    all_tasks_after = await task_ops.list_tasks()
+    print(f"All tasks after execution: {all_tasks_after}")
 
-            # Delete the task
-            success = TaskService.delete_task(session, task_id)
 
-        if success:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Task deleted successfully."
-                    }
-                ]
-            }
-        else:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Error: Could not delete task with ID {task_id_str}"
-                    }
-                ],
-                "is_error": True
-            }
-    except Exception as e:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Error deleting task: {str(e)}"
-                }
-            ],
-            "is_error": True
-        }
-
-async def update_task(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Update a task using the mock MCP SDK."""
-    try:
-        user_id = params.get("user_id")
-        task_id_str = params.get("task_id")
-        title = params.get("title", "")
-        description = params.get("description", "")
-
-        if not user_id or not task_id_str:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Error: Missing required parameters (user_id and task_id are required)"
-                    }
-                ],
-                "is_error": True
-            }
-
-        # Check if at least one field to update is provided
-        if not title and not description:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Error: At least one field (title or description) must be provided for update"
-                    }
-                ],
-                "is_error": True
-            }
-
-        try:
-            task_id = uuid.UUID(task_id_str)
-        except ValueError:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Error: Invalid task ID format: {task_id_str}"
-                    }
-                ],
-                "is_error": True
-            }
-
-        with Session(engine) as session:
-            # Verify that the task belongs to the user
-            task = session.get(Task, task_id)
-            if not task:
-                return {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"Error: Task with ID {task_id_str} not found"
-                        }
-                    ],
-                    "is_error": True
-                }
-
-            if task.user_id != user_id:
-                return {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Error: You don't have permission to update this task"
-                        }
-                    ],
-                    "is_error": True
-                }
-
-            # Prepare update data
-            task_update = TaskUpdate()
-            if title:
-                task_update.title = title
-            if description:
-                task_update.description = description
-
-            # Update the task
-            updated_task = TaskService.update_task(session, task_id, task_update)
-
-        if updated_task:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Task updated successfully to: '{updated_task.title}'"
-                    }
-                ]
-            }
-        else:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Error: Could not update task with ID {task_id_str}"
-                    }
-                ],
-                "is_error": True
-            }
-    except Exception as e:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Error updating task: {str(e)}"
-                }
-            ],
-            "is_error": True
-        }
-
-# Register the tools with the registry using the mock MCP SDK
-from .registry import register_tool
-
-register_tool("add_task")(add_task)
-register_tool("list_tasks")(list_tasks)
-register_tool("complete_task")(complete_task)
-register_tool("delete_task")(delete_task)
-register_tool("update_task")(update_task)
+if __name__ == "__main__":
+    asyncio.run(main())

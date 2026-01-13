@@ -93,6 +93,62 @@ async def chat_endpoint(
         agent = ChatAgent()
         result = agent.process_message(message_content, user_id, conversation_history)
 
+        # Execute any tool calls returned by the AI agent
+        if result["tool_calls"]:
+            for tool_call in result["tool_calls"]:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["arguments"]
+
+                # Ensure user_id matches for security
+                if tool_args.get("user_id") != user_id:
+                    continue  # Skip this tool call if user_id doesn't match
+
+                try:
+                    if tool_name == "add_task":
+                        from ..services.task_service import TaskService
+                        from ..models.task import TaskCreate
+
+                        task_create = TaskCreate(
+                            title=tool_args["title"],
+                            description=tool_args.get("description", ""),
+                            user_id=user_id,
+                            completed=False
+                        )
+                        TaskService.create_task(session, task_create)
+
+                    elif tool_name == "list_tasks":
+                        # Listing tasks doesn't require execution here since the frontend will make a separate API call
+                        pass
+
+                    elif tool_name == "complete_task":
+                        from ..services.task_service import TaskService
+
+                        task_id = uuid.UUID(tool_args["task_id"])
+                        TaskService.complete_task(session, task_id)
+
+                    elif tool_name == "delete_task":
+                        from ..services.task_service import TaskService
+
+                        task_id = uuid.UUID(tool_args["task_id"])
+                        TaskService.delete_task(session, task_id)
+
+                    elif tool_name == "update_task":
+                        from ..services.task_service import TaskService
+                        from ..models.task import TaskUpdate
+
+                        task_id = uuid.UUID(tool_args["task_id"])
+                        task_update = TaskUpdate(
+                            title=tool_args.get("title"),
+                            description=tool_args.get("description"),
+                            completed=tool_args.get("completed")
+                        )
+                        TaskService.update_task(session, task_id, task_update)
+
+                except Exception as e:
+                    # Log the error but continue processing other tool calls
+                    print(f"Error executing tool call {tool_name}: {str(e)}")
+                    continue
+
         # Create assistant message with the AI response
         assistant_message = MessageCreate(
             conversation_id=conversation_id,
@@ -109,7 +165,7 @@ async def chat_endpoint(
         return {
             "conversation_id": str(conversation_id),
             "response": result["response"],
-            "tool_calls": result["tool_calls"]
+            "tool_calls": result["tool_calls"]  # Still return tool calls for frontend display if needed
         }
 
     except HTTPException:
