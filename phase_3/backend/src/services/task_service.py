@@ -10,11 +10,14 @@ class TaskService:
     @staticmethod
     def create_task(session: Session, task_create: TaskCreate) -> Task:
         """Create a new task."""
-        task = Task.from_orm(task_create) if hasattr(Task, 'from_orm') else Task(
+        # Create task instance with all fields
+        task = Task(
             title=task_create.title,
             description=task_create.description,
             completed=task_create.completed,
-            user_id=task_create.user_id
+            user_id=task_create.user_id,
+            priority=task_create.priority,
+            due_date=task_create.due_date
         )
         session.add(task)
         session.commit()
@@ -40,7 +43,7 @@ class TaskService:
             return None
 
         # Update only the fields that are provided
-        update_data = task_update.dict(exclude_unset=True)
+        update_data = task_update.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(task, field, value)
 
@@ -70,6 +73,14 @@ class TaskService:
 
         task.completed = True
         task.updated_at = datetime.utcnow()
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+        return task
+
+    @staticmethod
+    def create_task_from_data(session: Session, task: Task) -> Task:
+        """Create a task from a Task model instance."""
         session.add(task)
         session.commit()
         session.refresh(task)

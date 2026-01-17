@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // API base URL
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
   // Register function
   const register = async (userData) => {
@@ -29,7 +29,16 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        // If JSON parsing fails, create a generic error response
+        return {
+          success: false,
+          error: `Non-JSON response received. Status: ${response.status}`
+        };
+      }
 
       if (response.ok) {
         // Store token in localStorage
@@ -41,7 +50,8 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: data.detail || 'Registration failed' };
       }
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Registration error:', error);
+      return { success: false, error: error.message || 'Network error occurred during registration' };
     }
   };
 
@@ -56,7 +66,16 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(credentials),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        // If JSON parsing fails, create a generic error response
+        return {
+          success: false,
+          error: `Non-JSON response received. Status: ${response.status}`
+        };
+      }
 
       if (response.ok) {
         // Store token in localStorage
@@ -68,7 +87,8 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: data.detail || 'Login failed' };
       }
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Login error:', error);
+      return { success: false, error: error.message || 'Network error occurred during login' };
     }
   };
 
@@ -97,44 +117,17 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         return userData;
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to fetch user profile:', response.status, errorData);
         // If token is invalid, logout user
         logout();
         return null;
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      return null;
-    }
-  };
-
-  // Refresh token
-  const refreshToken = async () => {
-    if (!token) {
-      return false;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('auth-token', data.access_token);
-        setToken(data.access_token);
-        return true;
-      } else {
-        logout();
-        return false;
-      }
-    } catch (error) {
-      console.error('Error refreshing token:', error);
+      // If there's a network error, the token might be invalid
       logout();
-      return false;
+      return null;
     }
   };
 
@@ -142,9 +135,16 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       if (token) {
-        const userProfile = await getUserProfile();
-        if (!userProfile) {
-          // Token was invalid, so clear it
+        try {
+          const userProfile = await getUserProfile();
+          if (!userProfile) {
+            // Token was invalid, so clear it
+            localStorage.removeItem('auth-token');
+            setToken(null);
+          }
+        } catch (error) {
+          console.error('Error initializing auth:', error);
+          // If there's an error getting the user profile, clear the token
           localStorage.removeItem('auth-token');
           setToken(null);
         }
@@ -163,7 +163,6 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     getUserProfile,
-    refreshToken,
     isAuthenticated: !!user,
   };
 

@@ -3,9 +3,14 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import OpenAIChatKitUI from './components/OpenAIChatKitUI';
+import ChatInterface from './components/ChatInterface';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import DashboardLayout from './components/DashboardLayout';
+import Dashboard from './components/Dashboard';
+import TasksDashboard from './components/TasksDashboard';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 import './App.css';
 
 // Main App component that handles routing
@@ -31,7 +36,7 @@ const MainApp = () => {
         element={
           user ? (
             <ProtectedRoute>
-              <Dashboard />
+              <Navigate to="/dashboard" replace />
             </ProtectedRoute>
           ) : (
             <Navigate to="/login" replace />
@@ -43,7 +48,51 @@ const MainApp = () => {
         element={
           user ? (
             <ProtectedRoute>
-              <Dashboard />
+              <DashboardLayout user={user}>
+                <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/tasks"
+        element={
+          user ? (
+            <ProtectedRoute>
+              <DashboardLayout user={user}>
+                <TasksDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          user ? (
+            <ProtectedRoute>
+              <DashboardLayout user={user}>
+                <AnalyticsDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/chat"
+        element={
+          user ? (
+            <ProtectedRoute>
+              <DashboardLayout user={user}>
+                <ChatInterface userId={user.id} />
+              </DashboardLayout>
             </ProtectedRoute>
           ) : (
             <Navigate to="/login" replace />
@@ -51,22 +100,6 @@ const MainApp = () => {
         }
       />
     </Routes>
-  );
-};
-
-// Dashboard component that contains the chat UI
-const Dashboard = () => {
-  const { user } = useAuth();
-
-  return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Welcome, {user?.name || user?.email || 'User'}!</h1>
-      </header>
-      <div className="chat-container">
-        <OpenAIChatKitUI userId={user?.id} />
-      </div>
-    </div>
   );
 };
 

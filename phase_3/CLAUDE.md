@@ -208,3 +208,61 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Authentication System Best Practices
+
+### **Authentication Architecture Options:**
+
+#### **1. Custom JWT Authentication (Current System - Recommended)**
+- **Frontend**: Next.js/React with token storage (localStorage/cookies)
+- **Backend**: FastAPI with JWT token validation middleware
+- **Database**: User records with hashed passwords
+- **Pros**: Full control, simple, no external dependencies
+- **Cons**: Need to maintain auth logic yourself
+- **Use Case**: Internal tools, applications requiring full control
+
+#### **2. Third-Party Auth Services**
+- **Options**: Supabase Auth, Firebase Auth, Auth0, Clerk
+- **Frontend**: Library integration (e.g., Supabase JS, Firebase JS)
+- **Backend**: Validate tokens from auth provider
+- **Pros**: Battle-tested, secure, feature-rich
+- **Cons**: External dependency, potential costs
+- **Use Case**: User-facing applications, rapid development
+
+#### **3. OAuth Providers**
+- **Options**: Google, GitHub, Facebook OAuth
+- **Integration**: Direct OAuth flow or through auth service
+- **Pros**: Easy user onboarding, trusted providers
+- **Cons**: Limited to specific providers, external dependency
+- **Use Case**: Applications wanting easy sign-in
+
+#### **4. Better Auth with FastAPI (Hybrid Approach)**
+- **Workflow**:
+  - User → Next.js Login → Better Auth (Node.js server) → JWT Token → Frontend → Authorization: Bearer <token> → FastAPI → JWT Verify → FastAPI → Protected Data
+- **Setup**:
+  - Run a separate Node.js server with Better Auth
+  - Next.js communicates with Better Auth server for login/logout
+  - Better Auth issues JWT tokens
+  - Frontend sends JWT tokens to FastAPI in Authorization header
+  - FastAPI validates JWT tokens independently
+- **Pros**: Get Better Auth's features, still use FastAPI for business logic
+- **Cons**: More complex architecture, extra network hop, additional maintenance
+- **Use Case**: When you specifically need Better Auth's features with a FastAPI backend
+
+### **Compatibility Matrix:**
+- **Better Auth**: JavaScript/TypeScript only (Node.js, Next.js) - NOT directly compatible with FastAPI
+- **Supabase Auth**: Works with both Next.js and Python (using supabase-py)
+- **Firebase Auth**: Works with both Next.js and Python (using firebase-admin)
+- **Custom JWT**: Compatible with any stack combination
+
+### **Recommended Approach for Next.js + FastAPI:**
+1. **Keep current custom JWT system** (already working well)
+2. **Alternative**: Supabase Auth (works with both stacks)
+3. **Hybrid Option**: Better Auth + FastAPI (requires separate Node.js server)
+4. **Avoid**: Direct Better Auth + FastAPI integration (not natively supported)
+
+### **Database Relationship Best Practices:**
+- Always define proper foreign key constraints
+- Use SQLModel's Field(sa_column=Column(ForeignKey(...))) for foreign keys
+- Maintain referential integrity
+- Use appropriate cascade options for related records

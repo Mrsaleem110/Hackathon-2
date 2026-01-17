@@ -16,13 +16,12 @@ export const useAuthState = () => {
 
 // Custom hook to handle authentication actions
 export const useAuthActions = () => {
-  const { register, login, logout, refreshToken, getUserProfile } = useAuth();
+  const { register, login, logout, getUserProfile } = useAuth();
 
   return {
     register,
     login,
     logout,
-    refreshToken,
     getUserProfile,
   };
 };
@@ -59,7 +58,7 @@ export const useProtectedResource = (permission = null) => {
 
 // Hook to make authenticated API calls
 export const useApi = () => {
-  const { token, refreshToken } = useAuth();
+  const { token } = useAuth();
 
   const authenticatedFetch = async (url, options = {}) => {
     const headers = {
@@ -72,22 +71,38 @@ export const useApi = () => {
       headers,
     });
 
-    // If token expired, try to refresh it
+    // If token expired, try to refresh it (if refresh endpoint exists)
     if (response.status === 401) {
-      const refreshed = await refreshToken();
-      if (refreshed) {
-        // Get the new token from localStorage after refresh
-        const newToken = localStorage.getItem('auth-token');
-
-        const newHeaders = {
-          ...options.headers,
-          'Authorization': `Bearer ${newToken}`,
-        };
-
-        response = await fetch(url, {
-          ...options,
-          headers: newHeaders,
+      try {
+        // Attempt to refresh the token
+        const refreshTokenResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         });
+
+        if (refreshTokenResponse.ok) {
+          const refreshData = await refreshTokenResponse.json();
+          const newToken = refreshData.access_token;
+
+          // Update token in localStorage and context
+          localStorage.setItem('auth-token', newToken);
+
+          const newHeaders = {
+            ...options.headers,
+            'Authorization': `Bearer ${newToken}`,
+          };
+
+          response = await fetch(url, {
+            ...options,
+            headers: newHeaders,
+          });
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        // If refresh fails, the original 401 response is returned
       }
     }
 

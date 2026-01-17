@@ -14,6 +14,7 @@ load_dotenv()
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # Import all models to register them with SQLModel
+from models.user import User
 from models.task import Task
 from models.conversation import Conversation
 from models.message import Message
@@ -28,8 +29,9 @@ if config.config_file_name is not None:
 # Set the target metadata for autogenerate support
 target_metadata = SQLModel.metadata
 
-# Set the database URL from environment
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", "postgresql://localhost:5432/todo_chatbot"))
+# Set the database URL from environment - use NEON_DATABASE_URL for compatibility with the project setup
+db_url = os.getenv("NEON_DATABASE_URL", os.getenv("DATABASE_URL", "sqlite:///./todo_chatbot.db"))
+config.set_main_option("sqlalchemy.url", db_url)
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
