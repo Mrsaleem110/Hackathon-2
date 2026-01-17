@@ -52,3 +52,8 @@ app.include_router(tasks_router, prefix="/tasks")
 app.include_router(chat_router)
 app.include_router(chatkit_router)
 app.include_router(chatkit_agent_router)
+
+# This ensures the app is available when Vercel imports it
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
