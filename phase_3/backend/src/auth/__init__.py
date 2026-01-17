@@ -1,20 +1,20 @@
 """
 Authentication module for the AI-Powered Todo Chatbot.
-Better Auth is a JavaScript library, so for Python we're implementing a similar interface
-using standard JWT authentication with additional security features.
+Supports both custom JWT authentication and Better Auth JWT validation.
 """
+
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 import os
 from datetime import datetime, timedelta
 import jwt
+import requests
 import bcrypt
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from sqlmodel import Session, select
 from ..models.user import User, UserCreate
-from ..database.connection import get_session
 
 # Load environment variables
 load_dotenv()
@@ -61,7 +61,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Create a JWT access token similar to Better Auth."""
+    """Create a JWT access token."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -73,8 +73,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-def verify_token(token: str) -> User:
-    """Verify a JWT token and return the user info."""
+def verify_custom_token(token: str) -> User:
+    """Verify a custom JWT token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
@@ -85,7 +85,7 @@ def verify_token(token: str) -> User:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create a user object similar to what Better Auth would provide
+        # Create a user object
         user = User(
             id=user_id,
             email=payload.get("email", None),
@@ -100,14 +100,78 @@ def verify_token(token: str) -> User:
         )
 
 
+def verify_better_auth_token(token: str) -> User:
+    """Verify a JWT token issued by Better Auth by calling the Better Auth server."""
+    try:
+        # Make a request to the Better Auth server to validate the token
+        BETTER_AUTH_URL = os.getenv("BETTER_AUTH_URL", "http://localhost:3000")
+
+        response = requests.get(
+            f"{BETTER_AUTH_URL}/api/auth/session",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            },
+            timeout=10  # Add timeout to prevent hanging requests
+        )
+
+        if response.status_code == 200:
+            session_data = response.json()
+            user_data = session_data.get("user", {})
+
+            user = User(
+                id=user_data.get("id", ""),
+                email=user_data.get("email", ""),
+                name=user_data.get("name", "")
+            )
+            return user
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate Better Auth credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except requests.exceptions.RequestException as e:
+        # Handle network-related errors specifically
+        print(f"Network error verifying Better Auth token: {str(e)}")
+        # If Better Auth server is not reachable, fall back to treating it as invalid token
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate Better Auth credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        # Handle any other errors (JSON parsing, etc.)
+        print(f"Error verifying Better Auth token: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate Better Auth credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
-    """Get the current authenticated user, similar to Better Auth's interface."""
+    """Get the current authenticated user, supporting both custom and Better Auth tokens."""
     token = credentials.credentials
-    return verify_token(token)
+
+    # First, try to verify as a custom JWT
+    try:
+        return verify_custom_token(token)
+    except:
+        # If that fails, try to verify as a Better Auth token
+        try:
+            return verify_better_auth_token(token)
+        except:
+            # If both fail, raise unauthorized error
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
 
 def require_auth():
-    """Dependency to require authentication."""
+    """Dependency to require authentication, supporting both custom and Better Auth tokens."""
     def auth_dependency(request: Request = None, current_user: User = Depends(get_current_user)):
         return current_user
     return auth_dependency

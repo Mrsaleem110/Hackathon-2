@@ -50,7 +50,7 @@ class UserService:
             return None
 
         # Update fields that were provided
-        update_data = user_update.dict(exclude_unset=True)
+        update_data = user_update.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_user, field, value)
 

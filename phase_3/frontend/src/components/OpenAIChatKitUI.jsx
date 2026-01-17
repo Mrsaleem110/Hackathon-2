@@ -40,11 +40,24 @@ const OpenAIChatKitUI = ({ userId, backendUrl }) => {
       // Add the streaming message to the messages list
       setMessages(prev => [...prev, initialAssistantMessage]);
 
+      // Get the auth token from localStorage (as it's more reliable in async context)
+      const token = localStorage.getItem('auth-token');
+
+      // Validate that we have both userId and token before making the request
+      if (!userId) {
+        throw new Error('User ID is required to send messages');
+      }
+
+      if (!token) {
+        throw new Error('Authentication token is missing. Please log in again.');
+      }
+
       // Send message to backend API
-      const response = await fetch(`${backendUrl || process.env.VITE_API_BASE_URL}/api/${userId}/chat`, {
+      const response = await fetch(`${backendUrl || import.meta.env.VITE_API_BASE_URL}/api/${userId}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Add the auth token
         },
         body: JSON.stringify({
           message: message,
@@ -53,7 +66,15 @@ const OpenAIChatKitUI = ({ userId, backendUrl }) => {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Get the error details from response
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage += `, message: ${errorData.detail || errorData.message || JSON.stringify(errorData)}`;
+        } catch (e) {
+          // If we can't parse the error response, just use the status
+        }
+        throw new Error(errorMessage);
       }
 
       // Handle JSON response (which may contain MCP-compatible format)

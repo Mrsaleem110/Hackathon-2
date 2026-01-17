@@ -24,10 +24,12 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:3000", "*"],  # Allow frontend origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Expose authorization header for auth token
+    expose_headers=["Access-Control-Allow-Origin", "Authorization"]
 )
 
 @app.get("/")
@@ -38,13 +40,15 @@ def read_root():
 def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
-# Include the auth, chat, chatkit, and chatkit_agent routers
+# Include the auth, tasks, chat, chatkit, and chatkit_agent routers
 from .auth import router as auth_router
+from .tasks import router as tasks_router
 from .chat import router as chat_router
 from .chatkit import router as chatkit_router
 from .chatkit_agent import router as chatkit_agent_router
 
 app.include_router(auth_router)
+app.include_router(tasks_router, prefix="/tasks")
 app.include_router(chat_router)
 app.include_router(chatkit_router)
 app.include_router(chatkit_agent_router)

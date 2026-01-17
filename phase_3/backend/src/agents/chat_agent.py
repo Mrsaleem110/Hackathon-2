@@ -20,7 +20,10 @@ class ChatAgent:
     """
 
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("Please set your OPENAI_API_KEY in the .env file")
+        self.client = OpenAI(api_key=api_key)
         self.model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
         # Define the tools available to the agent

@@ -39,41 +39,48 @@ const LoginPage = () => {
   return (
     <div className="auth-container">
       <div className="auth-form">
-        <h2>Login</h2>
+        <h2>Todo Ai Chatbot</h2>
+        <p style={{textAlign: 'center', marginBottom: '24px', color: '#6b7280', fontSize: '1rem'}}>Welcome Back</p>
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email:</label>
+            <label htmlFor="email">Email Address</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
+              placeholder="Enter your email"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password:</label>
+            <label htmlFor="password">Password</label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
+              placeholder="Enter your password"
               required
             />
           </div>
 
           <button type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? (
+              <span>Signing in...</span>
+            ) : (
+              <span>Sign In</span>
+            )}
           </button>
         </form>
 
         <div className="auth-links">
-          <p>Don't have an account? <Link to="/register">Register here</Link></p>
+          <p>Don't have an account? <Link to="/register">Sign Up</Link></p>
         </div>
       </div>
     </div>
