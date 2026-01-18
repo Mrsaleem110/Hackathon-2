@@ -5,27 +5,13 @@ from typing import Optional
 import uuid
 from datetime import datetime
 import logging
-
-# Import models
-from ..models.task import Task, TaskCreate, TaskUpdate
-from ..models.conversation import Conversation, ConversationCreate
-from ..models.message import Message, MessageCreate, MessageRole
-from ..database.connection import get_session, get_engine
-from ..services.task_service import TaskService
-from ..services.conversation_service import ConversationService
-from ..services.message_service import MessageService
-
-# Import SQLModel table classes to register them with the metadata
-from ..models.user import User, UserCreate, UserUpdate, UserPublic
-from ..models.task import Task, TaskCreate, TaskUpdate, TaskCreateRequest
-from ..models.conversation import Conversation, ConversationCreate
-from ..models.message import Message, MessageCreate, MessageRole
+import os
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
+# Initialize FastAPI app early to prevent startup failures
 app = FastAPI(
     title="AI-Powered Todo Chatbot API",
     description="API for the AI-Powered Todo Chatbot that enables users to manage tasks using natural language",
@@ -43,21 +29,42 @@ app.add_middleware(
     expose_headers=["Access-Control-Allow-Origin", "Authorization"]
 )
 
-@app.on_event("startup")
-async def startup_event():
-    """Create database tables on startup"""
-    try:
-        logger.info("Initializing database tables...")
-        from sqlmodel import SQLModel
-        # Create engine and initialize tables
-        engine = get_engine()
-        # Create all tables defined in the models
-        SQLModel.metadata.create_all(bind=engine)
-        logger.info("Database tables initialized successfully!")
-    except Exception as e:
-        logger.error(f"Error initializing database tables: {e}")
-        # Continue without raising the exception to allow the app to start
-        # The database might be connected later when the first request comes
+# Move imports inside try-catch to catch import errors during initialization
+try:
+    # Import models (removing duplicates)
+    from ..models.task import Task, TaskCreate, TaskUpdate, TaskCreateRequest
+    from ..models.conversation import Conversation, ConversationCreate
+    from ..models.message import Message, MessageCreate, MessageRole
+    from ..models.user import User, UserCreate, UserUpdate, UserPublic
+    from ..database.connection import get_session, get_engine
+    from ..services.task_service import TaskService
+    from ..services.conversation_service import ConversationService
+    from ..services.message_service import MessageService
+
+    logger.info("All modules imported successfully")
+
+except ImportError as e:
+    logger.error(f"Import error during app initialization: {e}")
+    # Add a basic error endpoint
+    @app.get("/")
+    def read_root():
+        return {"error": f"App failed to initialize: {str(e)}"}
+
+# Only include the startup event if not in serverless environment
+if os.getenv("VERCEL_ENV") is None:
+    @app.on_event("startup")
+    async def startup_event():
+        """Create database tables on startup"""
+        try:
+            logger.info("Initializing database tables...")
+            from sqlmodel import SQLModel
+            engine = get_engine()
+            SQLModel.metadata.create_all(bind=engine)
+            logger.info("Database tables initialized successfully!")
+        except Exception as e:
+            logger.error(f"Error initializing database tables: {e}")
+            # Continue without raising the exception to allow the app to start
+            # The database might be connected later when the first request comes
 
 @app.get("/")
 def read_root():
@@ -68,17 +75,21 @@ def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
 # Include the auth, tasks, chat, chatkit, and chatkit_agent routers
-from .auth import router as auth_router
-from .tasks import router as tasks_router
-from .chat import router as chat_router
-from .chatkit import router as chatkit_router
-from .chatkit_agent import router as chatkit_agent_router
+# Only include if imports were successful
+try:
+    from .auth import router as auth_router
+    from .tasks import router as tasks_router
+    from .chat import router as chat_router
+    from .chatkit import router as chatkit_router
+    from .chatkit_agent import router as chatkit_agent_router
 
-app.include_router(auth_router)
-app.include_router(tasks_router, prefix="/tasks")
-app.include_router(chat_router)
-app.include_router(chatkit_router)
-app.include_router(chatkit_agent_router)
+    app.include_router(auth_router)
+    app.include_router(tasks_router, prefix="/tasks")
+    app.include_router(chat_router)
+    app.include_router(chatkit_router)
+    app.include_router(chatkit_agent_router)
+except ImportError as e:
+    logger.error(f"Router import error: {e}")
 
 # This ensures the app is available when Vercel imports it
 if __name__ == "__main__":

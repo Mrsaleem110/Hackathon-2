@@ -22,7 +22,12 @@ def get_engine():
             "pool_pre_ping": True,
             "pool_recycle": 300,
             "pool_size": 1,
-            "max_overflow": 0
+            "max_overflow": 0,
+            "connect_args": {
+                "sslmode": "require",
+                "statement_timeout": 30000,  # 30 seconds timeout
+                "command_timeout": 30000
+            }
         }
 
     return create_engine(DATABASE_URL, echo=False, **connect_args)
