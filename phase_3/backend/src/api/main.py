@@ -25,9 +25,12 @@ allowed_origins = ["http://localhost:5173", "http://localhost:5174", "http://loc
 frontend_url = os.getenv("FRONTEND_URL")
 if frontend_url:
     allowed_origins.append(frontend_url)
-else:
-    # Always allow vercel.app domains for common deployment scenarios
-    allowed_origins.append("https://*.vercel.app")
+
+# Always allow specific vercel.app domains for common deployment scenarios
+allowed_origins.extend([
+    "https://*.vercel.app",
+    "https://hackathon-2-p-3.vercel.app"  # Specific frontend URL
+])
 
 app.add_middleware(
     CORSMiddleware,
