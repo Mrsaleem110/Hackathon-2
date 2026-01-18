@@ -4,15 +4,26 @@ from sqlmodel import Session
 from typing import Optional
 import uuid
 from datetime import datetime
+import logging
 
 # Import models
 from ..models.task import Task, TaskCreate, TaskUpdate
 from ..models.conversation import Conversation, ConversationCreate
 from ..models.message import Message, MessageCreate, MessageRole
-from ..database.connection import get_session
+from ..database.connection import get_session, get_engine
 from ..services.task_service import TaskService
 from ..services.conversation_service import ConversationService
 from ..services.message_service import MessageService
+
+# Import SQLModel table classes to register them with the metadata
+from ..models.user import User, UserCreate, UserUpdate, UserPublic
+from ..models.task import Task, TaskCreate, TaskUpdate, TaskCreateRequest
+from ..models.conversation import Conversation, ConversationCreate
+from ..models.message import Message, MessageCreate, MessageRole
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -31,6 +42,22 @@ app.add_middleware(
     # Expose authorization header for auth token
     expose_headers=["Access-Control-Allow-Origin", "Authorization"]
 )
+
+@app.on_event("startup")
+async def startup_event():
+    """Create database tables on startup"""
+    try:
+        logger.info("Initializing database tables...")
+        from sqlmodel import SQLModel
+        # Create engine and initialize tables
+        engine = get_engine()
+        # Create all tables defined in the models
+        SQLModel.metadata.create_all(bind=engine)
+        logger.info("Database tables initialized successfully!")
+    except Exception as e:
+        logger.error(f"Error initializing database tables: {e}")
+        # Continue without raising the exception to allow the app to start
+        # The database might be connected later when the first request comes
 
 @app.get("/")
 def read_root():
