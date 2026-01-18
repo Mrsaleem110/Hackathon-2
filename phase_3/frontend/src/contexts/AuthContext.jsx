@@ -15,8 +15,12 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('auth-token') || null);
   const [loading, setLoading] = useState(true);
 
-  // API base URL
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
+  // API base URL - configurable via environment variable, with fallback logic
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    process.env.REACT_APP_API_BASE_URL || // Fallback for Create React App projects
+    // For Vercel deployments, you may want to set the VITE_API_BASE_URL in Vercel dashboard
+    'http://localhost:8001'; // Default for local development
 
   // Register function
   const register = async (userData) => {
