@@ -12,12 +12,11 @@ import jwt
 import requests
 import bcrypt
 from pydantic import BaseModel
-from dotenv import load_dotenv
 from sqlmodel import Session, select
-from ..models.user import User, UserCreate
+from ..models.user import User as UserModel, UserCreate  # Rename to avoid conflict
 
-# Load environment variables
-load_dotenv()
+# Don't use load_dotenv() in serverless environments as it can cause issues
+# Environment variables are provided by the platform
 
 # Secret key for JWT (in production, this should be a strong secret)
 SECRET_KEY = os.getenv("BETTER_AUTH_SECRET", "your-default-secret-key-change-in-production")
@@ -103,45 +102,71 @@ def verify_custom_token(token: str) -> User:
 def verify_better_auth_token(token: str) -> User:
     """Verify a JWT token issued by Better Auth by calling the Better Auth server."""
     try:
-        # Make a request to the Better Auth server to validate the token
-        BETTER_AUTH_URL = os.getenv("BETTER_AUTH_URL", "http://localhost:3000")
+        # For serverless environments, we'll just decode the JWT locally since
+        # making HTTP requests to verify tokens can cause timeouts
+        # This is a simplified approach that assumes the token is valid if it decodes properly
 
-        response = requests.get(
-            f"{BETTER_AUTH_URL}/api/auth/session",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            },
-            timeout=10  # Add timeout to prevent hanging requests
-        )
-
-        if response.status_code == 200:
-            session_data = response.json()
-            user_data = session_data.get("user", {})
-
-            user = User(
-                id=user_data.get("id", ""),
-                email=user_data.get("email", ""),
-                name=user_data.get("name", "")
-            )
-            return user
-        else:
+        # Get the Better Auth secret key
+        BETTER_AUTH_SECRET = os.getenv("BETTER_AUTH_SECRET")
+        if not BETTER_AUTH_SECRET:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate Better Auth credentials",
+                detail="Better Auth secret not configured",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-    except requests.exceptions.RequestException as e:
-        # Handle network-related errors specifically
-        print(f"Network error verifying Better Auth token: {str(e)}")
-        # If Better Auth server is not reachable, fall back to treating it as invalid token
+
+        # Decode the token using the Better Auth secret
+        payload = jwt.decode(token, BETTER_AUTH_SECRET, algorithms=["HS256"])
+
+        user = User(
+            id=payload.get("sub", ""),
+            email=payload.get("email", ""),
+            name=payload.get("name", "")
+        )
+        return user
+
+        # Original approach with HTTP request (commented out for serverless compatibility)
+        # BETTER_AUTH_URL = os.getenv("BETTER_AUTH_URL", "http://localhost:3000")
+        #
+        # response = requests.get(
+        #     f"{BETTER_AUTH_URL}/api/auth/session",
+        #     headers={
+        #         "Authorization": f"Bearer {token}",
+        #         "Content-Type": "application/json"
+        #     },
+        #     timeout=5  # Shorter timeout for serverless
+        # )
+        #
+        # if response.status_code == 200:
+        #     session_data = response.json()
+        #     user_data = session_data.get("user", {})
+        #
+        #     user = User(
+        #         id=user_data.get("id", ""),
+        #         email=user_data.get("email", ""),
+        #         name=user_data.get("name", "")
+        #     )
+        #     return user
+        # else:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_401_UNAUTHORIZED,
+        #         detail="Could not validate Better Auth credentials",
+        #         headers={"WWW-Authenticate": "Bearer"},
+        #     )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate Better Auth credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except Exception as e:
-        # Handle any other errors (JSON parsing, etc.)
+        # Handle any other errors
         print(f"Error verifying Better Auth token: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -157,11 +182,15 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     # First, try to verify as a custom JWT
     try:
         return verify_custom_token(token)
-    except:
+    except Exception as e:
+        # Log the error for debugging but continue to try Better Auth
+        print(f"Custom token verification failed: {str(e)}")
         # If that fails, try to verify as a Better Auth token
         try:
             return verify_better_auth_token(token)
-        except:
+        except Exception as e2:
+            # Log the second error as well
+            print(f"Better Auth token verification failed: {str(e2)}")
             # If both fail, raise unauthorized error
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -193,7 +222,7 @@ def authenticate_user(email: str, password: str, session: Session) -> Optional[U
     """
     Authenticate a user by checking their credentials against the database.
     """
-    statement = select(User).where(User.email == email)
+    statement = select(UserModel).where(UserModel.email == email)
     db_user = session.exec(statement).first()
 
     if db_user and verify_password(password, db_user.hashed_password):
@@ -210,7 +239,7 @@ def register_user(user_data: UserCreate, session: Session) -> User:
     Register a new user in the database.
     """
     # Check if user already exists
-    statement = select(User).where(User.email == user_data.email)
+    statement = select(UserModel).where(UserModel.email == user_data.email)
     existing_user = session.exec(statement).first()
 
     if existing_user:
@@ -223,7 +252,7 @@ def register_user(user_data: UserCreate, session: Session) -> User:
     hashed_password = hash_password(user_data.password)
 
     # Create new user
-    db_user = User(
+    db_user = UserModel(
         email=user_data.email,
         name=user_data.name,
         hashed_password=hashed_password
