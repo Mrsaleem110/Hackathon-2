@@ -29,7 +29,8 @@ if frontend_url:
 # Always allow specific vercel.app domains for common deployment scenarios
 allowed_origins.extend([
     "https://*.vercel.app",
-    "https://hackathon-2-p-3.vercel.app"  # Specific frontend URL
+    "https://hackathon-2-p-3.vercel.app",  # Specific frontend URL
+    "https://hackathon-2-phase-3-backend.vercel.app"  # Specific backend URL to avoid redirect issues
 ])
 
 app.add_middleware(
@@ -38,8 +39,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    # Expose authorization header for auth token
-    expose_headers=["Access-Control-Allow-Origin", "Authorization"]
+    # Expose authorization and origin headers for auth token and CORS
+    expose_headers=["Access-Control-Allow-Origin", "Authorization", "X-Total-Count"]
 )
 
 # Move imports inside try-catch to catch import errors during initialization
