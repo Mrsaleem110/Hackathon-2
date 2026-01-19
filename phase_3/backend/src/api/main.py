@@ -31,7 +31,8 @@ allowed_origins.extend([
     "https://*.vercel.app",
     "https://hackathon-2-p-3.vercel.app",  # Specific frontend URL
     "https://hackathon-2-phase-3-backend.vercel.app",  # Specific backend URL to avoid redirect issues
-    "https://hackathon-2-phase-3.vercel.app"  # Your deployed frontend URL
+    "https://hackathon-2-phase-3.vercel.app",  # Your deployed frontend URL
+    "https://hackathon-2-p-3-ddgooywtc-muhammad-saleems-projects-daef11eb.vercel.app"  # Your actual deployed frontend URL
 ])
 
 # Allow all origins during development, but restrict in production
