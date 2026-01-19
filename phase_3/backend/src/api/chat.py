@@ -108,28 +108,34 @@ async def chat_endpoint(
                         from ..services.task_service import TaskService
                         from ..models.task import TaskCreate
 
+                        print(f"DEBUG: Attempting to create task with args: {tool_args}")
+
                         task_create = TaskCreate(
                             title=tool_args["title"],
                             description=tool_args.get("description", ""),
                             user_id=user_id,
                             completed=False
                         )
-                        TaskService.create_task(session, task_create)
+                        created_task = TaskService.create_task(session, task_create)
+                        print(f"DEBUG: Successfully created task with ID: {created_task.id}, Title: {created_task.title}")
 
                     elif tool_name == "list_tasks":
                         # Listing tasks doesn't require execution here since the frontend will make a separate API call
+                        print(f"DEBUG: list_tasks tool called")
                         pass
 
                     elif tool_name == "complete_task":
                         from ..services.task_service import TaskService
 
                         task_id = uuid.UUID(tool_args["task_id"])
+                        print(f"DEBUG: Attempting to complete task with ID: {task_id}")
                         TaskService.complete_task(session, task_id)
 
                     elif tool_name == "delete_task":
                         from ..services.task_service import TaskService
 
                         task_id = uuid.UUID(tool_args["task_id"])
+                        print(f"DEBUG: Attempting to delete task with ID: {task_id}")
                         TaskService.delete_task(session, task_id)
 
                     elif tool_name == "update_task":
@@ -137,6 +143,7 @@ async def chat_endpoint(
                         from ..models.task import TaskUpdate
 
                         task_id = uuid.UUID(tool_args["task_id"])
+                        print(f"DEBUG: Attempting to update task with ID: {task_id}")
                         task_update = TaskUpdate(
                             title=tool_args.get("title"),
                             description=tool_args.get("description"),
@@ -144,9 +151,17 @@ async def chat_endpoint(
                         )
                         TaskService.update_task(session, task_id, task_update)
 
+                except KeyError as e:
+                    # Specific error for missing keys in tool_args
+                    print(f"ERROR: Missing required argument for {tool_name} tool: {str(e)}")
+                    print(f"Tool args received: {tool_args}")
+                    continue
+
                 except Exception as e:
                     # Log the error but continue processing other tool calls
-                    print(f"Error executing tool call {tool_name}: {str(e)}")
+                    print(f"ERROR executing tool call {tool_name}: {str(e)}")
+                    import traceback
+                    print(f"Full traceback: {traceback.format_exc()}")
                     continue
 
         # Create assistant message with the AI response
