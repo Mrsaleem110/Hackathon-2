@@ -30,8 +30,17 @@ if frontend_url:
 allowed_origins.extend([
     "https://*.vercel.app",
     "https://hackathon-2-p-3.vercel.app",  # Specific frontend URL
-    "https://hackathon-2-phase-3-backend.vercel.app"  # Specific backend URL to avoid redirect issues
+    "https://hackathon-2-phase-3-backend.vercel.app",  # Specific backend URL to avoid redirect issues
+    "https://hackathon-2-phase-3.vercel.app"  # Your deployed frontend URL
 ])
+
+# Allow all origins during development, but restrict in production
+if os.getenv("ENVIRONMENT") == "development" or os.getenv("VERCEL_ENV") is None:
+    # In development, add more flexible origins
+    allowed_origins.extend([
+        "http://localhost:*",  # Allow any localhost port
+        "http://127.0.0.1:*",  # Allow any 127.0.0.1 port
+    ])
 
 app.add_middleware(
     CORSMiddleware,
