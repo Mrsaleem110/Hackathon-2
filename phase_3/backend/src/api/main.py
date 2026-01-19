@@ -100,7 +100,19 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "timestamp": datetime.utcnow()}
+    return {"status": "healthy", "timestamp": datetime.utcnow(), "routes_count": len(app.routes)}
+
+@app.get("/debug/routes")
+def debug_routes():
+    """Debug endpoint to list all registered routes"""
+    routes_info = []
+    for route in app.routes:
+        if hasattr(route, 'methods') and hasattr(route, 'path'):
+            routes_info.append({
+                "path": route.path,
+                "methods": list(route.methods) if route.methods else ["UNKNOWN"]
+            })
+    return {"routes": routes_info, "total": len(routes_info)}
 
 # Include the auth, tasks, chat, chatkit, and chatkit_agent routers
 # Log each import for debugging
