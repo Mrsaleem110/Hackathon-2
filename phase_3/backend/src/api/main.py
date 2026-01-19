@@ -96,7 +96,7 @@ if os.getenv("VERCEL_ENV") is None:
 
 @app.get("/")
 def read_root():
-    return {"message": "AI-Powered Todo Chatbot API"}
+    return {"message": "AI-Powered Todo Chatbot API", "status": "operational"}
 
 @app.get("/health")
 def health_check():
@@ -113,6 +113,11 @@ def debug_routes():
                 "methods": list(route.methods) if route.methods else ["UNKNOWN"]
             })
     return {"routes": routes_info, "total": len(routes_info)}
+
+@app.get("/debug/test")
+def debug_test():
+    """Simple test endpoint to confirm basic functionality"""
+    return {"test": "success", "message": "Backend is receiving requests properly"}
 
 # Include the auth, tasks, chat, chatkit, and chatkit_agent routers
 # Log each import for debugging
