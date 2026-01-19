@@ -42,6 +42,10 @@ if os.getenv("ENVIRONMENT") == "development" or os.getenv("VERCEL_ENV") is None:
         "http://127.0.0.1:*",  # Allow any 127.0.0.1 port
     ])
 
+# Make sure to include the current environment variables
+if os.getenv("ALLOWED_ORIGIN"):
+    allowed_origins.append(os.getenv("ALLOWED_ORIGIN"))
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,  # Allow frontend origins
