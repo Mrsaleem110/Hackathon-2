@@ -103,21 +103,46 @@ def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
 # Include the auth, tasks, chat, chatkit, and chatkit_agent routers
-# Only include if imports were successful
+# Log each import for debugging
 try:
     from .auth import router as auth_router
-    from .tasks import router as tasks_router
-    from .chat import router as chat_router
-    from .chatkit import router as chatkit_router
-    from .chatkit_agent import router as chatkit_agent_router
-
+    logger.info("Successfully imported auth router")
     app.include_router(auth_router)
-    app.include_router(tasks_router, prefix="/tasks")
-    app.include_router(chat_router)
-    app.include_router(chatkit_router)
-    app.include_router(chatkit_agent_router)
+    logger.info("Successfully included auth router")
 except ImportError as e:
-    logger.error(f"Router import error: {e}")
+    logger.error(f"Failed to import auth router: {e}")
+
+try:
+    from .tasks import router as tasks_router
+    logger.info("Successfully imported tasks router")
+    app.include_router(tasks_router, prefix="/tasks")
+    logger.info("Successfully included tasks router")
+except ImportError as e:
+    logger.error(f"Failed to import tasks router: {e}")
+
+try:
+    from .chat import router as chat_router
+    logger.info("Successfully imported chat router")
+    app.include_router(chat_router)
+    logger.info("Successfully included chat router")
+except ImportError as e:
+    logger.error(f"Failed to import chat router: {e}")
+
+try:
+    from .chatkit import router as chatkit_router
+    logger.info("Successfully imported chatkit router")
+    app.include_router(chatkit_router)
+    logger.info("Successfully included chatkit router")
+except ImportError as e:
+    logger.error(f"Failed to import chatkit router: {e}")
+
+try:
+    from .chatkit_agent import router as chatkit_agent_router
+    logger.info("Successfully imported chatkit_agent router")
+    app.include_router(chatkit_agent_router)
+    logger.info("Successfully included chatkit_agent router")
+except ImportError as e:
+    logger.error(f"Failed to import chatkit_agent router: {e}")
 
 # This ensures the app is available when Vercel imports it
 if __name__ == "__main__":
