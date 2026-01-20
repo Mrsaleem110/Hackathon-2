@@ -5,12 +5,9 @@ import { useAuth } from '../contexts/AuthContext';
 const ProtectedRoute = ({ children, requiredPermission = null }) => {
   const { isAuthenticated, loading } = useAuth();
 
+  // Don't show loading state here since it's handled at the route level
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Loading...</div>
-      </div>
-    );
+    return children; // Let the parent route handle loading state
   }
 
   if (!isAuthenticated) {
