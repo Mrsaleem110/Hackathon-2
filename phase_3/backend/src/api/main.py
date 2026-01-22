@@ -34,8 +34,10 @@ allowed_origins.extend([
     "https://hackathon-2-phase-3-backend.vercel.app",  # Specific backend URL to avoid redirect issues
     "https://hackathon-2-phase-3.vercel.app",  # Your deployed frontend URL
     "https://hackathon-2-p-3-ddgooywtc-muhammad-saleems-projects-daef11eb.vercel.app",  # Previous deployed frontend URL
-    "https://hackathon-2-p-3-p1auzk0df-muhammad-saleems-projects-daef11eb.vercel.app"   # New deployed frontend URL
+    "https://hackathon-2-p-3-p1auzk0df-muhammad-saleems-projects-daef11eb.vercel.app",   # New deployed frontend URL
+    "https://vercel.com/muhammad-saleems-projects-daef11eb/hackathon-2-p-3/CUFofdUTGungNuRUppNem8VNWVTB"  # Specific problematic URL from error
 ])
+
 
 # Allow all origins during development, but restrict in production
 if os.getenv("ENVIRONMENT") == "development" or os.getenv("VERCEL_ENV") is None:
