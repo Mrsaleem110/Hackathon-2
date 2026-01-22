@@ -66,6 +66,34 @@ if additional_origins:
         if origin:
             allowed_origins.append(origin)
 
+# Add custom CORS middleware for more reliable serverless function handling
+@app.middleware("http")
+async def add_cors_headers(request, call_next):
+    response = await call_next(request)
+
+    # Always add CORS headers to all responses
+    origin = request.headers.get('origin')
+    if origin and (any(origin.startswith(allowed_origin.replace('*', '')) for allowed_origin in allowed_origins) or
+                   any(allowed_origin.replace('*', '') in origin for allowed_origin in allowed_origins)):
+        response.headers['Access-Control-Allow-Origin'] = origin
+    else:
+        # If origin is not in allowed list, use the first allowed origin as fallback for development
+        if allowed_origins:
+            response.headers['Access-Control-Allow-Origin'] = allowed_origins[0]
+
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type, X-Requested-With, Accept, Origin'
+
+    return response
+
+# Handle preflight OPTIONS requests manually
+@app.options("/{full_path:path}")
+async def cors_options(full_path: str):
+    return {
+        "message": "OK"
+    }
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,  # Allow frontend origins
