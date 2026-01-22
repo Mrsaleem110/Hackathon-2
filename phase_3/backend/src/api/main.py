@@ -35,9 +35,16 @@ allowed_origins.extend([
     "https://hackathon-2-phase-3.vercel.app",  # Your deployed frontend URL
     "https://hackathon-2-p-3-ddgooywtc-muhammad-saleems-projects-daef11eb.vercel.app",  # Previous deployed frontend URL
     "https://hackathon-2-p-3-p1auzk0df-muhammad-saleems-projects-daef11eb.vercel.app",   # New deployed frontend URL
-    "https://vercel.com/muhammad-saleems-projects-daef11eb/hackathon-2-p-3/CUFofdUTGungNuRUppNem8VNWVTB"  # Specific problematic URL from error
 ])
 
+
+
+# Allow broader origins when running in Vercel environment to handle deployment edge cases
+if os.getenv("VERCEL_ENV"):
+    # When running in Vercel, be more permissive to handle deployment variations
+    allowed_origins.extend([
+        "https://*.vercel.app",
+    ])
 
 # Allow all origins during development, but restrict in production
 if os.getenv("ENVIRONMENT") == "development" or os.getenv("VERCEL_ENV") is None:
@@ -51,6 +58,14 @@ if os.getenv("ENVIRONMENT") == "development" or os.getenv("VERCEL_ENV") is None:
 if os.getenv("ALLOWED_ORIGIN"):
     allowed_origins.append(os.getenv("ALLOWED_ORIGIN"))
 
+# Additional allowed origins from environment - useful for Vercel deployments with dynamic URLs
+additional_origins = os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
+if additional_origins:
+    for origin in additional_origins.split(","):
+        origin = origin.strip()
+        if origin:
+            allowed_origins.append(origin)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,  # Allow frontend origins
@@ -58,7 +73,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly include OPTIONS
     allow_headers=["*"],  # Allow all headers including Content-Type
     # Expose authorization and origin headers for auth token and CORS
-    expose_headers=["Access-Control-Allow-Origin", "Authorization", "X-Total-Count"]
+    expose_headers=["Access-Control-Allow-Origin", "Authorization", "X-Total-Count", "Content-Type"]
 )
 
 # Move imports inside try-catch to catch import errors during initialization
