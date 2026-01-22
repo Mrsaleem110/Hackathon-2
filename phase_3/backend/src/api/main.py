@@ -23,13 +23,14 @@ allowed_origins = ["http://localhost:5173", "http://localhost:5174", "http://loc
 
 # Add deployed frontend URL from environment variables
 frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url:
+if frontend_url and frontend_url not in allowed_origins:
     allowed_origins.append(frontend_url)
 
 # Always allow specific vercel.app domains for common deployment scenarios
 allowed_origins.extend([
     "https://*.vercel.app",
-    "https://hackathon-2-p-3.vercel.app",  # Specific frontend URL
+    "https://hackathon-2-p-3.vercel.app",  # Specific backend URL
+    "https://hackathon-2-sooty.vercel.app", # Specific frontend URL causing CORS issue
     "https://hackathon-2-phase-3-backend.vercel.app",  # Specific backend URL to avoid redirect issues
     "https://hackathon-2-phase-3.vercel.app",  # Your deployed frontend URL
     "https://hackathon-2-p-3-ddgooywtc-muhammad-saleems-projects-daef11eb.vercel.app",  # Previous deployed frontend URL
@@ -53,7 +54,7 @@ app.add_middleware(
     allow_origins=allowed_origins,  # Allow frontend origins
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly include OPTIONS
-    allow_headers=["*"],
+    allow_headers=["*"],  # Allow all headers including Content-Type
     # Expose authorization and origin headers for auth token and CORS
     expose_headers=["Access-Control-Allow-Origin", "Authorization", "X-Total-Count"]
 )
