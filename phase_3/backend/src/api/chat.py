@@ -10,7 +10,17 @@ from ..models.message import Message, MessageCreate, MessageRole
 from ..models.task import Task
 from ..services.conversation_service import ConversationService
 from ..services.message_service import MessageService
-from ..agents.chat_agent import ChatAgent
+try:
+    from ..agents.chat_agent import ChatAgent
+    CHAT_AGENT_AVAILABLE = True
+except ImportError as e:
+    print(f"WARNING: ChatAgent could not be imported: {e}")
+    print("Chat functionality will be limited.")
+    CHAT_AGENT_AVAILABLE = False
+except Exception as e:
+    print(f"WARNING: Error importing ChatAgent: {e}")
+    print("Chat functionality will be limited.")
+    CHAT_AGENT_AVAILABLE = False
 from ..auth import get_current_user, require_auth, User
 
 router = APIRouter()
@@ -90,8 +100,23 @@ async def chat_endpoint(
             })
 
         # Process message with AI agent
-        agent = ChatAgent()
-        result = agent.process_message(message_content, user_id, conversation_history)
+        if CHAT_AGENT_AVAILABLE:
+            try:
+                agent = ChatAgent()
+                result = agent.process_message(message_content, user_id, conversation_history)
+            except Exception as e:
+                print(f"ERROR: Failed to process message with AI agent: {e}")
+                # Fallback response if AI agent fails
+                result = {
+                    "response": f"I received your message: '{message_content}'. [AI Agent temporarily unavailable]",
+                    "tool_calls": []
+                }
+        else:
+            # Fallback response if ChatAgent is not available
+            result = {
+                "response": f"I received your message: '{message_content}'. [AI functionality currently unavailable]",
+                "tool_calls": []
+            }
 
         # Execute any tool calls returned by the AI agent
         if result["tool_calls"]:
