@@ -12,6 +12,12 @@ from ..services.user_service import UserService
 
 router = APIRouter(tags=["authentication"])
 
+# Test endpoint to verify router is registered
+@router.get("/test")
+async def test_auth_endpoint():
+    """Test endpoint to verify auth router is working"""
+    return {"message": "Auth router is registered and working"}
+
 
 @router.post("/register", response_model=TokenResponse)
 async def register(
