@@ -2,11 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const { BetterAuth } = require('better-auth');
 
-// Initialize Better Auth
+// Initialize Better Auth with email password provider
 const auth = BetterAuth({
   secret: process.env.BETTER_AUTH_SECRET || 'your-secret-key-change-in-production',
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
   trustHost: true,
+  emailAndPassword: {
+    enabled: true,
+  }
 });
 
 const app = express();
