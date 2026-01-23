@@ -19,16 +19,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware - use built-in CORSMiddleware for better reliability
+# BULLETPROOF CORS CONFIGURATION - Add BEFORE any other middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:5174", 
         "http://localhost:3000",
+        "http://localhost:8000",
+        "http://localhost:8001",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8001",
         "https://hackathon-2-sooty.vercel.app",
         "https://hackathon-2-p-3.vercel.app",
         "https://hackathon-2-phase-3-backend.vercel.app",
@@ -37,46 +41,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]
-)
-
-# Get additional origins from environment
-additional_origins = os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
-if additional_origins:
-    for origin in additional_origins.split(","):
-        origin = origin.strip()
-        if origin and origin not in app.user_middleware[0].kwargs.get("allow_origins", []):
-            app.user_middleware[0].kwargs["allow_origins"].append(origin)
-
-# Custom CORS middleware as fallback - simplified version
-allowed_origins = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:3000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-    "http://127.0.0.1:3000",
-    "https://hackathon-2-sooty.vercel.app",
-    "https://hackathon-2-p-3.vercel.app",
-    "https://hackathon-2-phase-3-backend.vercel.app",
-    "https://hackathon-2-phase-3.vercel.app",
-]
-
-# Add simple HTTP middleware for additional header handling if needed
-@app.middleware("http")
-async def add_additional_headers(request, call_next):
-    response = await call_next(request)
-    # The CORSMiddleware above should handle CORS, this just adds any extra headers
-    return response
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,  # Allow frontend origins
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly include OPTIONS
-    allow_headers=["*"],  # Allow all headers including Content-Type
-    # Expose authorization and origin headers for auth token and CORS
-    expose_headers=["Access-Control-Allow-Origin", "Authorization", "X-Total-Count", "Content-Type"]
 )
 
 # Move imports inside try-catch to catch import errors during initialization
