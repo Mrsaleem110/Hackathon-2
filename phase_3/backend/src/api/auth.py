@@ -10,7 +10,7 @@ from ..auth import (
 )
 from ..services.user_service import UserService
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(tags=["authentication"])
 
 
 @router.post("/register", response_model=TokenResponse)
