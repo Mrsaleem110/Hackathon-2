@@ -1,12 +1,10 @@
-// Better Auth API client for Express server
-const betterAuthBaseURL = import.meta.env.VITE_BETTER_AUTH_URL ||
-  (typeof window !== 'undefined' && window.location.origin) ||
-  'http://localhost:3000';
+// FastAPI backend API client (replacing Better Auth for Vercel deployment)
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
-// API wrapper for Better Auth endpoints
+// API wrapper for FastAPI auth endpoints
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
-    const response = await fetch(`${betterAuthBaseURL}/api/auth/sign-up`, {
+    const response = await fetch(`${apiBaseURL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -14,25 +12,20 @@ const betterAuthAPI = {
       body: JSON.stringify({
         email,
         password,
-        name,
+        name, // FastAPI backend expects name field in registration
       }),
     });
 
-    // Check if response is HTML (starts with <!DOCTYPE or <html>)
-    const responseText = await response.text();
-
-    if (responseText.trim().startsWith('<')) {
-      // Response is HTML, which means there was an error
-      return { error: { message: `HTML response received instead of JSON. Server may not be configured properly. Status: ${response.status}` } };
-    }
-
-    // Parse as JSON if it's not HTML
     try {
-      const data = responseText ? JSON.parse(responseText) : {};
+      const data = await response.json();
       if (response.ok) {
+        // Store token in localStorage for API requests
+        if (data.access_token) {
+          localStorage.setItem('auth-token', data.access_token);
+        }
         return data;
       } else {
-        return { error: data };
+        return { error: data.detail || data.message || 'Registration failed' };
       }
     } catch (e) {
       return { error: { message: `Failed to parse JSON response: ${e.message}` } };
@@ -40,7 +33,7 @@ const betterAuthAPI = {
   },
 
   async signInEmail({ email, password }) {
-    const response = await fetch(`${betterAuthBaseURL}/api/auth/sign-in/email`, {
+    const response = await fetch(`${apiBaseURL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -51,21 +44,16 @@ const betterAuthAPI = {
       }),
     });
 
-    // Check if response is HTML (starts with <!DOCTYPE or <html>)
-    const responseText = await response.text();
-
-    if (responseText.trim().startsWith('<')) {
-      // Response is HTML, which means there was an error
-      return { error: { message: `HTML response received instead of JSON. Server may not be configured properly. Status: ${response.status}` } };
-    }
-
-    // Parse as JSON if it's not HTML
     try {
-      const data = responseText ? JSON.parse(responseText) : {};
+      const data = await response.json();
       if (response.ok) {
+        // Store token in localStorage for API requests
+        if (data.access_token) {
+          localStorage.setItem('auth-token', data.access_token);
+        }
         return data;
       } else {
-        return { error: data };
+        return { error: data.detail || data.message || 'Login failed' };
       }
     } catch (e) {
       return { error: { message: `Failed to parse JSON response: ${e.message}` } };
@@ -73,40 +61,40 @@ const betterAuthAPI = {
   },
 
   async getSession() {
-    const response = await fetch(`${betterAuthBaseURL}/api/auth/session`, {
-      method: 'GET',
-      credentials: 'include', // Important for cookies
-    });
-
-    // Check if response is HTML (starts with <!DOCTYPE or <html>)
-    const responseText = await response.text();
-
-    if (responseText.trim().startsWith('<')) {
-      // Response is HTML, which means there was an error or no session
+    const token = localStorage.getItem('auth-token');
+    if (!token) {
       return null;
     }
 
-    // Parse as JSON if it's not HTML
-    try {
-      const data = responseText ? JSON.parse(responseText) : {};
-      if (response.ok) {
-        return data;
-      } else {
+    const response = await fetch(`${apiBaseURL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      try {
+        const data = await response.json();
+        return {
+          user: data,
+          session: { token }
+        };
+      } catch (e) {
         return null;
       }
-    } catch (e) {
+    } else {
+      // Remove invalid token
+      localStorage.removeItem('auth-token');
       return null;
     }
   },
 
   async signOut() {
-    const response = await fetch(`${betterAuthBaseURL}/api/auth/sign-out`, {
-      method: 'POST',
-      credentials: 'include', // Important for cookies
-    });
-
-    return response.ok;
+    // Just remove the token from localStorage
+    localStorage.removeItem('auth-token');
+    return true;
   }
 };
 
-export { betterAuthAPI as authClient, betterAuthBaseURL };
+export { betterAuthAPI as authClient, apiBaseURL };
