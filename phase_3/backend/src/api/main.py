@@ -19,89 +19,55 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware
-allowed_origins = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:3000"]
+# Add CORS middleware - use built-in CORSMiddleware for better reliability
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174", 
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:3000",
+        "https://hackathon-2-sooty.vercel.app",
+        "https://hackathon-2-p-3.vercel.app",
+        "https://hackathon-2-phase-3-backend.vercel.app",
+        "https://hackathon-2-phase-3.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"]
+)
 
-# Add deployed frontend URL from environment variables
-frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url and frontend_url not in allowed_origins:
-    allowed_origins.append(frontend_url)
-
-# Always allow specific vercel.app domains for common deployment scenarios
-allowed_origins.extend([
-    "https://*.vercel.app",
-    "https://hackathon-2-p-3.vercel.app",  # Specific backend URL
-    "https://hackathon-2-sooty.vercel.app", # Specific frontend URL causing CORS issue
-    "https://hackathon-2-phase-3-backend.vercel.app",  # Specific backend URL to avoid redirect issues
-    "https://hackathon-2-phase-3.vercel.app",  # Your deployed frontend URL
-    "https://hackathon-2-p-3-ddgooywtc-muhammad-saleems-projects-daef11eb.vercel.app",  # Previous deployed frontend URL
-    "https://hackathon-2-p-3-p1auzk0df-muhammad-saleems-projects-daef11eb.vercel.app",   # New deployed frontend URL
-])
-
-
-
-# Allow broader origins when running in Vercel environment to handle deployment edge cases
-if os.getenv("VERCEL_ENV"):
-    # When running in Vercel, be more permissive to handle deployment variations
-    allowed_origins.extend([
-        "https://*.vercel.app",
-    ])
-
-# Allow all origins during development, but restrict in production
-if os.getenv("ENVIRONMENT") == "development" or os.getenv("VERCEL_ENV") is None:
-    # In development, add more flexible origins
-    allowed_origins.extend([
-        "http://localhost:*",  # Allow any localhost port
-        "http://127.0.0.1:*",  # Allow any 127.0.0.1 port
-    ])
-
-# Make sure to include the current environment variables
-if os.getenv("ALLOWED_ORIGIN"):
-    allowed_origins.append(os.getenv("ALLOWED_ORIGIN"))
-
-# Additional allowed origins from environment - useful for Vercel deployments with dynamic URLs
+# Get additional origins from environment
 additional_origins = os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
 if additional_origins:
     for origin in additional_origins.split(","):
         origin = origin.strip()
-        if origin:
-            allowed_origins.append(origin)
+        if origin and origin not in app.user_middleware[0].kwargs.get("allow_origins", []):
+            app.user_middleware[0].kwargs["allow_origins"].append(origin)
 
-# Add custom CORS middleware for more reliable serverless function handling
+# Custom CORS middleware as fallback - simplified version
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:3000",
+    "https://hackathon-2-sooty.vercel.app",
+    "https://hackathon-2-p-3.vercel.app",
+    "https://hackathon-2-phase-3-backend.vercel.app",
+    "https://hackathon-2-phase-3.vercel.app",
+]
+
+# Add simple HTTP middleware for additional header handling if needed
 @app.middleware("http")
-async def add_cors_headers(request, call_next):
-    # Handle preflight OPTIONS requests
-    if request.method == "OPTIONS":
-        origin = request.headers.get('origin', '*')
-        return Response(
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": origin,
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-                "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Requested-With, Accept, Origin",
-                "Access-Control-Allow-Credentials": "true",
-            }
-        )
-    
+async def add_additional_headers(request, call_next):
     response = await call_next(request)
-
-    # Always add CORS headers to all responses
-    origin = request.headers.get('origin')
-    if origin and (any(origin.startswith(allowed_origin.replace('*', '')) for allowed_origin in allowed_origins) or
-                   any(allowed_origin.replace('*', '') in origin for allowed_origin in allowed_origins)):
-        response.headers['Access-Control-Allow-Origin'] = origin
-    else:
-        # If origin is not in allowed list, use the first allowed origin as fallback for development
-        if allowed_origins:
-            response.headers['Access-Control-Allow-Origin'] = allowed_origins[0]
-
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type, X-Requested-With, Accept, Origin'
-
+    # The CORSMiddleware above should handle CORS, this just adds any extra headers
     return response
-
-# Remove redundant OPTIONS route handler - handled by middleware
 
 app.add_middleware(
     CORSMiddleware,
