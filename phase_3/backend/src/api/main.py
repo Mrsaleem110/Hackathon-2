@@ -44,31 +44,24 @@ app.add_middleware(
 )
 
 # ADDITIONAL: Override exception handler to ensure CORS headers on errors
-@app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
-    """Override exception handler to add CORS headers even on errors"""
-    from fastapi.responses import JSONResponse
-    
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    """Add CORS headers to HTTP exceptions"""
     response = JSONResponse(
-        status_code=500,
-        content={"detail": str(exc)},
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
     )
-    
     origin = request.headers.get("origin", "*")
     response.headers["Access-Control-Allow-Origin"] = origin
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     response.headers["Access-Control-Allow-Credentials"] = "true"
-    
     return response
 
 # Handle OPTIONS preflight explicitly
 @app.options("/{full_path:path}")
-async def preflight_handler(full_path: str, request):
+async def preflight_handler(full_path: str):
     """Handle CORS preflight requests"""
-    origin = request.headers.get("origin", "*")
     response = Response()
-    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
     response.headers["Access-Control-Allow-Credentials"] = "true"
