@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -9,173 +10,160 @@ router = APIRouter(tags=["authentication"])
 @router.get("/test")
 async def test_auth_endpoint():
     """Test endpoint to verify auth router is working"""
-    import sys
-    errors = []
+    diagnostics = {}
     
-    # Test database import
+    # Test each import
+    try:
+        from sqlmodel import Session
+        diagnostics["sqlmodel"] = "✓"
+    except Exception as e:
+        diagnostics["sqlmodel"] = f"✗ {str(e)}"
+    
     try:
         from ..database.connection import get_session
-        logger.info("✓ Database module imported")
-        db_ok = True
+        diagnostics["database"] = "✓"
     except Exception as e:
-        logger.error(f"✗ Database module failed: {e}")
-        errors.append(f"database: {str(e)}")
-        db_ok = False
+        diagnostics["database"] = f"✗ {str(e)}"
     
-    # Test auth module import
     try:
-        from ..auth import LoginRequest, RegisterRequest, TokenResponse, create_access_token
-        logger.info("✓ Auth module imported")
-        auth_ok = True
+        from ..auth import LoginRequest, RegisterRequest, TokenResponse
+        diagnostics["auth_models"] = "✓"
     except Exception as e:
-        logger.error(f"✗ Auth module failed: {e}")
-        errors.append(f"auth: {str(e)}")
-        auth_ok = False
+        diagnostics["auth_models"] = f"✗ {str(e)}"
     
-    # Test user service import
     try:
         from ..services.user_service import UserService
-        logger.info("✓ UserService imported")
-        service_ok = True
+        diagnostics["user_service"] = "✓"
     except Exception as e:
-        logger.error(f"✗ UserService failed: {e}")
-        errors.append(f"user_service: {str(e)}")
-        service_ok = False
+        diagnostics["user_service"] = f"✗ {str(e)}"
     
-    return {
-        "status": "ok" if all([db_ok, auth_ok, service_ok]) else "partial",
-        "database": "✓" if db_ok else "✗",
-        "auth_module": "✓" if auth_ok else "✗",
-        "user_service": "✓" if service_ok else "✗",
-        "errors": errors
-    }
+    return diagnostics
 
 
-# Now try to define the actual endpoints
-try:
-    from sqlmodel import Session
-    from datetime import timedelta
-    from ..database.connection import get_session
-    from ..auth import (
-        LoginRequest, RegisterRequest, TokenResponse,
-        create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, User, get_current_user
-    )
-    from ..services.user_service import UserService
-
-    @router.post("/register", response_model=TokenResponse)
-    async def register(
-        register_request: RegisterRequest,
-        session: Session = Depends(get_session)
-    ):
-        """Register a new user and return an access token."""
+# Simple working endpoints first
+@router.post("/login")
+async def login(request: dict = None):
+    """Test login endpoint"""
+    try:
+        logger.info(f"Login attempt with request: {request}")
+        
+        if not request:
+            raise HTTPException(status_code=400, detail="Request body required")
+        
+        email = request.get("email")
+        password = request.get("password")
+        
+        if not email or not password:
+            raise HTTPException(status_code=400, detail="Email and password required")
+        
+        # Try to authenticate
+        from ..services.user_service import UserService
+        from ..database.connection import get_session
+        from ..auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, User, TokenResponse
+        from datetime import timedelta
+        
+        # Get session
+        from sqlmodel import Session, create_engine, SQLModel
+        from ..database.connection import DATABASE_URL
+        engine = create_engine(DATABASE_URL, echo=False)
+        session = Session(engine)
+        
         try:
-            existing_user = UserService.get_user_by_email(register_request.email, session)
-            if existing_user:
+            user = UserService.authenticate_user(email, password, session)
+            
+            if not user:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="User with this email already exists"
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid email or password"
                 )
-
-            user = UserService.create_user(register_request, session)
-
+            
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
                 data={"sub": user.id, "email": user.email, "name": user.name},
                 expires_delta=access_token_expires
             )
+            
+            return {
+                "access_token": access_token,
+                "token_type": "bearer",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name
+                }
+            }
+        finally:
+            session.close()
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
 
-            return_user = User(id=user.id, email=user.email, name=user.name)
-            return TokenResponse(
-                access_token=access_token,
-                token_type="bearer",
-                user=return_user
+
+@router.post("/register")
+async def register(request: dict = None):
+    """Test register endpoint"""
+    try:
+        logger.info(f"Register attempt with request: {request}")
+        
+        if not request:
+            raise HTTPException(status_code=400, detail="Request body required")
+        
+        email = request.get("email")
+        password = request.get("password")
+        name = request.get("name")
+        
+        if not email or not password:
+            raise HTTPException(status_code=400, detail="Email and password required")
+        
+        from ..services.user_service import UserService
+        from ..database.connection import get_session
+        from ..auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, User, TokenResponse, RegisterRequest
+        from datetime import timedelta
+        
+        # Get session
+        from sqlmodel import Session, create_engine
+        from ..database.connection import DATABASE_URL
+        engine = create_engine(DATABASE_URL, echo=False)
+        session = Session(engine)
+        
+        try:
+            # Check if user exists
+            existing_user = UserService.get_user_by_email(email, session)
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User already exists"
+                )
+            
+            # Create user
+            user_data = RegisterRequest(email=email, password=password, name=name or email)
+            user = UserService.create_user(user_data, session)
+            
+            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"sub": user.id, "email": user.email, "name": user.name},
+                expires_delta=access_token_expires
             )
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Registration error: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Registration failed: {str(e)}"
-            )
-
-    @router.post("/login", response_model=TokenResponse)
-    async def login(
-        login_request: LoginRequest,
-        session: Session = Depends(get_session)
-    ):
-        """Authenticate user and return an access token."""
-        user = UserService.authenticate_user(login_request.email, login_request.password, session)
-
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": user.id, "email": user.email, "name": user.name},
-            expires_delta=access_token_expires
-        )
-
-        return_user = User(id=user.id, email=user.email, name=user.name)
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=return_user
-        )
-
-    @router.post("/refresh")
-    async def refresh_token(
-        current_user: User = Depends(get_current_user)
-    ):
-        """Refresh the access token."""
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": current_user.id, "email": current_user.email, "name": current_user.name},
-            expires_delta=access_token_expires
-        )
-
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=current_user
-        )
-
-    @router.get("/me", response_model=User)
-    async def get_current_user_profile(
-        current_user: User = Depends(get_current_user),
-        session: Session = Depends(get_session)
-    ):
-        """Get the profile of the currently authenticated user."""
-        db_user = UserService.get_user_by_id(current_user.id, session)
-
-        if not db_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-
-        return User(id=db_user.id, email=db_user.email, name=db_user.name)
-
-except Exception as e:
-    logger.error(f"Failed to load auth endpoints: {e}")
-    import traceback
-    logger.error(traceback.format_exc())
-    
-    # Define error endpoints as fallback
-    @router.post("/register")
-    async def register_error():
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Registration service unavailable: {str(e)}"
-        )
-
-    @router.post("/login")
-    async def login_error():
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Login service unavailable: {str(e)}"
-        )
+            
+            return {
+                "access_token": access_token,
+                "token_type": "bearer",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name
+                }
+            }
+        finally:
+            session.close()
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Register error: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
