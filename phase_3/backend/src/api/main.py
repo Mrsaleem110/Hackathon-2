@@ -166,6 +166,17 @@ def debug_test():
     """Simple test endpoint to confirm basic functionality"""
     return {"test": "success", "message": "Backend is receiving requests properly"}
 
+@app.get("/debug/cors")
+def debug_cors():
+    """Debug endpoint to test CORS configuration"""
+    import os
+    return {
+        "cors_allowed_origins": os.getenv("ADDITIONAL_ALLOWED_ORIGINS", ""),
+        "vercel_env": os.getenv("VERCEL_ENV"),
+        "request_processing": "CORS middleware should be active",
+        "allowed_origins_list": allowed_origins
+    }
+
 # Include the auth, tasks, chat, chatkit, and chatkit_agent routers
 # Log each import for debugging
 try:
