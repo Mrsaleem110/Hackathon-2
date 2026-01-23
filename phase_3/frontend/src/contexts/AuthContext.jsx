@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authClient } from '../config/betterAuthClient';
 
 const AuthContext = createContext();
 
@@ -12,124 +13,110 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('auth-token') || null);
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
-  // API base URL - configurable via environment variable, with fallback logic
+  // API base URL for FastAPI backend (for tasks, not auth)
   const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL ||
-    process.env.REACT_APP_API_BASE_URL || // Fallback for Create React App projects
-    // For Vercel deployments, you may want to set the VITE_API_BASE_URL in Vercel dashboard
-    'http://localhost:8001'; // Default for local development
+    process.env.REACT_APP_API_BASE_URL ||
+    'http://localhost:8001';
 
-  // Register function
+  // Register function using Better Auth
   const register = async (userData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await authClient.signUp.email({
+        email: userData.email,
+        password: userData.password,
+        name: userData.name,
+        image: userData.image,
+      }, {
+        onSuccess: (ctx) => {
+          // Successfully registered
+          setUser(ctx.data.user);
+          setSession(ctx.data.session);
+          if (ctx.data.session?.token) {
+            localStorage.setItem('auth-token', ctx.data.session.token);
+            setToken(ctx.data.session.token);
+          }
         },
-        body: JSON.stringify(userData),
+        onError: (ctx) => {
+          console.error('Registration error:', ctx.error);
+        }
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (jsonError) {
-        // If JSON parsing fails, create a generic error response
-        return {
-          success: false,
-          error: `Non-JSON response received. Status: ${response.status}`
-        };
-      }
-
-      if (response.ok) {
-        // Store token in localStorage
-        localStorage.setItem('auth-token', data.access_token);
-        setToken(data.access_token);
-        setUser(data.user);
-        return { success: true, user: data.user };
-      } else {
-        return { success: false, error: data.detail || 'Registration failed' };
-      }
+      return { success: true, user: response?.user };
     } catch (error) {
       console.error('Registration error:', error);
-      return { success: false, error: error.message || 'Network error occurred during registration' };
+      return {
+        success: false,
+        error: error.message || 'Registration failed'
+      };
     }
   };
 
-  // Login function
+  // Login function using Better Auth
   const login = async (credentials) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await authClient.signIn.email({
+        email: credentials.email,
+        password: credentials.password,
+      }, {
+        onSuccess: (ctx) => {
+          // Successfully logged in
+          setUser(ctx.data.user);
+          setSession(ctx.data.session);
+          if (ctx.data.session?.token) {
+            localStorage.setItem('auth-token', ctx.data.session.token);
+            setToken(ctx.data.session.token);
+          }
         },
-        body: JSON.stringify(credentials),
+        onError: (ctx) => {
+          console.error('Login error:', ctx.error);
+        }
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (jsonError) {
-        // If JSON parsing fails, create a generic error response
-        return {
-          success: false,
-          error: `Non-JSON response received. Status: ${response.status}`
-        };
-      }
-
-      if (response.ok) {
-        // Store token in localStorage
-        localStorage.setItem('auth-token', data.access_token);
-        setToken(data.access_token);
-        setUser(data.user);
-        return { success: true, user: data.user };
-      } else {
-        return { success: false, error: data.detail || 'Login failed' };
-      }
+      return { success: true, user: response?.user };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: error.message || 'Network error occurred during login' };
+      return {
+        success: false,
+        error: error.message || 'Login failed'
+      };
     }
   };
 
   // Logout function
-  const logout = () => {
-    localStorage.removeItem('auth-token');
-    setToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authClient.signOut();
+      localStorage.removeItem('auth-token');
+      setToken(null);
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear local state even if logout fails
+      localStorage.removeItem('auth-token');
+      setToken(null);
+      setUser(null);
+      setSession(null);
+    }
   };
 
   // Get user profile
   const getUserProfile = async () => {
-    if (!token) {
-      return null;
-    }
-
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        return userData;
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Failed to fetch user profile:', response.status, errorData);
-        // If token is invalid, logout user
-        logout();
-        return null;
+      const response = await authClient.getSession();
+      if (response && response.data) {
+        setUser(response.data.user);
+        setSession(response.data.session);
+        return response.data.user;
       }
+      return null;
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // If there's a network error, the token might be invalid
       logout();
       return null;
     }
@@ -138,22 +125,32 @@ export const AuthProvider = ({ children }) => {
   // Check authentication status on initial load
   useEffect(() => {
     const initAuth = async () => {
-      if (token) {
-        try {
-          const userProfile = await getUserProfile();
-          if (!userProfile) {
-            // Token was invalid, so clear it
-            localStorage.removeItem('auth-token');
-            setToken(null);
+      try {
+        // Get the current session from Better Auth
+        const sessionResponse = await authClient.getSession();
+
+        if (sessionResponse && sessionResponse.data) {
+          const { user: sessionUser, session: sessionData } = sessionResponse.data;
+          setUser(sessionUser);
+          setSession(sessionData);
+
+          // Store token for API requests to FastAPI backend
+          if (sessionData?.token) {
+            localStorage.setItem('auth-token', sessionData.token);
+            setToken(sessionData.token);
           }
-        } catch (error) {
-          console.error('Error initializing auth:', error);
-          // If there's an error getting the user profile, clear the token
+        } else {
+          // No session found, clear storage
           localStorage.removeItem('auth-token');
           setToken(null);
         }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        localStorage.removeItem('auth-token');
+        setToken(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initAuth();
@@ -161,6 +158,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    session,
     token,
     loading,
     register,
@@ -168,6 +166,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     getUserProfile,
     isAuthenticated: !!user,
+    API_BASE_URL, // Export for use in API calls
   };
 
   return (
