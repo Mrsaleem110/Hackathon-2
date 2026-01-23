@@ -182,7 +182,7 @@ def debug_cors():
 try:
     from .auth import router as auth_router
     logger.info("Successfully imported auth router")
-    app.include_router(auth_router)
+    app.include_router(auth_router, prefix="/auth")
     logger.info("Successfully included auth router")
 except ImportError as e:
     logger.error(f"Failed to import auth router: {e}")
