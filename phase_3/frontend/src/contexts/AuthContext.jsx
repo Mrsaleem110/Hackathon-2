@@ -26,23 +26,25 @@ export const AuthProvider = ({ children }) => {
   // Register function using Better Auth
   const register = async (userData) => {
     try {
-      const response = await authClient.signUp.email({
+      const response = await authClient.signUpEmail({
         email: userData.email,
         password: userData.password,
         name: userData.name,
       });
 
-      if (response && response.session) {
+      if (response && !response.error) {
         // Successfully registered
         setUser(response.user);
         setSession(response.session);
+        // For Better Auth with cookies, the token is typically stored in cookies
+        // We'll use the session data to get the token if available
         if (response.session?.token) {
           localStorage.setItem('auth-token', response.session.token);
           setToken(response.session.token);
         }
         return { success: true, user: response.user };
       } else {
-        return { success: false, error: response?.error || 'Registration failed' };
+        return { success: false, error: response?.error?.message || 'Registration failed' };
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -56,12 +58,12 @@ export const AuthProvider = ({ children }) => {
   // Login function using Better Auth
   const login = async (credentials) => {
     try {
-      const response = await authClient.signIn.email({
+      const response = await authClient.signInEmail({
         email: credentials.email,
         password: credentials.password,
       });
 
-      if (response && response.session) {
+      if (response && !response.error) {
         // Successfully logged in
         setUser(response.user);
         setSession(response.session);
@@ -71,7 +73,7 @@ export const AuthProvider = ({ children }) => {
         }
         return { success: true, user: response.user };
       } else {
-        return { success: false, error: response?.error || 'Login failed' };
+        return { success: false, error: response?.error?.message || 'Login failed' };
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -107,6 +109,10 @@ export const AuthProvider = ({ children }) => {
       if (response && response.session) {
         setUser(response.user);
         setSession(response.session);
+        if (response.session?.token) {
+          localStorage.setItem('auth-token', response.session.token);
+          setToken(response.session.token);
+        }
         return response.user;
       }
       return null;
@@ -125,14 +131,13 @@ export const AuthProvider = ({ children }) => {
         const sessionResponse = await authClient.getSession();
 
         if (sessionResponse && sessionResponse.session) {
-          const { user: sessionUser, session: sessionData } = sessionResponse;
-          setUser(sessionUser);
-          setSession(sessionData);
+          setUser(sessionResponse.user);
+          setSession(sessionResponse.session);
 
           // Store token for API requests to FastAPI backend
-          if (sessionData?.token) {
-            localStorage.setItem('auth-token', sessionData.token);
-            setToken(sessionData.token);
+          if (sessionResponse.session?.token) {
+            localStorage.setItem('auth-token', sessionResponse.session.token);
+            setToken(sessionResponse.session.token);
           }
         } else {
           // No session found, clear storage
