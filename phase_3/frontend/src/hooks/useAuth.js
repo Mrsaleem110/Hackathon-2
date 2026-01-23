@@ -32,20 +32,16 @@ export const useProtectedResource = (permission = null) => {
   const [hasPermission, setHasPermission] = useState(false);
 
   useEffect(() => {
-    // Check if user is authenticated
     if (!isAuthenticated || !token) {
       setHasPermission(false);
       return;
     }
 
-    // If no specific permission is required, just check authentication
     if (!permission) {
       setHasPermission(true);
       return;
     }
 
-    // In a real implementation, we would check user permissions
-    // For now, we'll assume all authenticated users have basic permissions
     setHasPermission(true);
   }, [isAuthenticated, user, token, permission]);
 
@@ -56,9 +52,9 @@ export const useProtectedResource = (permission = null) => {
   };
 };
 
-// Hook to make authenticated API calls
+// Hook to make authenticated API calls to FastAPI backend
 export const useApi = () => {
-  const { token } = useAuth();
+  const { token, API_BASE_URL } = useAuth();
 
   const authenticatedFetch = async (url, options = {}) => {
     const headers = {
@@ -71,11 +67,9 @@ export const useApi = () => {
       headers,
     });
 
-    // If token expired, try to refresh it (if refresh endpoint exists)
     if (response.status === 401) {
       try {
-        // Attempt to refresh the token
-        const refreshTokenResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/refresh`, {
+        const refreshTokenResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -87,7 +81,6 @@ export const useApi = () => {
           const refreshData = await refreshTokenResponse.json();
           const newToken = refreshData.access_token;
 
-          // Update token in localStorage and context
           localStorage.setItem('auth-token', newToken);
 
           const newHeaders = {
@@ -102,7 +95,6 @@ export const useApi = () => {
         }
       } catch (refreshError) {
         console.error('Token refresh failed:', refreshError);
-        // If refresh fails, the original 401 response is returned
       }
     }
 

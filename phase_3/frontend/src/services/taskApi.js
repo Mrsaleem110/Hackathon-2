@@ -1,5 +1,6 @@
 /**
- * API service for task operations
+ * API service for task operations - For FastAPI backend (NOT Better Auth)
+ * Better Auth is handled separately via authClient
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
@@ -41,22 +42,17 @@ class TaskApiService {
         description: taskData.description || '',
         completed: taskData.completed || false,
         priority: taskData.priority || 'medium',
-        due_date: taskData.dueDate || null,  // Map dueDate to due_date
-        user_id: taskData.user_id  // This should be handled by the backend from auth
+        due_date: taskData.dueDate || null,
       };
-
-      // Don't send user_id from frontend as it should be set from auth
-      delete mappedTaskData.user_id;
 
       const response = await fetch(`${API_BASE_URL}/tasks/`, {
         method: 'POST',
         headers: await this.getAuthHeaders(),
-        body: JSON.stringify(mappedTaskData)
+        body: JSON.stringify(mappedTaskData),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create task: ${response.status} ${response.statusText}. Details: ${errorText}`);
+        throw new Error(`Failed to create task: ${response.status} ${response.statusText}`);
       }
 
       return await response.json();
@@ -68,32 +64,22 @@ class TaskApiService {
 
   static async updateTask(taskId, taskData) {
     try {
-      // Create task data with proper field mapping
       const mappedTaskData = {
         title: taskData.title,
         description: taskData.description,
         completed: taskData.completed,
         priority: taskData.priority,
-        due_date: taskData.dueDate  // Map dueDate to due_date
+        due_date: taskData.dueDate,
       };
-
-      // Only include fields that are defined
-      const filteredTaskData = {};
-      Object.keys(mappedTaskData).forEach(key => {
-        if (mappedTaskData[key] !== undefined) {
-          filteredTaskData[key] = mappedTaskData[key];
-        }
-      });
 
       const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
         method: 'PUT',
         headers: await this.getAuthHeaders(),
-        body: JSON.stringify(filteredTaskData)
+        body: JSON.stringify(mappedTaskData),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update task: ${response.status} ${response.statusText}. Details: ${errorText}`);
+        throw new Error(`Failed to update task: ${response.status} ${response.statusText}`);
       }
 
       return await response.json();
@@ -107,7 +93,7 @@ class TaskApiService {
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
         method: 'DELETE',
-        headers: await this.getAuthHeaders()
+        headers: await this.getAuthHeaders(),
       });
 
       if (!response.ok) {
