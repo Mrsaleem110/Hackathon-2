@@ -171,6 +171,22 @@ except ImportError as e:
     logger.error(f"Failed to import tasks router: {e}")
 
 try:
+    from .dashboard import router as dashboard_router
+    logger.info("Successfully imported dashboard router")
+    app.include_router(dashboard_router, prefix="/dashboard")
+    logger.info("Successfully included dashboard router")
+except ImportError as e:
+    logger.error(f"Failed to import dashboard router: {e}")
+
+try:
+    from .analysis import router as analysis_router
+    logger.info("Successfully imported analysis router")
+    app.include_router(analysis_router, prefix="/analysis")
+    logger.info("Successfully included analysis router")
+except ImportError as e:
+    logger.error(f"Failed to import analysis router: {e}")
+
+try:
     from .chat import router as chat_router
     logger.info("Successfully imported chat router")
     app.include_router(chat_router)
