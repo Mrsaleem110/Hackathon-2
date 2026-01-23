@@ -1,40 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session
-from typing import Dict, Any
-from datetime import timedelta
 import logging
 
 logger = logging.getLogger(__name__)
-
-# Try to import database connection
-try:
-    from ..database.connection import get_session
-    db_available = True
-except Exception as e:
-    logger.warning(f"Database connection import failed: {e}")
-    db_available = False
-    # Provide a dummy get_session
-    def get_session():
-        return None
-
-# Try to import auth modules
-try:
-    from ..auth import (
-        LoginRequest, RegisterRequest, TokenResponse,
-        create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, User, get_current_user
-    )
-    auth_available = True
-except Exception as e:
-    logger.warning(f"Auth module import failed: {e}")
-    auth_available = False
-
-# Try to import user service
-try:
-    from ..services.user_service import UserService
-    user_service_available = True
-except Exception as e:
-    logger.warning(f"UserService import failed: {e}")
-    user_service_available = False
 
 router = APIRouter(tags=["authentication"])
 
@@ -42,26 +9,66 @@ router = APIRouter(tags=["authentication"])
 @router.get("/test")
 async def test_auth_endpoint():
     """Test endpoint to verify auth router is working"""
+    import sys
+    errors = []
+    
+    # Test database import
+    try:
+        from ..database.connection import get_session
+        logger.info("✓ Database module imported")
+        db_ok = True
+    except Exception as e:
+        logger.error(f"✗ Database module failed: {e}")
+        errors.append(f"database: {str(e)}")
+        db_ok = False
+    
+    # Test auth module import
+    try:
+        from ..auth import LoginRequest, RegisterRequest, TokenResponse, create_access_token
+        logger.info("✓ Auth module imported")
+        auth_ok = True
+    except Exception as e:
+        logger.error(f"✗ Auth module failed: {e}")
+        errors.append(f"auth: {str(e)}")
+        auth_ok = False
+    
+    # Test user service import
+    try:
+        from ..services.user_service import UserService
+        logger.info("✓ UserService imported")
+        service_ok = True
+    except Exception as e:
+        logger.error(f"✗ UserService failed: {e}")
+        errors.append(f"user_service: {str(e)}")
+        service_ok = False
+    
     return {
-        "message": "Auth router is registered and working",
-        "db_available": db_available,
-        "auth_available": auth_available,
-        "user_service_available": user_service_available
+        "status": "ok" if all([db_ok, auth_ok, service_ok]) else "partial",
+        "database": "✓" if db_ok else "✗",
+        "auth_module": "✓" if auth_ok else "✗",
+        "user_service": "✓" if service_ok else "✗",
+        "errors": errors
     }
 
 
-# Only define these endpoints if dependencies are available
-if auth_available and user_service_available and db_available:
+# Now try to define the actual endpoints
+try:
+    from sqlmodel import Session
+    from datetime import timedelta
+    from ..database.connection import get_session
+    from ..auth import (
+        LoginRequest, RegisterRequest, TokenResponse,
+        create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, User, get_current_user
+    )
+    from ..services.user_service import UserService
+
     @router.post("/register", response_model=TokenResponse)
     async def register(
         register_request: RegisterRequest,
         session: Session = Depends(get_session)
     ):
-        """
-        Register a new user and return an access token.
-        """
+        """Register a new user and return an access token."""
         try:
-            # Check if user already exists
             existing_user = UserService.get_user_by_email(register_request.email, session)
             if existing_user:
                 raise HTTPException(
@@ -69,42 +76,35 @@ if auth_available and user_service_available and db_available:
                     detail="User with this email already exists"
                 )
 
-            # Register the user
             user = UserService.create_user(register_request, session)
 
-            # Create access token
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
                 data={"sub": user.id, "email": user.email, "name": user.name},
                 expires_delta=access_token_expires
             )
 
-            # Convert to auth.User model for response
             return_user = User(id=user.id, email=user.email, name=user.name)
-
             return TokenResponse(
                 access_token=access_token,
                 token_type="bearer",
                 user=return_user
             )
         except HTTPException:
-            # Re-raise HTTP exceptions
             raise
         except Exception as e:
+            logger.error(f"Registration error: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Registration failed: {str(e)}"
             )
-
 
     @router.post("/login", response_model=TokenResponse)
     async def login(
         login_request: LoginRequest,
         session: Session = Depends(get_session)
     ):
-        """
-        Authenticate user and return an access token.
-        """
+        """Authenticate user and return an access token."""
         user = UserService.authenticate_user(login_request.email, login_request.password, session)
 
         if not user:
@@ -114,31 +114,24 @@ if auth_available and user_service_available and db_available:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create access token
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": user.id, "email": user.email, "name": user.name},
             expires_delta=access_token_expires
         )
 
-        # Convert to auth.User model for response
         return_user = User(id=user.id, email=user.email, name=user.name)
-
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
             user=return_user
         )
 
-
     @router.post("/refresh")
     async def refresh_token(
         current_user: User = Depends(get_current_user)
     ):
-        """
-        Refresh the access token.
-        """
-        # Create a new access token for the current user
+        """Refresh the access token."""
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": current_user.id, "email": current_user.email, "name": current_user.name},
@@ -151,16 +144,12 @@ if auth_available and user_service_available and db_available:
             user=current_user
         )
 
-
     @router.get("/me", response_model=User)
     async def get_current_user_profile(
         current_user: User = Depends(get_current_user),
         session: Session = Depends(get_session)
     ):
-        """
-        Get the profile of the currently authenticated user.
-        """
-        # Fetch the user from the database to ensure we have the latest data
+        """Get the profile of the currently authenticated user."""
         db_user = UserService.get_user_by_id(current_user.id, session)
 
         if not db_user:
@@ -169,20 +158,24 @@ if auth_available and user_service_available and db_available:
                 detail="User not found"
             )
 
-        # Return the user information
         return User(id=db_user.id, email=db_user.email, name=db_user.name)
-else:
-    # Provide error endpoints if dependencies are missing
+
+except Exception as e:
+    logger.error(f"Failed to load auth endpoints: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+    
+    # Define error endpoints as fallback
     @router.post("/register")
     async def register_error():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Registration not available. Missing: db={not db_available}, auth={not auth_available}, service={not user_service_available}"
+            detail=f"Registration service unavailable: {str(e)}"
         )
 
     @router.post("/login")
     async def login_error():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Login not available. Missing: db={not db_available}, auth={not auth_available}, service={not user_service_available}"
+            detail=f"Login service unavailable: {str(e)}"
         )
