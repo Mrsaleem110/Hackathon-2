@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
 from sqlmodel import Session
 from typing import Optional
 import uuid
@@ -19,7 +19,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# BULLETPROOF CORS CONFIGURATION - Add BEFORE any other middleware
+# BULLETPROOF CORS - Middleware approach
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -42,6 +42,38 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ADDITIONAL: Override exception handler to ensure CORS headers on errors
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    """Override exception handler to add CORS headers even on errors"""
+    from fastapi.responses import JSONResponse
+    
+    response = JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+    )
+    
+    origin = request.headers.get("origin", "*")
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return response
+
+# Handle OPTIONS preflight explicitly
+@app.options("/{full_path:path}")
+async def preflight_handler(full_path: str, request):
+    """Handle CORS preflight requests"""
+    origin = request.headers.get("origin", "*")
+    response = Response()
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Max-Age"] = "3600"
+    return response
 
 # Move imports inside try-catch to catch import errors during initialization
 try:
