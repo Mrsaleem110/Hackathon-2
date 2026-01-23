@@ -1,10 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
+from pydantic import BaseModel
 import logging
 import traceback
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["authentication"])
+
+# Define request models
+class LoginRequestModel(BaseModel):
+    email: str
+    password: str
+
+class RegisterRequestModel(BaseModel):
+    email: str
+    password: str
+    name: str = None
 
 # Test endpoint to verify router is registered
 @router.get("/test")
@@ -20,10 +31,10 @@ async def test_auth_endpoint():
         diagnostics["sqlmodel"] = f"✗ {str(e)}"
     
     try:
-        from ..database.connection import get_session
-        diagnostics["database"] = "✓"
+        from ..database.connection import DATABASE_URL
+        diagnostics["database_url"] = "✓" if DATABASE_URL else "✗ No URL"
     except Exception as e:
-        diagnostics["database"] = f"✗ {str(e)}"
+        diagnostics["database_url"] = f"✗ {str(e)}"
     
     try:
         from ..auth import LoginRequest, RegisterRequest, TokenResponse
@@ -37,39 +48,28 @@ async def test_auth_endpoint():
     except Exception as e:
         diagnostics["user_service"] = f"✗ {str(e)}"
     
-    return diagnostics
+    return {"status": "online", "diagnostics": diagnostics}
 
 
-# Simple working endpoints first
 @router.post("/login")
-async def login(request: dict = None):
-    """Test login endpoint"""
+async def login(credentials: LoginRequestModel):
+    """Login endpoint"""
     try:
-        logger.info(f"Login attempt with request: {request}")
+        logger.info(f"Login attempt for: {credentials.email}")
         
-        if not request:
-            raise HTTPException(status_code=400, detail="Request body required")
-        
-        email = request.get("email")
-        password = request.get("password")
-        
-        if not email or not password:
-            raise HTTPException(status_code=400, detail="Email and password required")
-        
-        # Try to authenticate
         from ..services.user_service import UserService
-        from ..database.connection import get_session
-        from ..auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, User, TokenResponse
-        from datetime import timedelta
-        
-        # Get session
-        from sqlmodel import Session, create_engine, SQLModel
         from ..database.connection import DATABASE_URL
-        engine = create_engine(DATABASE_URL, echo=False)
+        from ..auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+        from datetime import timedelta
+        from sqlmodel import Session, create_engine
+        
+        # Create engine and session
+        engine = create_engine(DATABASE_URL, echo=False, connect_args={"sslmode": "require"} if "neon" in DATABASE_URL.lower() else {})
         session = Session(engine)
         
         try:
-            user = UserService.authenticate_user(email, password, session)
+            # Authenticate user
+            user = UserService.authenticate_user(credentials.email, credentials.password, session)
             
             if not user:
                 raise HTTPException(
@@ -77,6 +77,7 @@ async def login(request: dict = None):
                     detail="Invalid email or password"
                 )
             
+            # Create token
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
                 data={"sub": user.id, "email": user.email, "name": user.name},
@@ -104,35 +105,24 @@ async def login(request: dict = None):
 
 
 @router.post("/register")
-async def register(request: dict = None):
-    """Test register endpoint"""
+async def register(credentials: RegisterRequestModel):
+    """Register endpoint"""
     try:
-        logger.info(f"Register attempt with request: {request}")
-        
-        if not request:
-            raise HTTPException(status_code=400, detail="Request body required")
-        
-        email = request.get("email")
-        password = request.get("password")
-        name = request.get("name")
-        
-        if not email or not password:
-            raise HTTPException(status_code=400, detail="Email and password required")
+        logger.info(f"Register attempt for: {credentials.email}")
         
         from ..services.user_service import UserService
-        from ..database.connection import get_session
-        from ..auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, User, TokenResponse, RegisterRequest
-        from datetime import timedelta
-        
-        # Get session
-        from sqlmodel import Session, create_engine
         from ..database.connection import DATABASE_URL
-        engine = create_engine(DATABASE_URL, echo=False)
+        from ..auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, RegisterRequest
+        from datetime import timedelta
+        from sqlmodel import Session, create_engine
+        
+        # Create engine and session
+        engine = create_engine(DATABASE_URL, echo=False, connect_args={"sslmode": "require"} if "neon" in DATABASE_URL.lower() else {})
         session = Session(engine)
         
         try:
             # Check if user exists
-            existing_user = UserService.get_user_by_email(email, session)
+            existing_user = UserService.get_user_by_email(credentials.email, session)
             if existing_user:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -140,9 +130,14 @@ async def register(request: dict = None):
                 )
             
             # Create user
-            user_data = RegisterRequest(email=email, password=password, name=name or email)
+            user_data = RegisterRequest(
+                email=credentials.email, 
+                password=credentials.password, 
+                name=credentials.name or credentials.email
+            )
             user = UserService.create_user(user_data, session)
             
+            # Create token
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
                 data={"sub": user.id, "email": user.email, "name": user.name},
