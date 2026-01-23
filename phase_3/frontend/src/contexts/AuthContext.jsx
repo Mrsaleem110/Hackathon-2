@@ -30,23 +30,20 @@ export const AuthProvider = ({ children }) => {
         email: userData.email,
         password: userData.password,
         name: userData.name,
-        image: userData.image,
-      }, {
-        onSuccess: (ctx) => {
-          // Successfully registered
-          setUser(ctx.data.user);
-          setSession(ctx.data.session);
-          if (ctx.data.session?.token) {
-            localStorage.setItem('auth-token', ctx.data.session.token);
-            setToken(ctx.data.session.token);
-          }
-        },
-        onError: (ctx) => {
-          console.error('Registration error:', ctx.error);
-        }
       });
 
-      return { success: true, user: response?.user };
+      if (response && response.session) {
+        // Successfully registered
+        setUser(response.user);
+        setSession(response.session);
+        if (response.session?.token) {
+          localStorage.setItem('auth-token', response.session.token);
+          setToken(response.session.token);
+        }
+        return { success: true, user: response.user };
+      } else {
+        return { success: false, error: response?.error || 'Registration failed' };
+      }
     } catch (error) {
       console.error('Registration error:', error);
       return {
@@ -62,22 +59,20 @@ export const AuthProvider = ({ children }) => {
       const response = await authClient.signIn.email({
         email: credentials.email,
         password: credentials.password,
-      }, {
-        onSuccess: (ctx) => {
-          // Successfully logged in
-          setUser(ctx.data.user);
-          setSession(ctx.data.session);
-          if (ctx.data.session?.token) {
-            localStorage.setItem('auth-token', ctx.data.session.token);
-            setToken(ctx.data.session.token);
-          }
-        },
-        onError: (ctx) => {
-          console.error('Login error:', ctx.error);
-        }
       });
 
-      return { success: true, user: response?.user };
+      if (response && response.session) {
+        // Successfully logged in
+        setUser(response.user);
+        setSession(response.session);
+        if (response.session?.token) {
+          localStorage.setItem('auth-token', response.session.token);
+          setToken(response.session.token);
+        }
+        return { success: true, user: response.user };
+      } else {
+        return { success: false, error: response?.error || 'Login failed' };
+      }
     } catch (error) {
       console.error('Login error:', error);
       return {
@@ -109,10 +104,10 @@ export const AuthProvider = ({ children }) => {
   const getUserProfile = async () => {
     try {
       const response = await authClient.getSession();
-      if (response && response.data) {
-        setUser(response.data.user);
-        setSession(response.data.session);
-        return response.data.user;
+      if (response && response.session) {
+        setUser(response.user);
+        setSession(response.session);
+        return response.user;
       }
       return null;
     } catch (error) {
@@ -129,8 +124,8 @@ export const AuthProvider = ({ children }) => {
         // Get the current session from Better Auth
         const sessionResponse = await authClient.getSession();
 
-        if (sessionResponse && sessionResponse.data) {
-          const { user: sessionUser, session: sessionData } = sessionResponse.data;
+        if (sessionResponse && sessionResponse.session) {
+          const { user: sessionUser, session: sessionData } = sessionResponse;
           setUser(sessionUser);
           setSession(sessionData);
 
