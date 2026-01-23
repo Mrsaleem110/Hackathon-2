@@ -168,7 +168,15 @@ def debug_routes():
                 "path": route.path,
                 "methods": list(route.methods) if route.methods else ["UNKNOWN"]
             })
-    return {"routes": routes_info, "total": len(routes_info)}
+    
+    # Specifically show auth routes
+    auth_routes = [r for r in routes_info if 'auth' in r['path'].lower()]
+    
+    return {
+        "total_routes": len(routes_info), 
+        "auth_routes": auth_routes,
+        "all_routes": routes_info
+    }
 
 @app.get("/debug/test")
 def debug_test():
@@ -193,8 +201,11 @@ try:
     logger.info("Successfully imported auth router")
     app.include_router(auth_router, prefix="/auth")
     logger.info("Successfully included auth router")
-except ImportError as e:
-    logger.error(f"Failed to import auth router: {e}")
+except Exception as e:
+    logger.error(f"Failed to import/include auth router: {e}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
 
 try:
     from .tasks import router as tasks_router
