@@ -2,7 +2,11 @@
  * API service for task operations - For FastAPI backend (NOT Better Auth)
  * Better Auth is handled separately via authClient
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
+// Use relative URL for production deployments, fallback to env var for development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
+                     (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+                       ? 'http://localhost:8001'
+                       : window.location.origin);
 
 class TaskApiService {
   static async getAuthHeaders() {
