@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
 import logging
 import uuid
+from ..auth import require_auth, User
 
 logger = logging.getLogger(__name__)
 
@@ -40,27 +41,29 @@ async def test_auth_endpoint():
 
 @router.post("/login")
 async def login(credentials: LoginRequestModel):
-    """Login endpoint - BYPASS MODE"""
+    """Login endpoint - creates proper JWT token"""
     try:
         logger.info(f"Login attempt for: {credentials.email}")
-        
-        # For testing: accept any login
+
         if not credentials.email or not credentials.password:
             raise HTTPException(status_code=400, detail="Email and password required")
-        
-        # Generate a fake token
-        fake_token = f"token_{uuid.uuid4().hex[:20]}"
-        
+
+        # In bypass mode, create a proper user session with JWT token
+        from ..auth import create_user_session
+
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        token = create_user_session(user_id, credentials.email, credentials.email.split("@")[0])
+
         return {
-            "access_token": fake_token,
+            "access_token": token,
             "token_type": "bearer",
             "user": {
-                "id": f"user_{uuid.uuid4().hex[:12]}",
+                "id": user_id,
                 "email": credentials.email,
                 "name": credentials.email.split("@")[0]
             }
         }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -70,19 +73,21 @@ async def login(credentials: LoginRequestModel):
 
 @router.post("/register")
 async def register(credentials: RegisterRequestModel):
-    """Register endpoint - BYPASS MODE"""
+    """Register endpoint - creates proper JWT token"""
     try:
         logger.info(f"Register attempt for: {credentials.email}")
-        
+
         if not credentials.email or not credentials.password:
             raise HTTPException(status_code=400, detail="Email and password required")
-        
-        # Generate fake data
+
+        # In bypass mode, create a proper user session with JWT token
+        from ..auth import create_user_session
+
         user_id = f"user_{uuid.uuid4().hex[:12]}"
-        fake_token = f"token_{uuid.uuid4().hex[:20]}"
-        
+        token = create_user_session(user_id, credentials.email, credentials.name or credentials.email.split("@")[0])
+
         return {
-            "access_token": fake_token,
+            "access_token": token,
             "token_type": "bearer",
             "user": {
                 "id": user_id,
@@ -90,7 +95,7 @@ async def register(credentials: RegisterRequestModel):
                 "name": credentials.name or credentials.email.split("@")[0]
             }
         }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -99,14 +104,14 @@ async def register(credentials: RegisterRequestModel):
 
 
 @router.get("/me")
-async def get_current_user_endpoint():
-    """Get current user endpoint - BYPASS MODE"""
+async def get_current_user_endpoint(current_user: User = Depends(require_auth())):
+    """Get current user endpoint - validates token and returns user info"""
     try:
-        # In bypass mode, return a dummy user
+        # Return the authenticated user's information
         return {
-            "id": "user_bypass_mode",
-            "email": "bypass@example.com",
-            "name": "Bypass User"
+            "id": current_user.id,
+            "email": current_user.email,
+            "name": current_user.name
         }
     except Exception as e:
         logger.error(f"Get user error: {str(e)}")
