@@ -146,7 +146,14 @@ def debug_cors():
         "cors_allowed_origins": os.getenv("ADDITIONAL_ALLOWED_ORIGINS", ""),
         "vercel_env": os.getenv("VERCEL_ENV"),
         "request_processing": "CORS middleware should be active",
-        "allowed_origins_list": allowed_origins
+        "allowed_origins_list": [
+            "http://localhost:5173", "http://localhost:5174", "http://localhost:3000",
+            "http://localhost:8000", "http://localhost:8001", "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174", "http://127.0.0.1:3000", "http://127.0.0.1:8000",
+            "http://127.0.0.1:8001", "https://hackathon-2-sooty.vercel.app",
+            "https://hackathon-2-p-3.vercel.app", "https://hackathon-2-phase-3-backend.vercel.app",
+            "https://hackathon-2-phase-3.vercel.app"
+        ]
     }
 
 # Include the auth, tasks, chat, chatkit, and chatkit_agent routers
