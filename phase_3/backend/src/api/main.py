@@ -174,48 +174,66 @@ try:
     logger.info("Successfully imported tasks router")
     app.include_router(tasks_router, prefix="/tasks")
     logger.info("Successfully included tasks router")
-except ImportError as e:
-    logger.error(f"Failed to import tasks router: {e}")
+except Exception as e:
+    logger.error(f"Failed to import/include tasks router: {e}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
 
 try:
     from .dashboard import router as dashboard_router
     logger.info("Successfully imported dashboard router")
     app.include_router(dashboard_router, prefix="/dashboard")
     logger.info("Successfully included dashboard router")
-except ImportError as e:
-    logger.error(f"Failed to import dashboard router: {e}")
+except Exception as e:
+    logger.error(f"Failed to import/include dashboard router: {e}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
 
 try:
     from .analysis import router as analysis_router
     logger.info("Successfully imported analysis router")
     app.include_router(analysis_router, prefix="/analysis")
     logger.info("Successfully included analysis router")
-except ImportError as e:
-    logger.error(f"Failed to import analysis router: {e}")
+except Exception as e:
+    logger.error(f"Failed to import/include analysis router: {e}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
 
 try:
     from .chat import router as chat_router
     logger.info("Successfully imported chat router")
     app.include_router(chat_router)
     logger.info("Successfully included chat router")
-except ImportError as e:
-    logger.error(f"Failed to import chat router: {e}")
+except Exception as e:
+    logger.error(f"Failed to import/include chat router: {e}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
 
 try:
     from .chatkit import router as chatkit_router
     logger.info("Successfully imported chatkit router")
     app.include_router(chatkit_router)
     logger.info("Successfully included chatkit router")
-except ImportError as e:
-    logger.error(f"Failed to import chatkit router: {e}")
+except Exception as e:
+    logger.error(f"Failed to import/include chatkit router: {e}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
 
 try:
     from .chatkit_agent import router as chatkit_agent_router
     logger.info("Successfully imported chatkit_agent router")
     app.include_router(chatkit_agent_router)
     logger.info("Successfully included chatkit_agent router")
-except ImportError as e:
-    logger.error(f"Failed to import chatkit_agent router: {e}")
+except Exception as e:
+    logger.error(f"Failed to import/include chatkit_agent router: {e}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
 
 # This ensures the app is available when Vercel imports it
 if __name__ == "__main__":
