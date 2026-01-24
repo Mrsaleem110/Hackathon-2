@@ -96,3 +96,18 @@ async def register(credentials: RegisterRequestModel):
     except Exception as e:
         logger.error(f"Register error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+
+
+@router.get("/me")
+async def get_current_user_endpoint():
+    """Get current user endpoint - BYPASS MODE"""
+    try:
+        # In bypass mode, return a dummy user
+        return {
+            "id": "user_bypass_mode",
+            "email": "bypass@example.com",
+            "name": "Bypass User"
+        }
+    except Exception as e:
+        logger.error(f"Get user error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get user: {str(e)}")
