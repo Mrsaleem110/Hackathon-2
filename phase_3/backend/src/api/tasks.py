@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
-from typing import List
+from typing import List, Optional
 import uuid
 from datetime import datetime
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ async def optional_auth():
     """Optional auth - returns a mock user if no token"""
     return {"id": "test-user", "email": "test@example.com", "name": "Test User"}
 
-@router.get("/", response_model=List[Task])
+@router.get("/", response_model=Optional[List[Task]])
 async def get_tasks(
     current_user: dict = Depends(optional_auth),
     session: Session = Depends(get_session)
@@ -30,12 +31,14 @@ async def get_tasks(
     try:
         user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
         tasks = TaskService.get_tasks_by_user(session, user_id)
+        logger.info(f"Successfully fetched {len(tasks)} tasks for user {user_id}")
         return tasks
     except Exception as e:
-        logger.error(f"Error fetching tasks: {str(e)}")
-        return []  # Return empty list on error
+        logger.error(f"Error fetching tasks: {str(e)}", exc_info=True)
+        # Return empty list instead of error to allow UI to function
+        return []
 
-@router.post("/", response_model=Task)
+@router.post("/", response_model=Optional[Task])
 async def create_task(
     task_request: TaskCreateRequest,
     current_user: dict = Depends(optional_auth),
@@ -46,6 +49,8 @@ async def create_task(
     """
     try:
         user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+        logger.info(f"Creating task for user {user_id}: {task_request.title}")
+        
         # Create the task with the authenticated user's ID
         task_create = TaskCreate(
             title=task_request.title,
@@ -56,10 +61,15 @@ async def create_task(
             due_date=task_request.due_date
         )
         created_task = TaskService.create_task(session, task_create)
+        logger.info(f"Successfully created task {created_task.id} for user {user_id}")
         return created_task
     except Exception as e:
-        logger.error(f"Error creating task: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to create task: {str(e)}")
+        error_msg = str(e)
+        logger.error(f"Error creating task: {error_msg}", exc_info=True)
+        # Provide more useful error messages
+        if "database" in error_msg.lower() or "connection" in error_msg.lower():
+            raise HTTPException(status_code=503, detail="Database service temporarily unavailable")
+        raise HTTPException(status_code=500, detail=f"Failed to create task: {error_msg}")
 
 @router.get("/{task_id}", response_model=Task)
 async def get_task(
@@ -87,7 +97,9 @@ async def get_task(
             )
         return task
     except Exception as e:
-        logger.error(f"Error fetching task: {str(e)}")
+        logger.error(f"Error fetching task: {str(e)}", exc_info=True)
+        if "database" in str(e).lower() or "connection" in str(e).lower():
+            raise HTTPException(status_code=503, detail="Database service temporarily unavailable")
         raise HTTPException(status_code=500, detail=f"Failed to fetch task: {str(e)}")
 
 @router.put("/{task_id}", response_model=Task)
@@ -126,7 +138,9 @@ async def update_task(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating task: {str(e)}")
+        logger.error(f"Error updating task: {str(e)}", exc_info=True)
+        if "database" in str(e).lower() or "connection" in str(e).lower():
+            raise HTTPException(status_code=503, detail="Database service temporarily unavailable")
         raise HTTPException(status_code=500, detail=f"Failed to update task: {str(e)}")
 
 @router.delete("/{task_id}")
@@ -165,5 +179,7 @@ async def delete_task(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting task: {str(e)}")
+        logger.error(f"Error deleting task: {str(e)}", exc_info=True)
+        if "database" in str(e).lower() or "connection" in str(e).lower():
+            raise HTTPException(status_code=503, detail="Database service temporarily unavailable")
         raise HTTPException(status_code=500, detail=f"Failed to delete task: {str(e)}")
