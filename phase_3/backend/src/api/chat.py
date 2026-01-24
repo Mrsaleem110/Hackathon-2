@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 from typing import Dict, Any, List, Optional
 import uuid
 from datetime import datetime
-from pydantic import BaseModel
 
 from ..database.connection import get_session
 from ..models.conversation import Conversation
@@ -26,31 +25,33 @@ from ..auth import get_current_user, require_auth, User
 
 router = APIRouter()
 
-class ChatRequest(BaseModel):
-    """Request model for chat endpoint"""
-    message: str
-    conversation_id: Optional[str] = None
-
 @router.post("/api/{user_id}/chat")
 async def chat_endpoint(
     user_id: str,
-    chat_request: ChatRequest,
+    request: Dict[str, Any],
+    current_user: User = Depends(require_auth()),
     session: Session = Depends(get_session)
 ):
     """
     Process a chat message and return AI response with tool calls.
-    Auth is optional for bypass mode in development/production.
     """
     try:
+        # Ensure the authenticated user matches the user_id in the path
+        if current_user.id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: You can only access your own conversations"
+            )
+
         # Extract message and conversation_id from request
-        message_content = chat_request.message
+        message_content = request.get("message")
         if not message_content:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Message content is required"
             )
 
-        conversation_id_str = chat_request.conversation_id
+        conversation_id_str = request.get("conversation_id")
         conversation_id = None
         if conversation_id_str:
             try:
