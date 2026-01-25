@@ -32,7 +32,16 @@ class TaskApiService {
         throw new Error(`Failed to fetch tasks: ${response.status} ${response.statusText}`);
       }
 
-      return await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      } else {
+        // If not JSON, try to read as text to see what was returned
+        const text = await response.text();
+        console.error('Expected JSON but got:', text);
+        throw new Error(`Expected JSON response but got: ${text.substring(0, 100)}...`);
+      }
     } catch (error) {
       console.error('Error fetching tasks:', error);
       throw error;
@@ -61,7 +70,16 @@ class TaskApiService {
         throw new Error(`Failed to create task: ${response.status} ${response.statusText}`);
       }
 
-      return await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      } else {
+        // If not JSON, try to read as text to see what was returned
+        const text = await response.text();
+        console.error('Expected JSON but got:', text);
+        throw new Error(`Expected JSON response but got: ${text.substring(0, 100)}...`);
+      }
     } catch (error) {
       console.error('Error creating task:', error);
       throw error;
@@ -89,7 +107,16 @@ class TaskApiService {
         throw new Error(`Failed to update task: ${response.status} ${response.statusText}`);
       }
 
-      return await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      } else {
+        // If not JSON, try to read as text to see what was returned
+        const text = await response.text();
+        console.error('Expected JSON but got:', text);
+        throw new Error(`Expected JSON response but got: ${text.substring(0, 100)}...`);
+      }
     } catch (error) {
       console.error('Error updating task:', error);
       throw error;
@@ -108,7 +135,16 @@ class TaskApiService {
         throw new Error(`Failed to delete task: ${response.status} ${response.statusText}`);
       }
 
-      return await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      } else {
+        // If not JSON, try to read as text to see what was returned
+        const text = await response.text();
+        console.error('Expected JSON but got:', text);
+        throw new Error(`Expected JSON response but got: ${text.substring(0, 100)}...`);
+      }
     } catch (error) {
       console.error('Error deleting task:', error);
       throw error;
