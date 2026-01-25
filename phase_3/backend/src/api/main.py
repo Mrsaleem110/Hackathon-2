@@ -62,6 +62,22 @@ async def http_exception_handler(request, exc):
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    """Handle all other exceptions and return JSON"""
+    import traceback
+    response = JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "message": str(exc) if os.getenv("DEBUG", "").lower() == "true" else "An unexpected error occurred"
+        },
+    )
+    origin = request.headers.get("origin", "*")
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
 # Handle OPTIONS preflight explicitly - match the origin from request
 @app.options("/{full_path:path}")
 async def preflight_handler(request, full_path: str):

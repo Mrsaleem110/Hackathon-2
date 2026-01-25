@@ -93,8 +93,18 @@ const ChatInterface = ({ userId }) => {
         throw new Error(errorMessage);
       }
 
-      // Handle JSON response (which may contain MCP-compatible format)
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let data;
+
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, try to read as text to see what was returned
+        const text = await response.text();
+        console.error('Expected JSON but got:', text);
+        throw new Error(`Expected JSON response but got: ${text.substring(0, 100)}...`);
+      }
 
       // Update conversation ID if new conversation was created
       if (data.conversation_id && !conversationId) {
