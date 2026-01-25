@@ -62,12 +62,18 @@ async def http_exception_handler(request, exc):
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
-# Handle OPTIONS preflight explicitly
+# Handle OPTIONS preflight explicitly - match the origin from request
 @app.options("/{full_path:path}")
-async def preflight_handler(full_path: str):
+async def preflight_handler(request, full_path: str):
     """Handle CORS preflight requests"""
     response = Response()
-    response.headers["Access-Control-Allow-Origin"] = "*"
+    origin = request.headers.get("origin", "")
+
+    # Check if the origin is allowed in our CORS configuration
+    if origin in cors_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+    # If origin is not allowed, we don't set the header, letting the default CORS middleware handle it
+
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
     response.headers["Access-Control-Allow-Credentials"] = "true"
