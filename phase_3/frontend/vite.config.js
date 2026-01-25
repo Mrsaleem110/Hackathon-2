@@ -14,7 +14,8 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      '/auth': {
+      // Only proxy actual API endpoints, not React Router pages
+      '/auth/': {
         target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
@@ -24,12 +25,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      '/dashboard': {
-        target: 'http://localhost:8001',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/analysis': {
+      '/chat': {
         target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
