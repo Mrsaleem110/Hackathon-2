@@ -28,9 +28,21 @@ const betterAuthAPI = {
         if (data.access_token) {
           localStorage.setItem('auth-token', data.access_token);
         }
-        return data;
+        // Return proper format expected by AuthContext
+        return {
+          user: data.user,
+          session: { 
+            token: data.access_token,
+            tokenType: data.token_type 
+          }
+        };
       } else {
-        return { error: data.detail || data.message || 'Registration failed' };
+        const errorMessage = data.detail || data.message || 'Registration failed';
+        return { 
+          error: { 
+            message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
+          } 
+        };
       }
     } catch (e) {
       return { error: { message: `Failed to parse JSON response: ${e.message}` } };
@@ -57,9 +69,21 @@ const betterAuthAPI = {
         if (data.access_token) {
           localStorage.setItem('auth-token', data.access_token);
         }
-        return data;
+        // Return proper format expected by AuthContext
+        return {
+          user: data.user,
+          session: { 
+            token: data.access_token,
+            tokenType: data.token_type 
+          }
+        };
       } else {
-        return { error: data.detail || data.message || 'Login failed' };
+        const errorMessage = data.detail || data.message || 'Login failed';
+        return { 
+          error: { 
+            message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
+          } 
+        };
       }
     } catch (e) {
       return { error: { message: `Failed to parse JSON response: ${e.message}` } };
@@ -83,9 +107,13 @@ const betterAuthAPI = {
     if (response.ok) {
       try {
         const data = await response.json();
+        // Return proper format expected by AuthContext
         return {
           user: data,
-          session: { token }
+          session: { 
+            token: token,
+            tokenType: 'bearer'
+          }
         };
       } catch (e) {
         return null;
