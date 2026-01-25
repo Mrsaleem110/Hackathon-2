@@ -53,7 +53,9 @@ const OpenAIChatKitUI = ({ userId, backendUrl }) => {
       }
 
       // Send message to backend API
-      const response = await fetch(`${backendUrl || import.meta.env.VITE_API_BASE_URL}/api/${userId}/chat`, {
+      const baseUrl = backendUrl || (import.meta.env.DEV ? import.meta.env.VITE_API_BASE_URL : '');
+      const url = baseUrl ? `${baseUrl}/api/${userId}/chat` : `/api/${userId}/chat`;
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

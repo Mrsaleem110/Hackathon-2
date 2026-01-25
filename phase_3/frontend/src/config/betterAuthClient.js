@@ -1,10 +1,15 @@
 // FastAPI backend API client (replacing Better Auth for Vercel deployment)
-const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
+// Use relative paths in production to leverage Vercel rewrites, absolute URLs in development
+const isDevelopment = import.meta.env.DEV;
+const apiBaseURL = isDevelopment
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001')
+  : ''; // Use relative paths in production to leverage Vercel rewrites
 
 // API wrapper for FastAPI auth endpoints
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
-    const response = await fetch(`${apiBaseURL}/auth/register`, {
+    const url = apiBaseURL ? `${apiBaseURL}/auth/register` : '/auth/register';
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -33,7 +38,8 @@ const betterAuthAPI = {
   },
 
   async signInEmail({ email, password }) {
-    const response = await fetch(`${apiBaseURL}/auth/login`, {
+    const url = apiBaseURL ? `${apiBaseURL}/auth/login` : '/auth/login';
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +72,8 @@ const betterAuthAPI = {
       return null;
     }
 
-    const response = await fetch(`${apiBaseURL}/auth/me`, {
+    const url = apiBaseURL ? `${apiBaseURL}/auth/me` : '/auth/me';
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -97,4 +104,4 @@ const betterAuthAPI = {
   }
 };
 
-export { betterAuthAPI as authClient, apiBaseURL };
+export { betterAuthAPI as authClient };

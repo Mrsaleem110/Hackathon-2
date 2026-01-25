@@ -18,10 +18,11 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
 
   // API base URL for FastAPI backend (for tasks, not auth)
-  const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL ||
-    process.env.REACT_APP_API_BASE_URL ||
-    'http://localhost:8001';
+  // Use relative paths in production to leverage Vercel rewrites, absolute URLs in development
+  const isDevelopment = import.meta.env.DEV;
+  const API_BASE_URL = isDevelopment
+    ? (import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:8001')
+    : ''; // Use relative paths in production to leverage Vercel rewrites
 
   // Register function using Better Auth
   const register = async (userData) => {
