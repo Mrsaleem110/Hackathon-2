@@ -1,6 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlmodel import Session
 from typing import Optional
 import uuid
@@ -78,6 +80,33 @@ async def general_exception_handler(request, exc):
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
+@app.exception_handler(StarletteHTTPException)
+async def starlette_http_exception_handler(request, exc):
+    """Handle Starlette HTTP exceptions and return JSON"""
+    response = JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+    origin = request.headers.get("origin", "*")
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    """Handle validation errors and return JSON"""
+    response = JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "detail": "Validation error",
+            "errors": exc.errors()
+        },
+    )
+    origin = request.headers.get("origin", "*")
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
 # Handle OPTIONS preflight explicitly - match the origin from request
 @app.options("/{full_path:path}")
 async def preflight_handler(request, full_path: str):
@@ -96,6 +125,31 @@ async def preflight_handler(request, full_path: str):
     response.headers["Access-Control-Max-Age"] = "3600"
     return response
 
+# Add middleware to ensure all responses have proper Content-Type header
+@app.middleware("http")
+async def ensure_json_response_middleware(request: Request, call_next):
+    """Middleware to ensure responses are JSON when appropriate"""
+    try:
+        response = await call_next(request)
+        
+        # If response doesn't have a content-type or it's not JSON, and it's an API endpoint, set it to JSON
+        content_type = response.headers.get('content-type', '')
+        path = request.url.path
+        
+        # For API endpoints that don't have content-type set, ensure it's JSON
+        if path.startswith('/api') or path.startswith('/auth') or path.startswith('/tasks') or path.startswith('/chat') or path.startswith('/dashboard') or path.startswith('/analysis'):
+            if not content_type or 'text/html' in content_type:
+                response.headers['content-type'] = 'application/json'
+        
+        return response
+    except Exception as e:
+        # If there's an error in middleware, return JSON error response
+        logger.error(f"Middleware error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error", "error": str(e) if os.getenv("DEBUG", "").lower() == "true" else "An unexpected error occurred"}
+        )
+
 # Move imports inside try-catch to catch import errors during initialization
 try:
     # Import models (removing duplicates)
@@ -112,10 +166,6 @@ try:
 
 except ImportError as e:
     logger.error(f"Import error during app initialization: {e}")
-    # Add a basic error endpoint
-    @app.get("/")
-    def read_root():
-        return {"error": f"App failed to initialize: {str(e)}"}
 
 # Only include the startup event if not in serverless environment
 if os.getenv("VERCEL_ENV") is None:
@@ -262,6 +312,17 @@ except Exception as e:
     logger.error(f"Error type: {type(e).__name__}")
     import traceback
     logger.error(f"Traceback: {traceback.format_exc()}")
+
+
+# Add a catch-all 404 handler to return JSON instead of HTML
+@app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"])
+async def catch_all_handler(path_name: str):
+    """Catch-all handler for undefined routes - returns JSON 404 instead of HTML"""
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Route '/{path_name}' not found"
+    )
+
 
 # This ensures the app is available when Vercel imports it
 if __name__ == "__main__":
