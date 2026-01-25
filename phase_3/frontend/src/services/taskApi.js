@@ -2,11 +2,11 @@
  * API service for task operations - For FastAPI backend (NOT Better Auth)
  * Better Auth is handled separately via authClient
  */
-// Use relative URL for production deployments, fallback to env var for development
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
-                     (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
-                       ? 'http://localhost:8001'
-                       : window.location.origin);
+// Use relative paths in production to leverage Vercel rewrites, absolute URLs in development
+const isDevelopment = import.meta.env.DEV;
+const API_BASE_URL = isDevelopment
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001')
+  : ''; // Use relative paths in production to leverage Vercel rewrites
 
 class TaskApiService {
   static async getAuthHeaders() {
@@ -22,7 +22,8 @@ class TaskApiService {
 
   static async getTasks() {
     try {
-      const response = await fetch(`${API_BASE_URL}/tasks/`, {
+      const url = API_BASE_URL ? `${API_BASE_URL}/tasks/` : '/tasks/';
+      const response = await fetch(url, {
         method: 'GET',
         headers: await this.getAuthHeaders()
       });
@@ -49,7 +50,8 @@ class TaskApiService {
         due_date: taskData.dueDate || null,
       };
 
-      const response = await fetch(`${API_BASE_URL}/tasks/`, {
+      const url = API_BASE_URL ? `${API_BASE_URL}/tasks/` : '/tasks/';
+      const response = await fetch(url, {
         method: 'POST',
         headers: await this.getAuthHeaders(),
         body: JSON.stringify(mappedTaskData),
@@ -76,7 +78,8 @@ class TaskApiService {
         due_date: taskData.dueDate,
       };
 
-      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      const url = API_BASE_URL ? `${API_BASE_URL}/tasks/${taskId}` : `/tasks/${taskId}`;
+      const response = await fetch(url, {
         method: 'PUT',
         headers: await this.getAuthHeaders(),
         body: JSON.stringify(mappedTaskData),
@@ -95,7 +98,8 @@ class TaskApiService {
 
   static async deleteTask(taskId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      const url = API_BASE_URL ? `${API_BASE_URL}/tasks/${taskId}` : `/tasks/${taskId}`;
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: await this.getAuthHeaders(),
       });

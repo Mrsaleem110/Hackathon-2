@@ -69,7 +69,8 @@ export const useApi = () => {
 
     if (response.status === 401) {
       try {
-        const refreshTokenResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        const refreshUrl = API_BASE_URL ? `${API_BASE_URL}/auth/refresh` : '/auth/refresh';
+        const refreshTokenResponse = await fetch(refreshUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
