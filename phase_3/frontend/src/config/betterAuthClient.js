@@ -2,7 +2,7 @@
 // Use relative paths in production to leverage Vercel rewrites, absolute URLs in development
 const isDevelopment = import.meta.env.DEV;
 const apiBaseURL = isDevelopment
-  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000') // Better Auth server runs on port 9000
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:10080') // Better Auth server runs on port 10080
   : ''; // Use relative paths in production to leverage Vercel rewrites
 
 // API wrapper for Better Auth endpoints
