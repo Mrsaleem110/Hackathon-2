@@ -1,9 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-const { BetterAuth } = require('better-auth');
+const { betterAuth } = require('better-auth');
+const { toNodeHandler } = require('better-auth/node');
 
 // Initialize Better Auth with email password provider
-const auth = BetterAuth({
+const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || 'your-secret-key-change-in-production',
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
   trustHost: true,
@@ -29,8 +30,8 @@ app.use(cors({
 
 app.use(express.json());
 
-// Mount Better Auth routes
-app.use(auth.endpoint);
+// Mount Better Auth routes using the Node.js handler
+app.use('/api/auth', toNodeHandler(auth));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
