@@ -14,12 +14,13 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      // Only proxy actual API endpoints, not React Router pages
-      '/auth/': {
-        target: 'http://localhost:8001',
+      // Proxy Better Auth requests to the Better Auth server (more specific first)
+      '/api/auth/': {
+        target: 'http://localhost:10080',
         changeOrigin: true,
         secure: false,
       },
+      // Proxy other API requests to the FastAPI backend
       '/tasks': {
         target: 'http://localhost:8001',
         changeOrigin: true,
@@ -30,7 +31,8 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      '/api': {
+      // Proxy all other /api requests to the FastAPI backend
+      '/api/': {
         target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
