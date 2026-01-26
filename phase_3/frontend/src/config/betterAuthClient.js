@@ -1,14 +1,14 @@
-// FastAPI backend API client (replacing Better Auth for Vercel deployment)
+// Better Auth API client
 // Use relative paths in production to leverage Vercel rewrites, absolute URLs in development
 const isDevelopment = import.meta.env.DEV;
 const apiBaseURL = isDevelopment
-  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001')
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000') // Better Auth server runs on port 9000
   : ''; // Use relative paths in production to leverage Vercel rewrites
 
-// API wrapper for FastAPI auth endpoints
+// API wrapper for Better Auth endpoints
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
-    const url = apiBaseURL ? `${apiBaseURL}/auth/register` : '/auth/register';
+    const url = apiBaseURL ? `${apiBaseURL}/api/auth/sign-up` : '/api/auth/sign-up';
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -17,7 +17,7 @@ const betterAuthAPI = {
       body: JSON.stringify({
         email,
         password,
-        name, // FastAPI backend expects name field in registration
+        name, // Better Auth expects name field in registration
       }),
     });
 
@@ -25,23 +25,23 @@ const betterAuthAPI = {
       const data = await response.json();
       if (response.ok) {
         // Store token in localStorage for API requests
-        if (data.access_token) {
-          localStorage.setItem('auth-token', data.access_token);
+        if (data.token) {
+          localStorage.setItem('auth-token', data.token);
         }
         // Return proper format expected by AuthContext
         return {
           user: data.user,
-          session: { 
-            token: data.access_token,
-            tokenType: data.token_type 
+          session: {
+            token: data.token,
+            tokenType: 'bearer'
           }
         };
       } else {
-        const errorMessage = data.detail || data.message || 'Registration failed';
-        return { 
-          error: { 
+        const errorMessage = data.message || 'Registration failed';
+        return {
+          error: {
             message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-          } 
+          }
         };
       }
     } catch (e) {
@@ -50,7 +50,7 @@ const betterAuthAPI = {
   },
 
   async signInEmail({ email, password }) {
-    const url = apiBaseURL ? `${apiBaseURL}/auth/login` : '/auth/login';
+    const url = apiBaseURL ? `${apiBaseURL}/api/auth/sign-in/email` : '/api/auth/sign-in/email';
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -66,23 +66,23 @@ const betterAuthAPI = {
       const data = await response.json();
       if (response.ok) {
         // Store token in localStorage for API requests
-        if (data.access_token) {
-          localStorage.setItem('auth-token', data.access_token);
+        if (data.token) {
+          localStorage.setItem('auth-token', data.token);
         }
         // Return proper format expected by AuthContext
         return {
           user: data.user,
-          session: { 
-            token: data.access_token,
-            tokenType: data.token_type 
+          session: {
+            token: data.token,
+            tokenType: 'bearer'
           }
         };
       } else {
-        const errorMessage = data.detail || data.message || 'Login failed';
-        return { 
-          error: { 
+        const errorMessage = data.message || 'Login failed';
+        return {
+          error: {
             message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-          } 
+          }
         };
       }
     } catch (e) {
@@ -96,7 +96,7 @@ const betterAuthAPI = {
       return null;
     }
 
-    const url = apiBaseURL ? `${apiBaseURL}/auth/me` : '/auth/me';
+    const url = apiBaseURL ? `${apiBaseURL}/api/auth/session` : '/api/auth/session';
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -109,8 +109,8 @@ const betterAuthAPI = {
         const data = await response.json();
         // Return proper format expected by AuthContext
         return {
-          user: data,
-          session: { 
+          user: data.user,
+          session: {
             token: token,
             tokenType: 'bearer'
           }
