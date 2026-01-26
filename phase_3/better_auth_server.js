@@ -92,9 +92,9 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// Start the server with a random port to avoid conflicts
-server.listen(0, 'localhost', () => {
-  const port = server.address().port;
-  console.log(`Better Auth server running on port ${port}`);
-  console.log(`Better Auth endpoints available at http://localhost:${port}/api/auth`);
+// Start the server on port 10080 for consistent frontend connection
+const PORT = process.env.PORT || 10080;
+server.listen(PORT, 'localhost', () => {
+  console.log(`Better Auth server running on port ${PORT}`);
+  console.log(`Better Auth endpoints available at http://localhost:${PORT}/api/auth`);
 });
