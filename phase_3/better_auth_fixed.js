@@ -5,11 +5,11 @@ const url = require('url');
 // Initialize Better Auth with email password provider
 const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || 'your-secret-key-change-in-production',
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:0',
   trustHost: true,
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Don't require email verification for testing
+    requireEmailVerification: false,
   }
 });
 
@@ -30,16 +30,17 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Handle Better Auth routes
-  if (req.url.startsWith('/api/auth')) {
+  if (parsedUrl.pathname.startsWith('/api/auth')) {
     try {
-      // Extract the path after /api/auth
-      let internalPath = req.url.replace('/api/auth', '');
-      if (internalPath === '') internalPath = '/';
+      // Extract the actual auth route part by removing the /api/auth prefix
+      const authPath = parsedUrl.pathname.replace(/^\/api\/auth/, '');
+      const fullUrl = `http://localhost:${server.address().port}${req.url}`;
 
-      // Construct the URL that Better Auth expects
-      const internalUrl = `http://localhost:${server.address().port}${internalPath}`;
+      // Create a new URL to manipulate the pathname
+      const originalUrl = new URL(fullUrl);
+      const newUrl = new URL(authPath || '/', originalUrl.origin);
 
-      // Create a Request object for Better Auth
+      // Create a Request object with the corrected path
       let body = '';
       if (req.method === 'POST' || req.method === 'PUT') {
         for await (const chunk of req) {
@@ -47,7 +48,7 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      const request = new Request(internalUrl, {
+      const request = new Request(newUrl.toString(), {
         method: req.method,
         headers: req.headers,
         body: body || undefined
@@ -56,7 +57,7 @@ const server = http.createServer(async (req, res) => {
       // Call Better Auth handler
       const response = await auth.handler(request);
 
-      // Set response status and headers
+      // Extract status, headers, and body from Better Auth response
       res.statusCode = response.status;
       for (const [key, value] of response.headers) {
         res.setHeader(key, value);
@@ -92,8 +93,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// Start the server with a random port to avoid conflicts
-server.listen(0, 'localhost', () => {
+// Start the server with a random port
+const serverInstance = server.listen(0, 'localhost', () => {
   const port = server.address().port;
   console.log(`Better Auth server running on port ${port}`);
   console.log(`Better Auth endpoints available at http://localhost:${port}/api/auth`);

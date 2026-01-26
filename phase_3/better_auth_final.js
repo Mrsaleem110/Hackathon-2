@@ -1,22 +1,19 @@
 const http = require('http');
 const { betterAuth } = require('better-auth');
-const url = require('url');
 
 // Initialize Better Auth with email password provider
 const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || 'your-secret-key-change-in-production',
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:0',
   trustHost: true,
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Don't require email verification for testing
+    requireEmailVerification: false,
   }
 });
 
-// Create HTTP server
+// Create HTTP server - let's try to handle the route matching differently
 const server = http.createServer(async (req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -29,7 +26,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Handle Better Auth routes
+  // For all requests that start with /api/auth, forward everything after /api/auth
+  // to Better Auth as if it were the root path
   if (req.url.startsWith('/api/auth')) {
     try {
       // Extract the path after /api/auth
@@ -38,6 +36,8 @@ const server = http.createServer(async (req, res) => {
 
       // Construct the URL that Better Auth expects
       const internalUrl = `http://localhost:${server.address().port}${internalPath}`;
+
+      console.log(`Forwarding: ${req.method} ${req.url} -> ${internalUrl}`);
 
       // Create a Request object for Better Auth
       let body = '';
@@ -55,6 +55,8 @@ const server = http.createServer(async (req, res) => {
 
       // Call Better Auth handler
       const response = await auth.handler(request);
+
+      console.log(`Better Auth responded with status: ${response.status}`);
 
       // Set response status and headers
       res.statusCode = response.status;
@@ -74,27 +76,20 @@ const server = http.createServer(async (req, res) => {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ error: 'Internal Server Error', details: error.message }));
     }
-  }
-  // Handle health check
-  else if (parsedUrl.pathname === '/health') {
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      message: 'Better Auth server is running'
-    }));
-  }
-  // Handle unknown routes
-  else {
+  } else {
+    // For other routes, return 404
     res.statusCode = 404;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ error: 'Not Found' }));
   }
 });
 
-// Start the server with a random port to avoid conflicts
+// Start the server with a random port
 server.listen(0, 'localhost', () => {
   const port = server.address().port;
   console.log(`Better Auth server running on port ${port}`);
   console.log(`Better Auth endpoints available at http://localhost:${port}/api/auth`);
+  console.log('Try:');
+  console.log(`  Register: curl -X POST http://localhost:${port}/api/auth/sign-up -H "Content-Type: application/json" -d \'{"email":"test@example.com", "password":"password123", "name":"Test User"}\'`);
+  console.log(`  Login: curl -X POST http://localhost:${port}/api/auth/sign-in/email -H "Content-Type: application/json" -d \'{"email":"test@example.com", "password":"password123"}\'`);
 });
