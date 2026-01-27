@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import OpenAIChatKitUI from './OpenAIChatKitUI';
 import TaskApiService from '../services/taskApi';
 
 const Dashboard = () => {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -178,13 +180,13 @@ const Dashboard = () => {
         <div className="dashboard-sidebar">
           <div className="quick-actions">
             <h4>Quick Actions</h4>
-            <button className="action-btn" onClick={() => window.location.href='/tasks'}>
+            <button className="action-btn" onClick={() => navigate('/tasks')}>
               <span>➕</span> New Task
             </button>
-            <button className="action-btn" onClick={() => window.location.href='/chat'}>
+            <button className="action-btn" onClick={() => navigate('/chat')}>
               <span>💬</span> New Chat
             </button>
-            <button className="action-btn" onClick={() => window.location.href='/analytics'}>
+            <button className="action-btn" onClick={() => navigate('/analytics')}>
               <span>📊</span> View Analytics
             </button>
           </div>
