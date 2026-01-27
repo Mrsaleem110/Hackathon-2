@@ -7,7 +7,7 @@ const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || '$@!eem1234', // Use the secret from .env
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
   trustHost: true,
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:10080'], // Allow Vite dev server and other origins
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'], // Allow Vite dev server and other origins
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Don't require email verification for testing
@@ -92,8 +92,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// Start the server on port 10080 for consistent frontend connection
-const PORT = process.env.PORT || 10080;
+// Start the server on port 3001 for consistent frontend connection (avoiding browser port restrictions)
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, 'localhost', () => {
   console.log(`Better Auth server running on port ${PORT}`);
   console.log(`Better Auth endpoints available at http://localhost:${PORT}/api/auth`);
