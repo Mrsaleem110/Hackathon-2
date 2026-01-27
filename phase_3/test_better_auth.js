@@ -4,18 +4,16 @@ const url = require('url');
 
 // Initialize Better Auth with email password provider
 const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET || '$@!eem1234', // Use the secret from .env
+  secret: process.env.BETTER_AUTH_SECRET || 'your-secret-key-change-in-production',
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
   trustHost: true,
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:10080'], // Allow Vite dev server and other origins
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Don't require email verification for testing
-    password: {
-      enabled: true,
-    }
   }
 });
+
+console.log("Available auth endpoints:", Object.keys(auth));
 
 // Create HTTP server
 const server = http.createServer(async (req, res) => {
@@ -36,8 +34,15 @@ const server = http.createServer(async (req, res) => {
   // Handle Better Auth routes
   if (req.url.startsWith('/api/auth')) {
     try {
-      // Better Auth expects the full path including /api/auth
-      const internalUrl = `http://localhost:${server.address().port}${req.url}`;
+      console.log(`Processing request: ${req.method} ${req.url}`);
+
+      // Extract the path after /api/auth
+      let internalPath = req.url.replace('/api/auth', '');
+      if (internalPath === '') internalPath = '/';
+
+      // Construct the URL that Better Auth expects
+      const internalUrl = `http://localhost:${server.address().port}${internalPath}`;
+      console.log(`Internal path: ${internalPath}, Internal URL: ${internalUrl}`);
 
       // Create a Request object for Better Auth
       let body = '';
@@ -53,8 +58,12 @@ const server = http.createServer(async (req, res) => {
         body: body || undefined
       });
 
+      console.log(`Calling auth.handler with path: ${internalPath}`);
+
       // Call Better Auth handler
       const response = await auth.handler(request);
+
+      console.log(`Better Auth response status: ${response.status}`);
 
       // Set response status and headers
       res.statusCode = response.status;
@@ -64,8 +73,10 @@ const server = http.createServer(async (req, res) => {
 
       if (response.body) {
         const responseBody = await response.text();
+        console.log(`Response body: ${responseBody.substring(0, 200)}...`); // Log first 200 chars
         res.end(responseBody);
       } else {
+        console.log('No response body from Better Auth');
         res.end();
       }
     } catch (error) {
@@ -81,7 +92,8 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({
       status: 'ok',
       timestamp: new Date().toISOString(),
-      message: 'Better Auth server is running'
+      message: 'Better Auth server is running',
+      availableEndpoints: Object.keys(auth)
     }));
   }
   // Handle unknown routes
