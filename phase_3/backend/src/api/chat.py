@@ -104,6 +104,9 @@ async def chat_endpoint(
             try:
                 agent = ChatAgent()
                 result = agent.process_message(message_content, user_id, conversation_history)
+
+                # Debug logging to see what the AI agent returns
+                print(f"DEBUG: AI Agent result for message '{message_content}': {result}")
             except Exception as e:
                 print(f"ERROR: Failed to process message with AI agent: {e}")
                 # Fallback response if AI agent fails
@@ -119,10 +122,12 @@ async def chat_endpoint(
             }
 
         # Execute any tool calls returned by the AI agent
+        print(f"DEBUG: Checking for tool calls in result: {result['tool_calls']}")
         if result["tool_calls"]:
             for tool_call in result["tool_calls"]:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["arguments"]
+                print(f"DEBUG: Processing tool call - Name: {tool_name}, Args: {tool_args}")
 
                 # Ensure user_id matches for security
                 if tool_args.get("user_id") != user_id:
