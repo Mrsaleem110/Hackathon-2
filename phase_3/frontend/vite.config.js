@@ -14,13 +14,16 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      // Proxy Better Auth requests to the Better Auth server (more specific first)
+      // Proxy Better Auth requests to the Better Auth server (most specific first)
       '/api/auth/': {
         target: 'http://localhost:10080',
         changeOrigin: true,
         secure: false,
+        // Preserve cookies and other headers that Better Auth might need
+        cookieDomainRewrite: 'localhost',
+        cookiePathRewrite: '/',
       },
-      // Proxy other API requests to the FastAPI backend
+      // Proxy other specific API requests to the FastAPI backend
       '/tasks': {
         target: 'http://localhost:8001',
         changeOrigin: true,
@@ -31,7 +34,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      // Proxy all other /api requests to the FastAPI backend
+      // Proxy all other /api requests to the FastAPI backend (most general last)
       '/api/': {
         target: 'http://localhost:8001',
         changeOrigin: true,
