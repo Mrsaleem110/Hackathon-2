@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/auth/:path*", "destination": "https://hackathon-2-phase-3-backend.vercel.app/auth/:path*" },
     { "source": "/auth/:path*", "destination": "https://hackathon-2-phase-3-backend.vercel.app/auth/:path*" },
     { "source": "/api/:path*", "destination": "https://hackathon-2-phase-3-backend.vercel.app/api/:path*" },
     { "source": "/tasks/:path*", "destination": "https://hackathon-2-phase-3-backend.vercel.app/tasks/:path*" },

@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
 
 // Custom hook to handle authentication state
 export const useAuthState = () => {
-  const { user, token, loading, isAuthenticated } = useAuth();
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthState must be used within an AuthProvider');
+  }
+  const { user, token, loading, isAuthenticated } = context;
 
   return {
     user,
@@ -16,7 +20,11 @@ export const useAuthState = () => {
 
 // Custom hook to handle authentication actions
 export const useAuthActions = () => {
-  const { register, login, logout, getUserProfile } = useAuth();
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthActions must be used within an AuthProvider');
+  }
+  const { register, login, logout, getUserProfile } = context;
 
   return {
     register,
@@ -28,7 +36,11 @@ export const useAuthActions = () => {
 
 // Custom hook to protect routes/components
 export const useProtectedResource = (permission = null) => {
-  const { isAuthenticated, user, token } = useAuth();
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useProtectedResource must be used within an AuthProvider');
+  }
+  const { isAuthenticated, user, token } = context;
   const [hasPermission, setHasPermission] = useState(false);
 
   useEffect(() => {
@@ -54,7 +66,11 @@ export const useProtectedResource = (permission = null) => {
 
 // Hook to make authenticated API calls to FastAPI backend
 export const useApi = () => {
-  const { token, API_BASE_URL } = useAuth();
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useApi must be used within an AuthProvider');
+  }
+  const { token, API_BASE_URL } = context;
 
   const authenticatedFetch = async (url, options = {}) => {
     const headers = {
