@@ -1,14 +1,14 @@
-// Better Auth API client
+// FastAPI Auth API client (replacing Better Auth with custom JWT auth)
 // Use relative paths in development to leverage Vite proxy, absolute URLs in development when explicitly configured
 const isDevelopment = import.meta.env.DEV;
 const apiBaseURL = isDevelopment
-  ? (import.meta.env.VITE_BETTER_AUTH_URL || '') // Use env var if set, otherwise relative path for Vite proxy
+  ? (import.meta.env.VITE_API_BASE_URL || '') // Use env var if set, otherwise relative path for Vite proxy
   : ''; // Use relative paths in production to leverage Vercel rewrites
 
-// API wrapper for Better Auth endpoints
+// API wrapper for FastAPI auth endpoints
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
-    const url = apiBaseURL ? `${apiBaseURL}/api/auth/sign-up` : '/api/auth/sign-up';
+    const url = apiBaseURL ? `${apiBaseURL}/auth/register` : '/auth/register';
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -17,7 +17,7 @@ const betterAuthAPI = {
       body: JSON.stringify({
         email,
         password,
-        name, // Better Auth expects name field in registration
+        name, // FastAPI auth expects name field in registration
       }),
     });
 
@@ -25,19 +25,19 @@ const betterAuthAPI = {
       const data = await response.json();
       if (response.ok) {
         // Store token in localStorage for API requests
-        if (data.token) {
-          localStorage.setItem('auth-token', data.token);
+        if (data.access_token) {
+          localStorage.setItem('auth-token', data.access_token);
         }
         // Return proper format expected by AuthContext
         return {
           user: data.user,
           session: {
-            token: data.token,
-            tokenType: 'bearer'
+            token: data.access_token,
+            tokenType: data.token_type
           }
         };
       } else {
-        const errorMessage = data.message || 'Registration failed';
+        const errorMessage = data.detail || 'Registration failed';
         return {
           error: {
             message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
@@ -50,7 +50,7 @@ const betterAuthAPI = {
   },
 
   async signInEmail({ email, password }) {
-    const url = apiBaseURL ? `${apiBaseURL}/api/auth/sign-in/email` : '/api/auth/sign-in/email';
+    const url = apiBaseURL ? `${apiBaseURL}/auth/login` : '/auth/login';
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -66,19 +66,19 @@ const betterAuthAPI = {
       const data = await response.json();
       if (response.ok) {
         // Store token in localStorage for API requests
-        if (data.token) {
-          localStorage.setItem('auth-token', data.token);
+        if (data.access_token) {
+          localStorage.setItem('auth-token', data.access_token);
         }
         // Return proper format expected by AuthContext
         return {
           user: data.user,
           session: {
-            token: data.token,
-            tokenType: 'bearer'
+            token: data.access_token,
+            tokenType: data.token_type
           }
         };
       } else {
-        const errorMessage = data.message || 'Login failed';
+        const errorMessage = data.detail || 'Login failed';
         return {
           error: {
             message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
@@ -96,7 +96,7 @@ const betterAuthAPI = {
       return null;
     }
 
-    const url = apiBaseURL ? `${apiBaseURL}/api/auth/session` : '/api/auth/session';
+    const url = apiBaseURL ? `${apiBaseURL}/auth/me` : '/auth/me';
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -109,7 +109,7 @@ const betterAuthAPI = {
         const data = await response.json();
         // Return proper format expected by AuthContext
         return {
-          user: data.user,
+          user: data,
           session: {
             token: token,
             tokenType: 'bearer'
