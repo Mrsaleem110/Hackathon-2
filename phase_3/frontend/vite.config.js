@@ -24,6 +24,11 @@ export default defineConfig({
         ws: true,
       },
       // Proxy other specific API requests to the FastAPI backend
+      '/auth': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+        secure: false,
+      },
       '/tasks': {
         target: 'http://localhost:8001',
         changeOrigin: true,
