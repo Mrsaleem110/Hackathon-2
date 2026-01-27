@@ -121,7 +121,10 @@ class ChatAgent:
                 "role": "system",
                 "content": "You are a helpful assistant that manages todo tasks. "
                           "When users request to add, list, complete, update, or delete tasks, "
-                          "use the appropriate tools. Always be friendly and confirm actions to the user."
+                          "you MUST use the appropriate tools. "
+                          "For example, if a user says 'Add a task to buy milk' or 'Create a task to call mom', "
+                          "you must use the add_task tool with the title 'buy milk' or 'call mom'. "
+                          "Always be friendly and confirm actions to the user after using tools."
             })
 
             # Add conversation history if provided
