@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
 import logging
 import uuid
-from ..auth import require_auth, User
+from ..auth import require_auth, User as UserClass
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ async def register(credentials: RegisterRequestModel):
 
 
 @router.get("/me")
-async def get_current_user_endpoint(current_user: User = Depends(require_auth())):
+async def get_current_user_endpoint(current_user: UserClass = Depends(require_auth())):
     """Get current user endpoint - validates token and returns user info"""
     try:
         # Return the authenticated user's information
