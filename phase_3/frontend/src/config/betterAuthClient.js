@@ -3,7 +3,7 @@
 const isDevelopment = import.meta.env.DEV;
 const apiBaseURL = isDevelopment
   ? (import.meta.env.VITE_API_BASE_URL || '') // Use env var if set, otherwise relative path for Vite proxy
-  : ''; // Use relative paths in production to leverage Vercel rewrites
+  : (import.meta.env.VITE_API_BASE_URL || ''); // Use env var in production, fallback to relative paths
 
 // API wrapper for FastAPI auth endpoints
 const betterAuthAPI = {
