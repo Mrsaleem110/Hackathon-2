@@ -23,7 +23,7 @@ app = FastAPI(
 
 # BULLETPROOF CORS - Middleware approach
 # Get frontend URL from environment variable for Vercel deployments
-frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3.vercel.app")
+frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.vercel.app")
 
 cors_origins = [
     "http://localhost:5173",
@@ -40,6 +40,8 @@ cors_origins = [
     "http://127.0.0.1:8001",
     "https://hackathon-2-sooty.vercel.app",
     "https://hackathon-2-p-3.vercel.app",
+    "https://hackathon-2-p-3-frontend.vercel.app",
+    "https://hackathon-2-p-3-backend.vercel.app",
     "https://hackathon-2-phase-3-backend.vercel.app",
     "https://hackathon-2-phase-3.vercel.app",
     frontend_url,
