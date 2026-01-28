@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
 import logging
 import uuid
-from ..auth import require_auth, User as AuthUser as UserClass
+from ..auth import require_auth, User as AuthUser
 
 logger = logging.getLogger(__name__)
 
