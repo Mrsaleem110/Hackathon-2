@@ -7,7 +7,7 @@
     "start": "node better_auth_server.js",
     "dev": "nodemon better_auth_server.js",
     "dev-all": "concurrently \"npm run dev\" \"cd backend && uvicorn src.api.main:app --reload --port 8001\"",
-    "build": "echo 'Build scripts go here'"
+    "build": "cd frontend && npm ci && npm run build"
   },
   "dependencies": {
     "@types/node": "^22.0.0",
