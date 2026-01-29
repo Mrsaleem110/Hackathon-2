@@ -81,7 +81,7 @@ const Dashboard = () => {
     }
   }, [user, isAuthenticated, authLoading]);
 
-  if (loading && stats.totalTasks === 0) {
+  if (loading && !error) {
     return (
       <div className="dashboard">
         <div className="loading-spinner" style={{ textAlign: 'center', padding: '40px' }}>
