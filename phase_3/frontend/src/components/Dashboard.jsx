@@ -18,11 +18,17 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('Dashboard useEffect running - auth state:', { isAuthenticated, user, authLoading }); // Debug log
+
     const fetchStats = async () => {
       try {
+        console.log('Fetching dashboard stats...'); // Debug log
         setLoading(true);
+
         // Get all tasks to calculate stats
         const tasksData = await TaskApiService.getTasks();
+        console.log('Tasks data received:', tasksData); // Debug log
+
         setTasks(tasksData);
 
         // Calculate task statistics
@@ -32,25 +38,33 @@ const Dashboard = () => {
 
         // For now, set activeConversations to a reasonable default
         // In a real app, this would come from a conversations API
-        setStats({
+        const newStats = {
           totalTasks,
           completedTasks,
           pendingTasks,
           activeConversations: 1  // Default to 1 for the current chat
-        });
+        };
+
+        console.log('Calculated stats:', newStats); // Debug log
+        setStats(newStats);
 
         setError(null);
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
-        setError('Failed to load dashboard data. Please try again.');
+        console.error('Error details:', err.message); // Debug log
+
+        const errorMsg = 'Failed to load dashboard data. Backend may be unreachable.';
+        setError(errorMsg);
 
         // Set default values on error
-        setStats({
+        const defaultStats = {
           totalTasks: 0,
           completedTasks: 0,
           pendingTasks: 0,
           activeConversations: 0
-        });
+        };
+        console.log('Setting default stats due to error:', defaultStats); // Debug log
+        setStats(defaultStats);
         setTasks([]);
       } finally {
         setLoading(false);
@@ -58,8 +72,10 @@ const Dashboard = () => {
     };
 
     if (isAuthenticated && user) {
+      console.log('User authenticated, fetching stats...'); // Debug log
       fetchStats();
     } else if (!authLoading) {
+      console.log('User not authenticated, showing auth error'); // Debug log
       setError('User not authenticated. Please log in.');
       setLoading(false);
     }
