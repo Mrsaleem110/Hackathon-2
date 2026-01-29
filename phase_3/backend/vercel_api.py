@@ -32,8 +32,14 @@ try:
 
     # Try to import specific modules to identify where the issue occurs
     logger.info("About to import from src.api.main")
-    from src.api.main import app
-    logger.info("FastAPI app imported successfully")
+
+    # Import the main module
+    from src.api import main
+    logger.info("Main module imported successfully")
+
+    # Access the app instance
+    app = main.app
+    logger.info("FastAPI app accessed successfully")
 
     # Verify app has the expected attributes
     logger.info(f"App object type: {type(app)}")
@@ -43,7 +49,7 @@ try:
         logger.info(f"All registered routes: {route_paths}")
 
         # Specifically check for auth routes
-        auth_routes = [path for path in route_paths if 'auth' in path.lower()]
+        auth_routes = [path for path in route_paths if 'auth/' in path.lower()]
         logger.info(f"Auth-related routes found: {auth_routes}")
 
         # Add a test route to verify app is working
