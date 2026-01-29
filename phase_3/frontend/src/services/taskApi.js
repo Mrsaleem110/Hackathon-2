@@ -12,11 +12,12 @@ class TaskApiService {
   static async getAuthHeaders() {
     const token = localStorage.getItem('auth-token');
     console.log('Task API - Token available:', !!token); // Debug log
+    console.log('Task API - Full token in storage:', token); // Debug log
     if (!token) {
       console.error('Task API - Authentication token is missing'); // Debug log
       throw new Error('Authentication token is missing');
     }
-    console.log('Task API - Using token:', token.substring(0, 10) + '...'); // Debug log
+    console.log('Task API - Using token:', token ? token.substring(0, 10) + '...' : 'NO TOKEN'); // Debug log
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
@@ -27,16 +28,21 @@ class TaskApiService {
     try {
       const token = localStorage.getItem('auth-token');
       console.log('getTasks called with token:', token ? 'YES' : 'NO'); // Debug log
+      console.log('Full token in getTasks:', token); // Debug log
 
       const url = API_BASE_URL ? `${API_BASE_URL}/tasks/` : '/tasks/';
       console.log('Fetching tasks from URL:', url); // Debug log
 
+      const headers = await this.getAuthHeaders();
+      console.log('Using headers:', headers); // Debug log
+
       const response = await fetch(url, {
         method: 'GET',
-        headers: await this.getAuthHeaders()
+        headers: headers
       });
 
       console.log('Tasks response status:', response.status); // Debug log
+      console.log('Tasks response headers:', response.headers); // Debug log
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -55,11 +61,13 @@ class TaskApiService {
       } else {
         // If not JSON, try to read as text to see what was returned
         const text = await response.text();
+        console.log('Tasks response text:', text); // Debug log
         console.error('Expected JSON but got:', text);
         throw new Error(`Expected JSON response but got: ${text.substring(0, 100)}...`);
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      console.error('Error stack:', error.stack); // Debug log
       throw error;
     }
   }
