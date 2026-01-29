@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }) => {
 
       if (response && !response.error) {
         // Successfully registered
+        console.log('Setting user in context:', response.user); // Debug log
         setUser(response.user);
         setSession(response.session);
         // For Better Auth with cookies, the token is typically stored in cookies
@@ -74,6 +75,7 @@ export const AuthProvider = ({ children }) => {
 
       if (response && !response.error) {
         // Successfully logged in
+        console.log('Setting user in context during login:', response.user); // Debug log
         setUser(response.user);
         setSession(response.session);
         if (response.session?.token) {
