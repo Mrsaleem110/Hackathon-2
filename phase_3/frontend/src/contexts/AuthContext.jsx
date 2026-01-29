@@ -27,11 +27,14 @@ export const AuthProvider = ({ children }) => {
   // Register function using Better Auth
   const register = async (userData) => {
     try {
+      console.log('Starting registration with userData:', userData); // Debug log
       const response = await authClient.signUpEmail({
         email: userData.email,
         password: userData.password,
         name: userData.name,
       });
+
+      console.log('Registration response:', response); // Debug log
 
       if (response && !response.error) {
         // Successfully registered
@@ -43,8 +46,10 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('auth-token', response.session.token);
           setToken(response.session.token);
         }
+        console.log('Registration successful, user set in context:', response.user); // Debug log
         return { success: true, user: response.user };
       } else {
+        console.error('Registration failed with error:', response?.error?.message); // Debug log
         return { success: false, error: response?.error?.message || 'Registration failed' };
       }
     } catch (error) {
@@ -59,10 +64,13 @@ export const AuthProvider = ({ children }) => {
   // Login function using Better Auth
   const login = async (credentials) => {
     try {
+      console.log('Starting login with credentials:', credentials); // Debug log
       const response = await authClient.signInEmail({
         email: credentials.email,
         password: credentials.password,
       });
+
+      console.log('Login response:', response); // Debug log
 
       if (response && !response.error) {
         // Successfully logged in
@@ -72,8 +80,10 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('auth-token', response.session.token);
           setToken(response.session.token);
         }
+        console.log('Login successful, user set in context:', response.user); // Debug log
         return { success: true, user: response.user };
       } else {
+        console.error('Login failed with error:', response?.error?.message); // Debug log
         return { success: false, error: response?.error?.message || 'Login failed' };
       }
     } catch (error) {

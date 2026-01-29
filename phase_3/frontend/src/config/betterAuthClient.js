@@ -18,6 +18,8 @@ const apiBaseURL = getApiBaseUrl();
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
     const url = apiBaseURL ? `${apiBaseURL}/auth/register` : '/auth/register';
+    console.log('Making registration request to:', url); // Debug log
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -30,8 +32,12 @@ const betterAuthAPI = {
       }),
     });
 
+    console.log('Registration response status:', response.status); // Debug log
+
     try {
       const data = await response.json();
+      console.log('Registration response data:', data); // Debug log
+
       if (response.ok) {
         // Store token in localStorage for API requests
         if (data.access_token) {
@@ -47,6 +53,7 @@ const betterAuthAPI = {
         };
       } else {
         const errorMessage = data.detail || 'Registration failed';
+        console.error('Registration failed:', errorMessage); // Debug log
         return {
           error: {
             message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
@@ -54,12 +61,15 @@ const betterAuthAPI = {
         };
       }
     } catch (e) {
+      console.error('Registration error parsing response:', e); // Debug log
       return { error: { message: `Failed to parse JSON response: ${e.message}` } };
     }
   },
 
   async signInEmail({ email, password }) {
     const url = apiBaseURL ? `${apiBaseURL}/auth/login` : '/auth/login';
+    console.log('Making login request to:', url); // Debug log
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -71,8 +81,12 @@ const betterAuthAPI = {
       }),
     });
 
+    console.log('Login response status:', response.status); // Debug log
+
     try {
       const data = await response.json();
+      console.log('Login response data:', data); // Debug log
+
       if (response.ok) {
         // Store token in localStorage for API requests
         if (data.access_token) {
@@ -88,6 +102,7 @@ const betterAuthAPI = {
         };
       } else {
         const errorMessage = data.detail || 'Login failed';
+        console.error('Login failed:', errorMessage); // Debug log
         return {
           error: {
             message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
@@ -95,6 +110,7 @@ const betterAuthAPI = {
         };
       }
     } catch (e) {
+      console.error('Login error parsing response:', e); // Debug log
       return { error: { message: `Failed to parse JSON response: ${e.message}` } };
     }
   },
@@ -102,9 +118,11 @@ const betterAuthAPI = {
   async getSession() {
     const token = localStorage.getItem('auth-token');
     if (!token) {
+      console.log('No auth token found in localStorage'); // Debug log
       return null;
     }
 
+    console.log('Getting session with token'); // Debug log
     const url = apiBaseURL ? `${apiBaseURL}/auth/me` : '/auth/me';
     const response = await fetch(url, {
       method: 'GET',
@@ -113,9 +131,12 @@ const betterAuthAPI = {
       },
     });
 
+    console.log('Session response status:', response.status); // Debug log
+
     if (response.ok) {
       try {
         const data = await response.json();
+        console.log('Session response data:', data); // Debug log
         // Return proper format expected by AuthContext
         return {
           user: data,
@@ -125,9 +146,11 @@ const betterAuthAPI = {
           }
         };
       } catch (e) {
+        console.error('Error parsing session response:', e); // Debug log
         return null;
       }
     } else {
+      console.error('Session request failed, removing token'); // Debug log
       // Remove invalid token
       localStorage.removeItem('auth-token');
       return null;
