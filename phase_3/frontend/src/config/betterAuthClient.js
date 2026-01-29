@@ -5,6 +5,18 @@ const apiBaseURL = isDevelopment
   ? (import.meta.env.VITE_API_BASE_URL || '') // Use env var if set, otherwise relative path for Vite proxy
   : (import.meta.env.VITE_API_BASE_URL || ''); // Use env var in production, fallback to relative paths
 
+// Fallback to a default backend URL if none is provided in production
+const getApiBaseUrl = () => {
+  if (isDevelopment) {
+    return import.meta.env.VITE_API_BASE_URL || '';
+  } else {
+    // In production, use the environment variable or fall back to the deployed backend
+    return import.meta.env.VITE_API_BASE_URL || 'https://hackathon-2-p-3-backend.vercel.app';
+  }
+};
+
+const apiBaseURL = getApiBaseUrl();
+
 // API wrapper for FastAPI auth endpoints
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
