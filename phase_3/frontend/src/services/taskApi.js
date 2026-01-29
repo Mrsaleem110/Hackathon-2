@@ -22,20 +22,33 @@ class TaskApiService {
 
   static async getTasks() {
     try {
+      const token = localStorage.getItem('auth-token');
+      console.log('getTasks called with token:', token ? 'YES' : 'NO'); // Debug log
+
       const url = API_BASE_URL ? `${API_BASE_URL}/tasks/` : '/tasks/';
+      console.log('Fetching tasks from URL:', url); // Debug log
+
       const response = await fetch(url, {
         method: 'GET',
         headers: await this.getAuthHeaders()
       });
 
+      console.log('Tasks response status:', response.status); // Debug log
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch tasks: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Tasks API error response:', errorText); // Debug log
+        throw new Error(`Failed to fetch tasks: ${response.status} ${response.statusText}. Details: ${errorText}`);
       }
 
       // Check if response is JSON before parsing
       const contentType = response.headers.get('content-type');
+      console.log('Tasks response content-type:', contentType); // Debug log
+
       if (contentType && contentType.includes('application/json')) {
-        return await response.json();
+        const jsonData = await response.json();
+        console.log('Tasks response data:', jsonData); // Debug log
+        return jsonData;
       } else {
         // If not JSON, try to read as text to see what was returned
         const text = await response.text();
