@@ -35,27 +35,39 @@ const betterAuthAPI = {
     console.log('Registration response status:', response.status); // Debug log
 
     try {
-      const data = await response.json();
-      console.log('Registration response data:', data); // Debug log
+      const rawData = await response.json();
+      console.log('Raw registration response data:', rawData); // Debug log
+      console.log('Raw registration response type:', typeof rawData); // Debug log
+      console.log('Is raw registration response an array?', Array.isArray(rawData)); // Debug log
+
+      // Handle the response properly - it might be an array
+      let data = rawData;
+      if (Array.isArray(rawData)) {
+        console.log('Registration response is an array with length:', rawData.length); // Debug log
+        console.log('Registration array elements:', rawData); // Debug log
+        // If it's an array, we need to determine which element contains the auth data
+        // Usually it's the first element, but let's check both
+        for (let i = 0; i < rawData.length; i++) {
+          console.log(`Registration array element ${i}:`, rawData[i], typeof rawData[i]); // Debug log
+        }
+        // Take the first element that looks like it contains auth data
+        data = rawData.find(item => item && typeof item === 'object' && (item.access_token || item.token || item.user));
+        if (!data && rawData.length > 0) {
+          data = rawData[0]; // Fallback to first element
+        }
+      }
+
+      console.log('Processed registration response data:', data); // Debug log
 
       if (response.ok) {
-        // Check the actual structure of the response
-        console.log('Registration response structure:', Object.keys(data)); // Debug log
-        console.log('Full registration response data:', data); // Debug log
-
         // Determine the correct token field - it might be in different places
         let tokenToStore = null;
-        if (data.access_token) {
+        if (data && data.access_token) {
           tokenToStore = data.access_token;
-        } else if (data.token) {
+        } else if (data && data.token) {
           tokenToStore = data.token;
-        } else if (data.session && data.session.token) {
+        } else if (data && data.session && data.session.token) {
           tokenToStore = data.session.token;
-        } else if (Array.isArray(data) && data.length > 0) {
-          // Handle case where response is an array
-          console.log('Response is an array, checking first element');
-          const firstElement = data[0];
-          tokenToStore = firstElement.access_token || firstElement.token || (firstElement.session && firstElement.session.token);
         }
 
         // Store token in localStorage for API requests
@@ -63,21 +75,18 @@ const betterAuthAPI = {
           localStorage.setItem('auth-token', tokenToStore);
           console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
         } else {
-          console.error('No token found in response to store:', data); // Debug log
+          console.error('No token found in response to store:', data, rawData); // Debug log
         }
 
         // Return proper format expected by AuthContext
         // The user property might be in a different field
         let userData = null;
-        if (data.user) {
+        if (data && data.user) {
           userData = data.user;
-        } else if (data.data && data.data.user) {
+        } else if (data && data.data && data.data.user) {
           userData = data.data.user;
-        } else if (data.data && !data.user) {
+        } else if (data && data.data && !data.user) {
           userData = data.data;
-        } else if (Array.isArray(data) && data.length > 0) {
-          // If response is an array, use the first element as user data if it's not the token
-          userData = data[0];
         } else {
           userData = data;
         }
@@ -85,8 +94,8 @@ const betterAuthAPI = {
         return {
           user: userData,
           session: {
-            token: tokenToStore || data.access_token || data.token || (data.session && data.session.token),
-            tokenType: data.token_type || 'bearer'
+            token: tokenToStore || (data && data.access_token) || (data && data.token) || (data && data.session && data.session.token),
+            tokenType: (data && data.token_type) || 'bearer'
           }
         };
       } else {
@@ -122,27 +131,39 @@ const betterAuthAPI = {
     console.log('Login response status:', response.status); // Debug log
 
     try {
-      const data = await response.json();
-      console.log('Login response data:', data); // Debug log
+      const rawData = await response.json();
+      console.log('Raw login response data:', rawData); // Debug log
+      console.log('Raw login response type:', typeof rawData); // Debug log
+      console.log('Is raw response an array?', Array.isArray(rawData)); // Debug log
+
+      // Handle the response properly - it might be an array
+      let data = rawData;
+      if (Array.isArray(rawData)) {
+        console.log('Response is an array with length:', rawData.length); // Debug log
+        console.log('Array elements:', rawData); // Debug log
+        // If it's an array, we need to determine which element contains the auth data
+        // Usually it's the first element, but let's check both
+        for (let i = 0; i < rawData.length; i++) {
+          console.log(`Array element ${i}:`, rawData[i], typeof rawData[i]); // Debug log
+        }
+        // Take the first element that looks like it contains auth data
+        data = rawData.find(item => item && typeof item === 'object' && (item.access_token || item.token || item.user));
+        if (!data && rawData.length > 0) {
+          data = rawData[0]; // Fallback to first element
+        }
+      }
+
+      console.log('Processed login response data:', data); // Debug log
 
       if (response.ok) {
-        // Check the actual structure of the response
-        console.log('Login response structure:', Object.keys(data)); // Debug log
-        console.log('Full login response data:', data); // Debug log
-
         // Determine the correct token field - it might be in different places
         let tokenToStore = null;
-        if (data.access_token) {
+        if (data && data.access_token) {
           tokenToStore = data.access_token;
-        } else if (data.token) {
+        } else if (data && data.token) {
           tokenToStore = data.token;
-        } else if (data.session && data.session.token) {
+        } else if (data && data.session && data.session.token) {
           tokenToStore = data.session.token;
-        } else if (Array.isArray(data) && data.length > 0) {
-          // Handle case where response is an array
-          console.log('Response is an array, checking first element');
-          const firstElement = data[0];
-          tokenToStore = firstElement.access_token || firstElement.token || (firstElement.session && firstElement.session.token);
         }
 
         // Store token in localStorage for API requests
@@ -150,21 +171,18 @@ const betterAuthAPI = {
           localStorage.setItem('auth-token', tokenToStore);
           console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
         } else {
-          console.error('No token found in response to store:', data); // Debug log
+          console.error('No token found in response to store:', data, rawData); // Debug log
         }
 
         // Return proper format expected by AuthContext
         // The user property might be in a different field
         let userData = null;
-        if (data.user) {
+        if (data && data.user) {
           userData = data.user;
-        } else if (data.data && data.data.user) {
+        } else if (data && data.data && data.data.user) {
           userData = data.data.user;
-        } else if (data.data && !data.user) {
+        } else if (data && data.data && !data.user) {
           userData = data.data;
-        } else if (Array.isArray(data) && data.length > 0) {
-          // If response is an array, use the first element as user data if it's not the token
-          userData = data[0];
         } else {
           userData = data;
         }
@@ -172,8 +190,8 @@ const betterAuthAPI = {
         return {
           user: userData,
           session: {
-            token: tokenToStore || data.access_token || data.token || (data.session && data.session.token),
-            tokenType: data.token_type || 'bearer'
+            token: tokenToStore || (data && data.access_token) || (data && data.token) || (data && data.session && data.session.token),
+            tokenType: (data && data.token_type) || 'bearer'
           }
         };
       } else {
