@@ -43,12 +43,19 @@ const betterAuthAPI = {
         if (data.access_token) {
           localStorage.setItem('auth-token', data.access_token);
         }
+
+        // Check the actual structure of the response
+        console.log('Registration response structure:', Object.keys(data)); // Debug log
+
         // Return proper format expected by AuthContext
+        // The user property might be in a different field
+        const userData = data.user || data.data || data || null;
+
         return {
-          user: data.user,
+          user: userData,
           session: {
-            token: data.access_token,
-            tokenType: data.token_type
+            token: data.access_token || data.token,
+            tokenType: data.token_type || 'bearer'
           }
         };
       } else {
@@ -92,12 +99,19 @@ const betterAuthAPI = {
         if (data.access_token) {
           localStorage.setItem('auth-token', data.access_token);
         }
+
+        // Check the actual structure of the response
+        console.log('Login response structure:', Object.keys(data)); // Debug log
+
         // Return proper format expected by AuthContext
+        // The user property might be in a different field
+        const userData = data.user || data.data || data || null;
+
         return {
-          user: data.user,
+          user: userData,
           session: {
-            token: data.access_token,
-            tokenType: data.token_type
+            token: data.access_token || data.token,
+            tokenType: data.token_type || 'bearer'
           }
         };
       } else {
@@ -137,9 +151,16 @@ const betterAuthAPI = {
       try {
         const data = await response.json();
         console.log('Session response data:', data); // Debug log
+
+        // Check the actual structure of the response
+        console.log('Session response structure:', Object.keys(data || {})); // Debug log
+
         // Return proper format expected by AuthContext
+        // The user property might be in a different field
+        const userData = data.user || data.data || data || null;
+
         return {
-          user: data,
+          user: userData,
           session: {
             token: token,
             tokenType: 'bearer'
