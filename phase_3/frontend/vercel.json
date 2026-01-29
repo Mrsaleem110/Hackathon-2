@@ -10,3 +10,16 @@
     { "source": "/(.*)", "destination": "/" }
   ]
 }
+
+ {
+    "rewrites": [
+      { "source": "/api/auth/:path*", "destination": "https://hackathon-2-p-3-backend.vercel.app/auth/:path*" },
+      { "source": "/auth/:path*", "destination": "https://hackathon-2-p-3-backend.vercel.app/auth/:path*" },
+      { "source": "/api/:path*", "destination": "https://hackathon-2-p-3-backend.vercel.app/api/:path*" },
+      { "source": "/tasks/:path*", "destination": "https://hackathon-2-p-3-backend.vercel.app/tasks/:path*" },
+      { "source": "/chat/:path*", "destination": "https://hackathon-2-p-3-backend.vercel.app/chat/:path*" },
+      { "source": "/dashboard/:path*", "destination": "https://hackathon-2-p-3-backend.vercel.app/dashboard/:path*" },
+      { "source": "/analysis/:path*", "destination": "https://hackathon-2-p-3-backend.vercel.app/analysis/:path*" },
+      { "source": "/(.*)", "destination": "/" }
+    ]
+  }
