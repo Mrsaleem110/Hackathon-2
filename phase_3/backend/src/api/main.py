@@ -254,6 +254,14 @@ except Exception as e:
     import traceback
     logger.error(f"Traceback: {traceback.format_exc()}")
 
+    # As a backup, create a simple auth route to indicate the issue
+    @app.get("/auth/test")
+    @app.post("/auth/login")
+    @app.post("/auth/register")
+    @app.get("/auth/me")
+    def auth_unavailable():
+        return {"error": "Auth routes failed to load", "detail": "Check server logs for import error"}
+
 try:
     from .tasks import router as tasks_router
     logger.info("Successfully imported tasks router")
