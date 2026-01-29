@@ -11,9 +11,12 @@ const API_BASE_URL = isDevelopment
 class TaskApiService {
   static async getAuthHeaders() {
     const token = localStorage.getItem('auth-token');
+    console.log('Task API - Token available:', !!token); // Debug log
     if (!token) {
+      console.error('Task API - Authentication token is missing'); // Debug log
       throw new Error('Authentication token is missing');
     }
+    console.log('Task API - Using token:', token.substring(0, 10) + '...'); // Debug log
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
