@@ -1,9 +1,6 @@
 // FastAPI Auth API client (replacing Better Auth with custom JWT auth)
 // Use relative paths in development to leverage Vite proxy, absolute URLs in development when explicitly configured
 const isDevelopment = import.meta.env.DEV;
-const apiBaseURL = isDevelopment
-  ? (import.meta.env.VITE_API_BASE_URL || '') // Use env var if set, otherwise relative path for Vite proxy
-  : (import.meta.env.VITE_API_BASE_URL || ''); // Use env var in production, fallback to relative paths
 
 // Fallback to a default backend URL if none is provided in production
 const getApiBaseUrl = () => {
