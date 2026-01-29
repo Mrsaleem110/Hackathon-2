@@ -52,8 +52,20 @@ const Dashboard = () => {
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
         console.error('Error details:', err.message); // Debug log
+        console.error('Error stack:', err.stack); // Debug log
 
-        const errorMsg = 'Failed to load dashboard data. Backend may be unreachable.';
+        // Provide more specific error messages based on the error
+        let errorMsg = 'Failed to load dashboard data. ';
+        if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+          errorMsg += 'Authentication failed - please log in again.';
+        } else if (err.message.includes('403')) {
+          errorMsg += 'Access forbidden - please check your permissions.';
+        } else if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+          errorMsg += 'Backend may be unreachable - please check your connection.';
+        } else {
+          errorMsg += 'Backend may be unreachable.';
+        }
+
         setError(errorMsg);
 
         // Set default values on error
