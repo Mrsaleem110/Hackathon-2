@@ -13,10 +13,32 @@ class TaskApiService {
     const token = localStorage.getItem('auth-token');
     console.log('Task API - Token available:', !!token); // Debug log
     console.log('Task API - Full token in storage:', token); // Debug log
+
     if (!token) {
       console.error('Task API - Authentication token is missing'); // Debug log
+      // Double-check: maybe the token is stored under a different key
+      const keys = Object.keys(localStorage);
+      for (const key of keys) {
+        if (key.toLowerCase().includes('token')) {
+          const potentialToken = localStorage.getItem(key);
+          if (potentialToken && typeof potentialToken === 'string' && potentialToken.includes('.')) {
+            // This might be a JWT token
+            const parts = potentialToken.split('.');
+            if (parts.length === 3) {
+              console.log(`Found potential token in localStorage key: ${key}`); // Debug log
+              localStorage.setItem('auth-token', potentialToken); // Store with correct key
+              return {
+                'Authorization': `Bearer ${potentialToken}`,
+                'Content-Type': 'application/json'
+              };
+            }
+          }
+        }
+      }
+
       throw new Error('Authentication token is missing');
     }
+
     console.log('Task API - Using token:', token ? token.substring(0, 10) + '...' : 'NO TOKEN'); // Debug log
     return {
       'Authorization': `Bearer ${token}`,
