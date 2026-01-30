@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 import uuid
 from ..models.user import User
-from ..auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, verify_token
+from ..auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, verify_custom_token as verify_token
 from fastapi import Depends, HTTPException, status
 
 
