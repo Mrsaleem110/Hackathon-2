@@ -41,12 +41,25 @@ export const AuthProvider = ({ children }) => {
         console.log('Setting user in context:', response.user); // Debug log
         setUser(response.user);
         setSession(response.session);
-        // For Better Auth with cookies, the token is typically stored in cookies
-        // We'll use the session data to get the token if available
+
+        // Get token from response session or from localStorage if it's been set there
+        let tokenToSet = null;
         if (response.session?.token) {
-          localStorage.setItem('auth-token', response.session.token);
-          setToken(response.session.token);
+          tokenToSet = response.session.token;
+        } else {
+          // Check if token was already stored in localStorage by the authClient
+          tokenToSet = localStorage.getItem('auth-token');
         }
+
+        if (tokenToSet) {
+          // Ensure token is in localStorage
+          localStorage.setItem('auth-token', tokenToSet);
+          setToken(tokenToSet);
+          console.log('Token set in context:', tokenToSet.substring(0, 10) + '...'); // Debug log
+        } else {
+          console.warn('No token found to set in context'); // Debug log
+        }
+
         console.log('Registration successful, user set in context:', response.user); // Debug log
         return { success: true, user: response.user };
       } else {
@@ -78,10 +91,25 @@ export const AuthProvider = ({ children }) => {
         console.log('Setting user in context during login:', response.user); // Debug log
         setUser(response.user);
         setSession(response.session);
+
+        // Get token from response session or from localStorage if it's been set there
+        let tokenToSet = null;
         if (response.session?.token) {
-          localStorage.setItem('auth-token', response.session.token);
-          setToken(response.session.token);
+          tokenToSet = response.session.token;
+        } else {
+          // Check if token was already stored in localStorage by the authClient
+          tokenToSet = localStorage.getItem('auth-token');
         }
+
+        if (tokenToSet) {
+          // Ensure token is in localStorage
+          localStorage.setItem('auth-token', tokenToSet);
+          setToken(tokenToSet);
+          console.log('Token set in context:', tokenToSet.substring(0, 10) + '...'); // Debug log
+        } else {
+          console.warn('No token found to set in context'); // Debug log
+        }
+
         console.log('Login successful, user set in context:', response.user); // Debug log
         return { success: true, user: response.user };
       } else {
@@ -122,10 +150,23 @@ export const AuthProvider = ({ children }) => {
       if (response && response.session) {
         setUser(response.user);
         setSession(response.session);
+
+        // Get token from response session or from localStorage if it's been set there
+        let tokenToSet = null;
         if (response.session?.token) {
-          localStorage.setItem('auth-token', response.session.token);
-          setToken(response.session.token);
+          tokenToSet = response.session.token;
+        } else {
+          // Check if token was already stored in localStorage by the authClient
+          tokenToSet = localStorage.getItem('auth-token');
         }
+
+        if (tokenToSet) {
+          // Ensure token is in localStorage
+          localStorage.setItem('auth-token', tokenToSet);
+          setToken(tokenToSet);
+          console.log('Token set in context from getUserProfile:', tokenToSet.substring(0, 10) + '...'); // Debug log
+        }
+
         return response.user;
       }
       return null;
@@ -147,10 +188,20 @@ export const AuthProvider = ({ children }) => {
           setUser(sessionResponse.user);
           setSession(sessionResponse.session);
 
-          // Store token for API requests to FastAPI backend
+          // Get token from response session or from localStorage if it's been set there
+          let tokenToSet = null;
           if (sessionResponse.session?.token) {
-            localStorage.setItem('auth-token', sessionResponse.session.token);
-            setToken(sessionResponse.session.token);
+            tokenToSet = sessionResponse.session.token;
+          } else {
+            // Check if token was already stored in localStorage by the authClient
+            tokenToSet = localStorage.getItem('auth-token');
+          }
+
+          if (tokenToSet) {
+            // Ensure token is in localStorage
+            localStorage.setItem('auth-token', tokenToSet);
+            setToken(tokenToSet);
+            console.log('Token set in context from init:', tokenToSet.substring(0, 10) + '...'); // Debug log
           }
         } else {
           // No session found, clear storage

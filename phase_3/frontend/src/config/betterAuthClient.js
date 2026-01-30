@@ -70,12 +70,41 @@ const betterAuthAPI = {
           tokenToStore = data.session.token;
         }
 
+        // Additional check: if data is a direct object with access_token at root
+        if (!tokenToStore && typeof data === 'object' && data !== null) {
+          // Check if access_token is directly in the response object
+          const keys = Object.keys(data);
+          for (const key of keys) {
+            if (key.toLowerCase().includes('token') && typeof data[key] === 'string') {
+              if (key.toLowerCase() === 'access_token' || key.toLowerCase() === 'token') {
+                tokenToStore = data[key];
+                break;
+              }
+            }
+          }
+        }
+
         // Store token in localStorage for API requests
         if (tokenToStore) {
           localStorage.setItem('auth-token', tokenToStore);
           console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
         } else {
           console.error('No token found in response to store:', data, rawData); // Debug log
+
+          // Try to find any string field that might be a token by checking for JWT-like patterns
+          if (data && typeof data === 'object') {
+            for (const [key, value] of Object.entries(data)) {
+              if (typeof value === 'string' && value.includes('.')) { // JWT tokens have dots
+                const parts = value.split('.');
+                if (parts.length === 3) { // JWT has 3 parts separated by dots
+                  tokenToStore = value;
+                  console.log('Found potential JWT token in field:', key);
+                  localStorage.setItem('auth-token', tokenToStore);
+                  break;
+                }
+              }
+            }
+          }
         }
 
         // Return proper format expected by AuthContext
@@ -166,12 +195,41 @@ const betterAuthAPI = {
           tokenToStore = data.session.token;
         }
 
+        // Additional check: if data is a direct object with access_token at root
+        if (!tokenToStore && typeof data === 'object' && data !== null) {
+          // Check if access_token is directly in the response object
+          const keys = Object.keys(data);
+          for (const key of keys) {
+            if (key.toLowerCase().includes('token') && typeof data[key] === 'string') {
+              if (key.toLowerCase() === 'access_token' || key.toLowerCase() === 'token') {
+                tokenToStore = data[key];
+                break;
+              }
+            }
+          }
+        }
+
         // Store token in localStorage for API requests
         if (tokenToStore) {
           localStorage.setItem('auth-token', tokenToStore);
           console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
         } else {
           console.error('No token found in response to store:', data, rawData); // Debug log
+
+          // Try to find any string field that might be a token by checking for JWT-like patterns
+          if (data && typeof data === 'object') {
+            for (const [key, value] of Object.entries(data)) {
+              if (typeof value === 'string' && value.includes('.')) { // JWT tokens have dots
+                const parts = value.split('.');
+                if (parts.length === 3) { // JWT has 3 parts separated by dots
+                  tokenToStore = value;
+                  console.log('Found potential JWT token in field:', key);
+                  localStorage.setItem('auth-token', tokenToStore);
+                  break;
+                }
+              }
+            }
+          }
         }
 
         // Return proper format expected by AuthContext
