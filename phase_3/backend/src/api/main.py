@@ -41,6 +41,7 @@ cors_origins = [
     "https://hackathon-2-sooty.vercel.app",
     "https://hackathon-2-p-3.vercel.app",
     "https://hackathon-2-p-3-frontend.vercel.app",
+    "https://hackathon-2-p-3-frontend-k57stbf9j.vercel.app",  # Your specific frontend URL
     "https://hackathon-2-p-3-backend.vercel.app",
     "https://hackathon-2-phase-3-backend.vercel.app",
     "https://hackathon-2-phase-3.vercel.app",
