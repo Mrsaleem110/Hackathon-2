@@ -18,6 +18,7 @@ class FrontendEnvValidator {
 
     // Check for required environment variables
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const chatkitDomainKey = import.meta.env.VITE_CHATKIT_DOMAIN_KEY;
 
     if (!apiBaseUrl) {
       results.valid = false;
@@ -38,6 +39,19 @@ class FrontendEnvValidator {
       };
     }
 
+    // ChatKit domain key is important for production
+    if (!chatkitDomainKey) {
+      results.warnings.push(
+        "VITE_CHATKIT_DOMAIN_KEY is not set - this is required for production ChatKit functionality"
+      );
+    } else {
+      results.details.VITE_CHATKIT_DOMAIN_KEY = {
+        value: chatkitDomainKey ? '***masked***' : undefined,
+        required: false, // Not strictly required for auth, but important for ChatKit
+        valid: !!chatkitDomainKey
+      };
+    }
+
     // Check for common misconfigurations
     if (apiBaseUrl && apiBaseUrl.endsWith('/')) {
       results.warnings.push(
@@ -49,6 +63,20 @@ class FrontendEnvValidator {
       results.warnings.push(
         "VITE_API_BASE_URL does not start with http:// or https://, which may cause connection issues"
       );
+    }
+
+    // Additional CORS-specific validation for production
+    if (!import.meta.env.DEV && apiBaseUrl) {
+      // In production, ensure the API base URL is properly configured for cross-origin requests
+      const currentOrigin = window.location.origin;
+      const apiOrigin = new URL(apiBaseUrl).origin;
+
+      if (currentOrigin !== apiOrigin) {
+        // Cross-origin request - make sure this is intentional
+        results.warnings.push(
+          `Cross-origin request detected: frontend (${currentOrigin}) -> backend (${apiOrigin}). Ensure CORS is properly configured on the backend.`
+        );
+      }
     }
 
     return results;

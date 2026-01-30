@@ -28,6 +28,7 @@ app = FastAPI(
 # BULLETPROOF CORS - Middleware approach
 # Get frontend URL from environment variable for Vercel deployments
 frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.vercel.app")
+additional_origins = os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "").split(",") if os.getenv("ADDITIONAL_ALLOWED_ORIGINS") else []
 
 cors_origins = [
     "http://localhost:5173",
@@ -50,7 +51,7 @@ cors_origins = [
     "https://hackathon-2-phase-3-backend.vercel.app",
     "https://hackathon-2-phase-3.vercel.app",
     frontend_url,
-]
+] + [origin.strip() for origin in additional_origins if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
@@ -123,44 +124,148 @@ async def preflight_handler(request, full_path: str):
     response = Response()
     origin = request.headers.get("origin", "")
 
+    # Check if the request is from a Vercel preview deployment (dynamic subdomains)
+    if origin and ".vercel.app" in origin:
+        # For Vercel deployments, allow the specific origin if it matches our domain patterns
+        allowed_vercel_domains = [
+            "hackathon-2-p-3-frontend.vercel.app",
+            "hackathon-2-p-3-backend.vercel.app",
+            "hackathon-2-phase-3-backend.vercel.app",
+            "hackathon-2-phase-3.vercel.app",
+            "hackathon-2-sooty.vercel.app",
+            "hackathon-2-p-3.vercel.app"
+        ]
+
+        # Check if the origin ends with one of our allowed domains
+        is_allowed_vercel = any(origin.endswith(domain) for domain in allowed_vercel_domains)
+
+        if is_allowed_vercel:
+            response.headers["Access-Control-Allow-Origin"] = origin
+        else:
+            # Check if it's in the explicit cors_origins list
+            if origin in cors_origins:
+                response.headers["Access-Control-Allow-Origin"] = origin
     # For development, allow localhost origins dynamically
-    if origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
+    elif origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
         response.headers["Access-Control-Allow-Origin"] = origin
     # Otherwise, check if the origin is in our allowed list
     elif origin in cors_origins:
         response.headers["Access-Control-Allow-Origin"] = origin
     # If origin is not allowed, we don't set the header, letting the default CORS middleware handle it
 
+    # Additional headers that are important for authentication
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By"
     response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Max-Age"] = "3600"
+    response.headers["Access-Control-Max-Age"] = "86400"  # Cache preflight for 24 hours
     return response
 
-# Add middleware to ensure all responses have proper Content-Type header
+# Add middleware to ensure all responses have proper CORS headers and Content-Type
 @app.middleware("http")
-async def ensure_json_response_middleware(request: Request, call_next):
-    """Middleware to ensure responses are JSON when appropriate"""
+async def cors_and_content_type_middleware(request: Request, call_next):
+    """Middleware to ensure all responses have proper CORS headers and Content-Type"""
+    # Handle preflight requests at middleware level as well
+    if request.method == "OPTIONS":
+        response = Response()
+        origin = request.headers.get("origin", "")
+
+        # Apply the same CORS logic as the explicit OPTIONS handler
+        if origin and ".vercel.app" in origin:
+            allowed_vercel_domains = [
+                "hackathon-2-p-3-frontend.vercel.app",
+                "hackathon-2-p-3-backend.vercel.app",
+                "hackathon-2-phase-3-backend.vercel.app",
+                "hackathon-2-phase-3.vercel.app",
+                "hackathon-2-sooty.vercel.app",
+                "hackathon-2-p-3.vercel.app"
+            ]
+
+            is_allowed_vercel = any(origin.endswith(domain) for domain in allowed_vercel_domains)
+
+            if is_allowed_vercel or origin in cors_origins:
+                response.headers["Access-Control-Allow-Origin"] = origin
+        elif origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
+            response.headers["Access-Control-Allow-Origin"] = origin
+        elif origin in cors_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        return response
+
     try:
         response = await call_next(request)
-        
+
+        # Add CORS headers to all responses
+        origin = request.headers.get("origin", "")
+
+        # Apply CORS headers based on the same logic as above
+        if origin and ".vercel.app" in origin:
+            allowed_vercel_domains = [
+                "hackathon-2-p-3-frontend.vercel.app",
+                "hackathon-2-p-3-backend.vercel.app",
+                "hackathon-2-phase-3-backend.vercel.app",
+                "hackathon-2-phase-3.vercel.app",
+                "hackathon-2-sooty.vercel.app",
+                "hackathon-2-p-3.vercel.app"
+            ]
+
+            is_allowed_vercel = any(origin.endswith(domain) for domain in allowed_vercel_domains)
+
+            if is_allowed_vercel or origin in cors_origins:
+                response.headers["Access-Control-Allow-Origin"] = origin
+        elif origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
+            response.headers["Access-Control-Allow-Origin"] = origin
+        elif origin in cors_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By"
+
         # If response doesn't have a content-type or it's not JSON, and it's an API endpoint, set it to JSON
         content_type = response.headers.get('content-type', '')
         path = request.url.path
-        
+
         # For API endpoints that don't have content-type set, ensure it's JSON
         if path.startswith('/api') or path.startswith('/auth') or path.startswith('/tasks') or path.startswith('/chat') or path.startswith('/dashboard') or path.startswith('/analysis'):
             if not content_type or 'text/html' in content_type:
                 response.headers['content-type'] = 'application/json'
-        
+
         return response
     except Exception as e:
         # If there's an error in middleware, return JSON error response
         logger.error(f"Middleware error: {str(e)}")
-        return JSONResponse(
+        # Create response with CORS headers even for errors
+        error_response = JSONResponse(
             status_code=500,
             content={"detail": "Internal server error", "error": str(e) if os.getenv("DEBUG", "").lower() == "true" else "An unexpected error occurred"}
         )
+
+        # Apply CORS headers to error response too
+        origin = request.headers.get("origin", "")
+        if origin and ".vercel.app" in origin:
+            allowed_vercel_domains = [
+                "hackathon-2-p-3-frontend.vercel.app",
+                "hackathon-2-p-3-backend.vercel.app",
+                "hackathon-2-phase-3-backend.vercel.app",
+                "hackathon-2-phase-3.vercel.app",
+                "hackathon-2-sooty.vercel.app",
+                "hackathon-2-p-3.vercel.app"
+            ]
+
+            is_allowed_vercel = any(origin.endswith(domain) for domain in allowed_vercel_domains)
+
+            if is_allowed_vercel or origin in cors_origins:
+                error_response.headers["Access-Control-Allow-Origin"] = origin
+        elif origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
+            error_response.headers["Access-Control-Allow-Origin"] = origin
+        elif origin in cors_origins:
+            error_response.headers["Access-Control-Allow-Origin"] = origin
+
+        error_response.headers["Access-Control-Allow-Credentials"] = "true"
+        return error_response
 
 # Move imports inside try-catch to catch import errors during initialization
 try:
