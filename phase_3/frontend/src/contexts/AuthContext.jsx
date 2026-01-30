@@ -51,13 +51,39 @@ export const AuthProvider = ({ children }) => {
           tokenToSet = localStorage.getItem('auth-token');
         }
 
+        // CRITICAL: Ensure we always have a token by double-checking localStorage after registration
+        if (!tokenToSet) {
+          tokenToSet = localStorage.getItem('auth-token');
+        }
+
         if (tokenToSet) {
-          // Ensure token is in localStorage
+          // Ensure token is in localStorage (double-check)
           localStorage.setItem('auth-token', tokenToSet);
           setToken(tokenToSet);
           console.log('Token set in context:', tokenToSet.substring(0, 10) + '...'); // Debug log
         } else {
-          console.warn('No token found to set in context'); // Debug log
+          console.error('No token found to set in context after registration'); // Critical debug log
+          // Try to get any token that might exist in localStorage with different naming
+          const allKeys = Object.keys(localStorage);
+          for (const key of allKeys) {
+            if (key.toLowerCase().includes('token')) {
+              const potentialToken = localStorage.getItem(key);
+              if (potentialToken && typeof potentialToken === 'string' && potentialToken.includes('.')) {
+                const parts = potentialToken.split('.');
+                if (parts.length === 3) { // JWT format
+                  console.log(`Found potential token in localStorage key: ${key}`);
+                  localStorage.setItem('auth-token', potentialToken);
+                  setToken(potentialToken);
+                  tokenToSet = potentialToken;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!tokenToSet) {
+            console.error('Still no token found after checking all localStorage keys');
+          }
         }
 
         console.log('Registration successful, user set in context:', response.user); // Debug log
@@ -101,13 +127,39 @@ export const AuthProvider = ({ children }) => {
           tokenToSet = localStorage.getItem('auth-token');
         }
 
+        // CRITICAL: Ensure we always have a token by double-checking localStorage after login
+        if (!tokenToSet) {
+          tokenToSet = localStorage.getItem('auth-token');
+        }
+
         if (tokenToSet) {
-          // Ensure token is in localStorage
+          // Ensure token is in localStorage (double-check)
           localStorage.setItem('auth-token', tokenToSet);
           setToken(tokenToSet);
           console.log('Token set in context:', tokenToSet.substring(0, 10) + '...'); // Debug log
         } else {
-          console.warn('No token found to set in context'); // Debug log
+          console.error('No token found to set in context after login'); // Critical debug log
+          // Try to get any token that might exist in localStorage with different naming
+          const allKeys = Object.keys(localStorage);
+          for (const key of allKeys) {
+            if (key.toLowerCase().includes('token')) {
+              const potentialToken = localStorage.getItem(key);
+              if (potentialToken && typeof potentialToken === 'string' && potentialToken.includes('.')) {
+                const parts = potentialToken.split('.');
+                if (parts.length === 3) { // JWT format
+                  console.log(`Found potential token in localStorage key: ${key}`);
+                  localStorage.setItem('auth-token', potentialToken);
+                  setToken(potentialToken);
+                  tokenToSet = potentialToken;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!tokenToSet) {
+            console.error('Still no token found after checking all localStorage keys');
+          }
         }
 
         console.log('Login successful, user set in context:', response.user); // Debug log
@@ -160,11 +212,35 @@ export const AuthProvider = ({ children }) => {
           tokenToSet = localStorage.getItem('auth-token');
         }
 
+        // CRITICAL: Ensure we always have a token by double-checking localStorage after session retrieval
+        if (!tokenToSet) {
+          tokenToSet = localStorage.getItem('auth-token');
+        }
+
         if (tokenToSet) {
-          // Ensure token is in localStorage
+          // Ensure token is in localStorage (double-check)
           localStorage.setItem('auth-token', tokenToSet);
           setToken(tokenToSet);
           console.log('Token set in context from getUserProfile:', tokenToSet.substring(0, 10) + '...'); // Debug log
+        } else {
+          console.warn('No token found in localStorage during getUserProfile'); // Debug log
+          // Try to get any token that might exist in localStorage with different naming
+          const allKeys = Object.keys(localStorage);
+          for (const key of allKeys) {
+            if (key.toLowerCase().includes('token')) {
+              const potentialToken = localStorage.getItem(key);
+              if (potentialToken && typeof potentialToken === 'string' && potentialToken.includes('.')) {
+                const parts = potentialToken.split('.');
+                if (parts.length === 3) { // JWT format
+                  console.log(`Found potential token in localStorage key: ${key}`);
+                  localStorage.setItem('auth-token', potentialToken);
+                  setToken(potentialToken);
+                  tokenToSet = potentialToken;
+                  break;
+                }
+              }
+            }
+          }
         }
 
         return response.user;
@@ -197,16 +273,41 @@ export const AuthProvider = ({ children }) => {
             tokenToSet = localStorage.getItem('auth-token');
           }
 
+          // CRITICAL: Ensure we always have a token by double-checking localStorage after session retrieval
+          if (!tokenToSet) {
+            tokenToSet = localStorage.getItem('auth-token');
+          }
+
           if (tokenToSet) {
-            // Ensure token is in localStorage
+            // Ensure token is in localStorage (double-check)
             localStorage.setItem('auth-token', tokenToSet);
             setToken(tokenToSet);
             console.log('Token set in context from init:', tokenToSet.substring(0, 10) + '...'); // Debug log
+          } else {
+            console.warn('No token found in localStorage during init'); // Debug log
+            // Try to get any token that might exist in localStorage with different naming
+            const allKeys = Object.keys(localStorage);
+            for (const key of allKeys) {
+              if (key.toLowerCase().includes('token')) {
+                const potentialToken = localStorage.getItem(key);
+                if (potentialToken && typeof potentialToken === 'string' && potentialToken.includes('.')) {
+                  const parts = potentialToken.split('.');
+                  if (parts.length === 3) { // JWT format
+                    console.log(`Found potential token in localStorage key: ${key}`);
+                    localStorage.setItem('auth-token', potentialToken);
+                    setToken(potentialToken);
+                    tokenToSet = potentialToken;
+                    break;
+                  }
+                }
+              }
+            }
           }
         } else {
           // No session found, clear storage
           localStorage.removeItem('auth-token');
           setToken(null);
+          console.log('No session found, cleared auth token'); // Debug log
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
