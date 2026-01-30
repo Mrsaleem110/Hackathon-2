@@ -19,6 +19,7 @@ const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
     const url = apiBaseURL ? `${apiBaseURL}/auth/register` : '/auth/register';
     console.log('Making registration request to:', url); // Debug log
+    console.log('API Base URL:', apiBaseURL); // Debug log
 
     const response = await fetch(url, {
       method: 'POST',
@@ -84,7 +85,7 @@ const betterAuthAPI = {
           }
         }
 
-        // Store token in localStorage for API requests
+        // Store token in localStorage for API requests - CRITICAL FIX
         if (tokenToStore) {
           localStorage.setItem('auth-token', tokenToStore);
           console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
@@ -105,6 +106,16 @@ const betterAuthAPI = {
               }
             }
           }
+
+          // If still no token, try to extract from response structure based on known backend format
+          if (!tokenToStore) {
+            // Backend returns {access_token: "...", token_type: "...", user: {...}}
+            if (rawData && rawData.access_token) {
+              tokenToStore = rawData.access_token;
+              localStorage.setItem('auth-token', tokenToStore);
+              console.log('Extracted token from rawData:', tokenToStore.substring(0, 10) + '...');
+            }
+          }
         }
 
         // Return proper format expected by AuthContext
@@ -120,12 +131,17 @@ const betterAuthAPI = {
           userData = data;
         }
 
+        // Ensure token is in the session response
+        const sessionWithToken = {
+          token: tokenToStore || (data && data.access_token) || (data && data.token) || (data && data.session && data.session.token),
+          tokenType: (data && data.token_type) || 'bearer'
+        };
+
+        console.log('Final session object:', sessionWithToken); // Debug log
+
         return {
           user: userData,
-          session: {
-            token: tokenToStore || (data && data.access_token) || (data && data.token) || (data && data.session && data.session.token),
-            tokenType: (data && data.token_type) || 'bearer'
-          }
+          session: sessionWithToken
         };
       } else {
         const errorMessage = data.detail || 'Registration failed';
@@ -138,6 +154,13 @@ const betterAuthAPI = {
       }
     } catch (e) {
       console.error('Registration error parsing response:', e); // Debug log
+      // Even if parsing fails, try to read the raw response text to see what's happening
+      try {
+        const textResponse = await response.text();
+        console.error('Raw response text:', textResponse);
+      } catch (textError) {
+        console.error('Could not read raw response:', textError);
+      }
       return { error: { message: `Failed to parse JSON response: ${e.message}` } };
     }
   },
@@ -145,6 +168,7 @@ const betterAuthAPI = {
   async signInEmail({ email, password }) {
     const url = apiBaseURL ? `${apiBaseURL}/auth/login` : '/auth/login';
     console.log('Making login request to:', url); // Debug log
+    console.log('API Base URL:', apiBaseURL); // Debug log
 
     const response = await fetch(url, {
       method: 'POST',
@@ -209,7 +233,7 @@ const betterAuthAPI = {
           }
         }
 
-        // Store token in localStorage for API requests
+        // Store token in localStorage for API requests - CRITICAL FIX
         if (tokenToStore) {
           localStorage.setItem('auth-token', tokenToStore);
           console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
@@ -230,6 +254,16 @@ const betterAuthAPI = {
               }
             }
           }
+
+          // If still no token, try to extract from response structure based on known backend format
+          if (!tokenToStore) {
+            // Backend returns {access_token: "...", token_type: "...", user: {...}}
+            if (rawData && rawData.access_token) {
+              tokenToStore = rawData.access_token;
+              localStorage.setItem('auth-token', tokenToStore);
+              console.log('Extracted token from rawData:', tokenToStore.substring(0, 10) + '...');
+            }
+          }
         }
 
         // Return proper format expected by AuthContext
@@ -245,12 +279,17 @@ const betterAuthAPI = {
           userData = data;
         }
 
+        // Ensure token is in the session response
+        const sessionWithToken = {
+          token: tokenToStore || (data && data.access_token) || (data && data.token) || (data && data.session && data.session.token),
+          tokenType: (data && data.token_type) || 'bearer'
+        };
+
+        console.log('Final session object:', sessionWithToken); // Debug log
+
         return {
           user: userData,
-          session: {
-            token: tokenToStore || (data && data.access_token) || (data && data.token) || (data && data.session && data.session.token),
-            tokenType: (data && data.token_type) || 'bearer'
-          }
+          session: sessionWithToken
         };
       } else {
         const errorMessage = data.detail || 'Login failed';
@@ -263,12 +302,20 @@ const betterAuthAPI = {
       }
     } catch (e) {
       console.error('Login error parsing response:', e); // Debug log
+      // Even if parsing fails, try to read the raw response text to see what's happening
+      try {
+        const textResponse = await response.text();
+        console.error('Raw response text:', textResponse);
+      } catch (textError) {
+        console.error('Could not read raw response:', textError);
+      }
       return { error: { message: `Failed to parse JSON response: ${e.message}` } };
     }
   },
 
   async getSession() {
     const token = localStorage.getItem('auth-token');
+    console.log('Getting session - token exists:', !!token); // Debug log
     if (!token) {
       console.log('No auth token found in localStorage'); // Debug log
       return null;
@@ -276,17 +323,20 @@ const betterAuthAPI = {
 
     console.log('Getting session with token'); // Debug log
     const url = apiBaseURL ? `${apiBaseURL}/auth/me` : '/auth/me';
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    console.log('Session URL:', url); // Debug log
 
-    console.log('Session response status:', response.status); // Debug log
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
 
-    if (response.ok) {
-      try {
+      console.log('Session response status:', response.status); // Debug log
+
+      if (response.ok) {
         const data = await response.json();
         console.log('Session response data:', data); // Debug log
 
@@ -316,14 +366,18 @@ const betterAuthAPI = {
             tokenType: 'bearer'
           }
         };
-      } catch (e) {
-        console.error('Error parsing session response:', e); // Debug log
+      } else {
+        // If the session request fails, the token might be invalid/expired
+        console.error('Session request failed, removing token'); // Debug log
+        const errorText = await response.text();
+        console.error('Session error response:', errorText); // Debug log
+
+        // Remove invalid token
+        localStorage.removeItem('auth-token');
         return null;
       }
-    } else {
-      console.error('Session request failed, removing token'); // Debug log
-      // Remove invalid token
-      localStorage.removeItem('auth-token');
+    } catch (error) {
+      console.error('Network error getting session:', error); // Debug log
       return null;
     }
   },
