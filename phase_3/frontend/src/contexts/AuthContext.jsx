@@ -11,6 +11,20 @@ export const useAuth = () => {
   return context;
 };
 
+// Custom hook to specifically check if user ID is available
+export const useUserId = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useUserId must be used within an AuthProvider');
+  }
+  return {
+    userId: context.user?.id,
+    hasUserId: !!context.user?.id,
+    isAuthenticated: context.isAuthenticated,
+    loading: context.loading
+  };
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
@@ -330,7 +344,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     getUserProfile,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!user.id, // Require user.id to be present for authentication
     API_BASE_URL, // Export for use in API calls
   };
 

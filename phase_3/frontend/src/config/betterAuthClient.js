@@ -390,3 +390,19 @@ const betterAuthAPI = {
 };
 
 export { betterAuthAPI as authClient };
+// 🔑 SINGLE SOURCE OF TRUTH FOR USER ID
+export function resolveUserId(session: any): string | null {
+  if (!session) return null;
+
+  const user = session.user;
+
+  if (!user || typeof user !== 'object') return null;
+
+  return (
+    user.id ||
+    user.user_id ||
+    user.userId ||
+    user.sub ||
+    null
+  );
+}

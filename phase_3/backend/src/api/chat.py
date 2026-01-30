@@ -43,6 +43,14 @@ async def chat_endpoint(
                 detail="Access denied: You can only access your own conversations"
             )
 
+        # Additionally, verify user_id from request payload matches for extra security
+        request_user_id = request.get("user_id")
+        if request_user_id and request_user_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: User ID in request payload does not match path parameter"
+            )
+
         # Extract message and conversation_id from request
         message_content = request.get("message")
         if not message_content:

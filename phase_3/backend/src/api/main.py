@@ -1,3 +1,7 @@
+# Validate environment variables at startup
+from ..utils.env_validator import validate_environment
+validate_environment()
+
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse

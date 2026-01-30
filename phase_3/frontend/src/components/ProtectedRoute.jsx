@@ -1,17 +1,18 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useUserId } from '../contexts/AuthContext';
 
 const ProtectedRoute = ({ children, requiredPermission = null }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { hasUserId, isAuthenticated, loading } = useUserId();
 
   // Don't show loading state here since it's handled at the route level
   if (loading) {
     return children; // Let the parent route handle loading state
   }
 
-  if (!isAuthenticated) {
-    // Redirect to login page if not authenticated
+  // Check both authentication status and user ID availability
+  if (!isAuthenticated || !hasUserId) {
+    // Redirect to login page if not authenticated or user ID is not available
     return <Navigate to="/login" replace />;
   }
 

@@ -91,23 +91,43 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
+def normalize_jwt_payload(payload: dict) -> dict:
+    """Normalize JWT payload to ensure consistent user identification."""
+    normalized = {}
+
+    # Normalize user ID field - check multiple possible locations
+    normalized['user_id'] = payload.get('sub') or payload.get('user_id') or payload.get('id')
+
+    # Normalize email field
+    normalized['email'] = payload.get('email') or payload.get('user_email')
+
+    # Normalize name field
+    normalized['name'] = payload.get('name') or payload.get('user_name') or payload.get('full_name')
+
+    return normalized
+
+
 def verify_custom_token(token: str) -> User:
     """Verify a custom JWT token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
+
+        # Normalize the JWT payload to ensure consistent user identification
+        normalized_payload = normalize_jwt_payload(payload)
+
+        user_id: str = normalized_payload.get("user_id")
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
+                detail="Could not validate credentials - missing user ID",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         # Create a user object
         user = User(
             id=user_id,
-            email=payload.get("email", None),
-            name=payload.get("name", None)
+            email=normalized_payload.get("email", None),
+            name=normalized_payload.get("name", None)
         )
         return user
     except jwt.PyJWTError:
@@ -123,7 +143,7 @@ def verify_better_auth_token(token: str) -> User:
     try:
         # For serverless environments, we'll just decode the JWT locally since
         # making HTTP requests to verify tokens can cause timeouts
-        # This is a simplified approach that assumes the token is valid if it decodes properly
+        # This is a simplified approach that ensures consistent JWT payload handling
 
         # Get the Better Auth secret key
         BETTER_AUTH_SECRET = os.getenv("BETTER_AUTH_SECRET")
@@ -137,10 +157,21 @@ def verify_better_auth_token(token: str) -> User:
         # Decode the token using the Better Auth secret
         payload = jwt.decode(token, BETTER_AUTH_SECRET, algorithms=["HS256"])
 
+        # Normalize the JWT payload to ensure consistent user identification
+        normalized_payload = normalize_jwt_payload(payload)
+
+        user_id = normalized_payload.get("user_id", "")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Better Auth token missing user ID",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         user = User(
-            id=payload.get("sub", ""),
-            email=payload.get("email", ""),
-            name=payload.get("name", "")
+            id=user_id,
+            email=normalized_payload.get("email", ""),
+            name=normalized_payload.get("name", "")
         )
         return user
 
