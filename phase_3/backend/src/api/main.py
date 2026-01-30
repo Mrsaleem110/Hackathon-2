@@ -28,7 +28,9 @@ app = FastAPI(
 # BULLETPROOF CORS - Middleware approach
 # Get frontend URL from environment variable for Vercel deployments
 frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.vercel.app")
-additional_origins = os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "").split(",") if os.getenv("ADDITIONAL_ALLOWED_ORIGINS") else []
+# Support both the requested CORS_ORIGINS and legacy ADDITIONAL_ALLOWED_ORIGINS for backward compatibility
+cors_origins_env = os.getenv("CORS_ORIGINS", "") or os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
+cors_origins_list = cors_origins_env.split(",") if cors_origins_env else []
 
 cors_origins = [
     "http://localhost:5173",
@@ -51,7 +53,7 @@ cors_origins = [
     "https://hackathon-2-phase-3-backend.vercel.app",
     "https://hackathon-2-phase-3.vercel.app",
     frontend_url,
-] + [origin.strip() for origin in additional_origins if origin.strip()]
+] + [origin.strip() for origin in cors_origins_list if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
@@ -142,7 +144,7 @@ async def preflight_handler(request, full_path: str):
         if is_allowed_vercel:
             response.headers["Access-Control-Allow-Origin"] = origin
         else:
-            # Check if it's in the explicit cors_origins list
+            # Check if it's in the explicit cors_origins list (which includes env var origins)
             if origin in cors_origins:
                 response.headers["Access-Control-Allow-Origin"] = origin
     # For development, allow localhost origins dynamically
@@ -337,8 +339,11 @@ def debug_test():
 def debug_cors():
     """Debug endpoint to test CORS configuration"""
     import os
+    # Check both environment variables for compatibility
+    cors_origins_val = os.getenv("CORS_ORIGINS", "") or os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
     return {
-        "cors_allowed_origins": os.getenv("ADDITIONAL_ALLOWED_ORIGINS", ""),
+        "cors_allowed_origins": cors_origins_val,
+        "cors_env_variable_used": "CORS_ORIGINS" if os.getenv("CORS_ORIGINS") else "ADDITIONAL_ALLOWED_ORIGINS" if os.getenv("ADDITIONAL_ALLOWED_ORIGINS") else "None",
         "vercel_env": os.getenv("VERCEL_ENV"),
         "request_processing": "CORS middleware should be active",
         "allowed_origins_list": [

@@ -35,6 +35,9 @@ All code must meet production-ready quality standards. This includes proper erro
 ### Authentication-driven messaging
 System must never send a chat message without a verified authenticated userId. Frontend MUST derive userId ONLY from auth session, never from assumptions. Backend MUST reject chat requests without JWT user context. Auth state MUST be resolved before ChatKit initialization.
 
+### Cross-Origin Resource Sharing (CORS) requirements
+Backend MUST allow cross-origin requests from the deployed frontend. All auth endpoints MUST support OPTIONS preflight requests. CORS configuration MUST be environment-aware and adapt to deployment scenarios. No auth request should fail due to missing Access-Control-Allow-Origin headers. Authentication flows MUST work seamlessly across different deployment domains.
+
 ## Architecture Rules
 - Frontend MUST use OpenAI ChatKit only
 - Backend MUST use FastAPI (Python)
@@ -44,6 +47,9 @@ System must never send a chat message without a verified authenticated userId. F
 - Database MUST be Neon Serverless PostgreSQL
 - Authentication MUST use Better Auth
 - Chat endpoint MUST be stateless
+- Backend MUST support CORS for frontend deployment scenarios
+- All auth endpoints MUST support OPTIONS preflight requests
+- CORS configuration MUST be environment-aware and dynamic
 
 ## Agent Rules
 - Agent NEVER directly accesses database
@@ -66,6 +72,6 @@ System must never send a chat message without a verified authenticated userId. F
 - Must include comprehensive README
 
 ## Governance
-All development follows the spec-driven development process with clear separation of concerns. FastAPI routes handle HTTP only, business logic lives inside MCP tools, decision-making lives inside the AI agent, and database access is via SQLModel only. All write actions MUST be confirmed to the user, and errors MUST be handled gracefully. Authentication via Better Auth is mandatory, and user data MUST be scoped by user_id. Chat messaging MUST require verified authentication, with userId derived ONLY from auth session. Backend MUST validate JWT user context before processing chat requests. Auth state MUST be resolved before ChatKit initialization.
+All development follows the spec-driven development process with clear separation of concerns. FastAPI routes handle HTTP only, business logic lives inside MCP tools, decision-making lives inside the AI agent, and database access is via SQLModel only. All write actions MUST be confirmed to the user, and errors MUST be handled gracefully. Authentication via Better Auth is mandatory, and user data MUST be scoped by user_id. Chat messaging MUST require verified authentication, with userId derived ONLY from auth session. Backend MUST validate JWT user context before processing chat requests. Auth state MUST be resolved before ChatKit initialization. Backend MUST support CORS for cross-origin requests from frontend deployments, and all auth endpoints MUST support OPTIONS preflight requests to ensure seamless authentication across different deployment domains.
 
 **Version**: 2.1.0 | **Ratified**: 2026-01-06 | **Last Amended**: 2026-01-30
