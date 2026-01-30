@@ -9,6 +9,9 @@ const ChatInterface = ({ userId }) => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Check if userId is available
+  const isAuthResolved = userId !== undefined && userId !== null;
+
   // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -26,6 +29,22 @@ const ChatInterface = ({ userId }) => {
   // Function to send message to backend with MCP-compatible response handling
   const sendMessage = async (message) => {
     if (!message.trim()) return;
+
+    // Early return if userId is not available
+    if (!userId) {
+      console.warn('Cannot send message: User ID is not available');
+
+      // Add error message to the chat
+      const errorMessage = {
+        id: Date.now(),
+        role: 'system',
+        content: 'Authentication error: User ID is not available. Please refresh the page or log in again.',
+        isError: true,
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
 
     // Add user message to UI immediately
     const userMessage = {
@@ -56,11 +75,6 @@ const ChatInterface = ({ userId }) => {
 
       // Get the auth token from localStorage (as it's more reliable in async context)
       const token = localStorage.getItem('auth-token');
-
-      // Validate that we have both userId and token before making the request
-      if (!userId) {
-        throw new Error('User ID is required to send messages');
-      }
 
       if (!token) {
         throw new Error('Authentication token is missing. Please log in again.');
@@ -185,6 +199,32 @@ const ChatInterface = ({ userId }) => {
       setInputValue('');
     }
   };
+
+  // If auth is not resolved, show loading state
+  if (!isAuthResolved) {
+    return (
+      <div className="chat-interface" role="main" aria-label="Chat interface">
+        <div className="chat-header">
+          <h2 tabIndex="0">AI Assistant</h2>
+        </div>
+        <div className="messages-container" aria-live="polite" aria-label="Chat loading state">
+          <div className="loading-state" style={{ padding: '20px', textAlign: 'center' }}>
+            <p>Verifying authentication...</p>
+            <div className="spinner" style={{
+              border: '4px solid rgba(0, 0, 0, 0.1)',
+              borderTop: '4px solid #3498db',
+              borderRadius: '50%',
+              width: '30px',
+              height: '30px',
+              animation: 'spin 1s linear infinite',
+              margin: '10px auto'
+            }}></div>
+            <p>Please wait while we verify your authentication.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="chat-interface" role="main" aria-label="Chat interface">

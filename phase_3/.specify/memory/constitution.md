@@ -32,6 +32,9 @@ Conversation state MUST be persisted in the database. Database access is via SQL
 ### Production-ready code quality
 All code must meet production-ready quality standards. This includes proper error handling, testing, security considerations, and performance optimization.
 
+### Authentication-driven messaging
+System must never send a chat message without a verified authenticated userId. Frontend MUST derive userId ONLY from auth session, never from assumptions. Backend MUST reject chat requests without JWT user context. Auth state MUST be resolved before ChatKit initialization.
+
 ## Architecture Rules
 - Frontend MUST use OpenAI ChatKit only
 - Backend MUST use FastAPI (Python)
@@ -63,6 +66,6 @@ All code must meet production-ready quality standards. This includes proper erro
 - Must include comprehensive README
 
 ## Governance
-All development follows the spec-driven development process with clear separation of concerns. FastAPI routes handle HTTP only, business logic lives inside MCP tools, decision-making lives inside the AI agent, and database access is via SQLModel only. All write actions MUST be confirmed to the user, and errors MUST be handled gracefully. Authentication via Better Auth is mandatory, and user data MUST be scoped by user_id.
+All development follows the spec-driven development process with clear separation of concerns. FastAPI routes handle HTTP only, business logic lives inside MCP tools, decision-making lives inside the AI agent, and database access is via SQLModel only. All write actions MUST be confirmed to the user, and errors MUST be handled gracefully. Authentication via Better Auth is mandatory, and user data MUST be scoped by user_id. Chat messaging MUST require verified authentication, with userId derived ONLY from auth session. Backend MUST validate JWT user context before processing chat requests. Auth state MUST be resolved before ChatKit initialization.
 
-**Version**: 2.0.0 | **Ratified**: 2026-01-06 | **Last Amended**: 2026-01-06
+**Version**: 2.1.0 | **Ratified**: 2026-01-06 | **Last Amended**: 2026-01-30

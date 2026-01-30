@@ -144,6 +144,47 @@ The application is designed to be deployed with:
 - MCP Server: Containerized with Docker
 - Database: Neon Serverless PostgreSQL
 
+## Authentication Troubleshooting Guide
+
+### Common Issues and Solutions
+
+1. **Chat messages not sending / User ID missing**
+   - Verify that the auth session contains a user.id field
+   - Check that the JWT token includes proper user identification
+   - Ensure the frontend waits for complete auth state resolution before enabling chat
+
+2. **Authentication fails after deployment**
+   - Verify that environment variables are properly set in the deployment environment
+   - Check that BETTER_AUTH_URL is set correctly for your deployment
+   - Ensure CORS settings allow requests from your frontend domain
+
+3. **JWT validation errors**
+   - Verify that JWT tokens contain required fields (sub or user_id)
+   - Check that JWT secret keys match between frontend and backend
+   - Ensure token expiration times are reasonable
+
+4. **Environment variable validation**
+   - Run `npm run dev` or `npm start` to trigger frontend environment validation
+   - Check browser console for environment validation errors
+   - Verify all required VITE_* variables are set in your environment
+
+### Verification Steps
+
+1. **Frontend Auth Verification**
+   - Check that AuthContext shows user.id after login
+   - Verify ProtectedRoute waits for auth resolution
+   - Confirm ChatInterface only loads after user.id is available
+
+2. **Backend Auth Verification**
+   - Test that /chat endpoint rejects requests without valid JWT
+   - Verify JWT payload normalization works with different field names (sub vs user_id)
+   - Confirm user ID is properly extracted and validated
+
+3. **Integration Verification**
+   - Test complete auth flow from login to chat message
+   - Verify error handling when auth fails
+   - Confirm proper error messages are shown to users
+
 ## Contributing
 
 1. Fork the repository

@@ -13,6 +13,22 @@ const OpenAIChatKitUI = ({ userId, backendUrl }) => {
   const sendMessage = async (message) => {
     if (!message.trim()) return;
 
+    // Early return if userId is not available
+    if (!userId) {
+      console.warn('Cannot send message: User ID is not available');
+
+      // Add error message to the chat
+      const errorMessage = {
+        id: Date.now(),
+        role: 'system',
+        content: 'Authentication error: User ID is not available. Please refresh the page or log in again.',
+        isError: true,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
+
     // Add user message to UI immediately
     const userMessage = {
       id: Date.now(),
@@ -43,11 +59,6 @@ const OpenAIChatKitUI = ({ userId, backendUrl }) => {
       // Get the auth token from localStorage (as it's more reliable in async context)
       const token = localStorage.getItem('auth-token');
 
-      // Validate that we have both userId and token before making the request
-      if (!userId) {
-        throw new Error('User ID is required to send messages');
-      }
-
       if (!token) {
         throw new Error('Authentication token is missing. Please log in again.');
       }
@@ -63,7 +74,8 @@ const OpenAIChatKitUI = ({ userId, backendUrl }) => {
         },
         body: JSON.stringify({
           message: message,
-          conversation_id: conversationId
+          conversation_id: conversationId,
+          user_id: userId  // Explicitly include userId in the payload
         })
       });
 
