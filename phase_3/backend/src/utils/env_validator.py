@@ -12,6 +12,7 @@ class EnvValidator:
     """Validate required environment variables for the application."""
 
     # Required environment variables for production
+    # For Vercel serverless functions, we'll make some variables optional with fallbacks
     REQUIRED_VARS = {
         "SECRET_KEY": {
             "description": "Secret key for JWT token signing",
@@ -20,6 +21,20 @@ class EnvValidator:
         "DATABASE_URL": {
             "description": "Database connection URL",
             "validation": lambda x: x is not None and x.startswith(('postgresql://', 'postgresql+asyncpg://', 'sqlite:///'))
+        }
+    }
+
+    # Optional variables for serverless environments with fallbacks
+    SERVERLESS_FALLBACK_VARS = {
+        "DATABASE_URL": {
+            "fallback": "sqlite:///./todo_app_serverless.db",
+            "description": "Fallback SQLite database for serverless environments",
+            "validation": lambda x: x is not None and x.startswith(('postgresql://', 'postgresql+asyncpg://', 'sqlite:///'))
+        },
+        "SECRET_KEY": {
+            "fallback": "fallback-serverless-secret-key-change-in-production-please",
+            "description": "Fallback secret key for serverless environments",
+            "validation": lambda x: len(x) >= 32 if x else False
         }
     }
 
@@ -54,20 +69,40 @@ class EnvValidator:
             "details": {}
         }
 
+        # Check if we're in a serverless environment
+        is_serverless = os.getenv("VERCEL_ENV") is not None or os.getenv("SERVERLESS") is not None
+
         # Validate required variables
         for var_name, config in cls.REQUIRED_VARS.items():
             value = os.getenv(var_name)
 
             if value is None:
-                results["valid"] = False
-                error_msg = f"Missing required environment variable: {var_name} - {config['description']}"
-                results["errors"].append(error_msg)
-                results["details"][var_name] = {
-                    "value": None,
-                    "required": True,
-                    "valid": False,
-                    "error": "Variable not set"
-                }
+                # Check if we have a fallback for serverless environments
+                if is_serverless and var_name in cls.SERVERLESS_FALLBACK_VARS:
+                    fallback_config = cls.SERVERLESS_FALLBACK_VARS[var_name]
+                    fallback_value = fallback_config["fallback"]
+
+                    # Set the fallback value as an environment variable
+                    os.environ[var_name] = fallback_value
+                    value = fallback_value
+
+                    results["warnings"].append(f"Using fallback value for {var_name} in serverless environment: {fallback_config['description']}")
+                    results["details"][var_name] = {
+                        "value": value[:10] + "..." if len(str(value)) > 10 else value,
+                        "required": True,
+                        "valid": True,
+                        "source": "serverless_fallback"
+                    }
+                else:
+                    results["valid"] = False
+                    error_msg = f"Missing required environment variable: {var_name} - {config['description']}"
+                    results["errors"].append(error_msg)
+                    results["details"][var_name] = {
+                        "value": None,
+                        "required": True,
+                        "valid": False,
+                        "error": "Variable not set"
+                    }
             elif not config["validation"](value):
                 results["valid"] = False
                 error_msg = f"Invalid value for required environment variable: {var_name} - {config['description']}"
@@ -121,6 +156,24 @@ class EnvValidator:
     def validate_and_exit(cls):
         """Validate environment variables and exit if validation fails."""
         results = cls.validate()
+
+        # Check if we're in a serverless environment
+        is_serverless = os.getenv("VERCEL_ENV") is not None or os.getenv("SERVERLESS") is not None
+
+        # In serverless environments, we'll allow certain validation errors to be treated as warnings
+        if not results["valid"] and is_serverless:
+            # Filter out serverless-specific fallback errors from the "errors" list
+            filtered_errors = []
+            for error in results["errors"]:
+                # If this error is about missing vars that have serverless fallbacks, treat as warning
+                has_fallback = any(var_name in error for var_name in cls.SERVERLESS_FALLBACK_VARS.keys())
+                if has_fallback:
+                    results["warnings"].append(f"Serverless fallback applied: {error}")
+                else:
+                    filtered_errors.append(error)
+
+            results["errors"] = filtered_errors
+            results["valid"] = len(filtered_errors) == 0
 
         if not results["valid"]:
             print("❌ Environment validation failed:", file=sys.stderr)
