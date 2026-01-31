@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import OpenAIChatKitUI from './OpenAIChatKitUI';
-import TaskApiService from '../services/taskApi';
+import DashboardApiService from '../services/dashboardApi';
 
 const Dashboard = () => {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -22,30 +22,29 @@ const Dashboard = () => {
 
     const fetchStats = async () => {
       try {
-        console.log('Fetching dashboard stats...'); // Debug log
+        console.log('Fetching dashboard stats from API...'); // Debug log
         setLoading(true);
 
-        // Get all tasks to calculate stats
-        const tasksData = await TaskApiService.getTasks();
-        console.log('Tasks data received:', tasksData); // Debug log
+        // Get dashboard stats from API
+        const statsData = await DashboardApiService.getDashboardStats();
+        console.log('Dashboard stats received:', statsData); // Debug log
 
-        setTasks(tasksData);
-
-        // Calculate task statistics
-        const totalTasks = tasksData.length;
-        const completedTasks = tasksData.filter(task => task.completed).length;
-        const pendingTasks = tasksData.length - completedTasks;
-
-        // For now, set activeConversations to a reasonable default
-        // In a real app, this would come from a conversations API
+        // Update stats with data from API
         const newStats = {
-          totalTasks,
-          completedTasks,
-          pendingTasks,
-          activeConversations: 1  // Default to 1 for the current chat
+          totalTasks: statsData.total_tasks || 0,
+          completedTasks: statsData.completed_tasks || 0,
+          pendingTasks: statsData.pending_tasks || 0,
+          activeConversations: statsData.total_chats || 1  // Default to 1 for the current chat
         };
 
-        console.log('Calculated stats:', newStats); // Debug log
+        // Get dashboard overview to get recent tasks
+        const overviewData = await DashboardApiService.getDashboardOverview();
+        console.log('Dashboard overview received:', overviewData); // Debug log
+
+        // Set recent tasks from the overview
+        setTasks(overviewData.recent_tasks || []);
+
+        console.log('Fetched stats:', newStats); // Debug log
         setStats(newStats);
 
         setError(null);
@@ -170,27 +169,16 @@ const Dashboard = () => {
                   {error}
                 </div>
               )}
-              {stats.totalTasks > 0 ? (
-                <>
-                  {stats.completedTasks > 0 && (
-                    <div className="activity-item">
-                      <div className="activity-icon">✅</div>
-                      <div className="activity-content">
-                        <p>Completed {stats.completedTasks} task{stats.completedTasks !== 1 ? 's' : ''}</p>
-                        <span className="activity-time">Just now</span>
-                      </div>
+              {tasks && tasks.length > 0 ? (
+                tasks.map((task, index) => (
+                  <div key={`${task.id || index}`} className="activity-item">
+                    <div className="activity-icon">{task.completed ? '✅' : '📝'}</div>
+                    <div className="activity-content">
+                      <p>{task.completed ? 'Completed' : 'Created'} task: {task.title}</p>
+                      <span className="activity-time">{task.created_at ? new Date(task.created_at).toLocaleDateString() : 'Just now'}</span>
                     </div>
-                  )}
-                  {stats.pendingTasks > 0 && (
-                    <div className="activity-item">
-                      <div className="activity-icon">📝</div>
-                      <div className="activity-content">
-                        <p>You have {stats.pendingTasks} pending task{stats.pendingTasks !== 1 ? 's' : ''}</p>
-                        <span className="activity-time">Just now</span>
-                      </div>
-                    </div>
-                  )}
-                </>
+                  </div>
+                ))
               ) : (
                 <div className="activity-item">
                   <div className="activity-icon">👋</div>
@@ -221,10 +209,10 @@ const Dashboard = () => {
 
           <div className="upcoming-tasks">
             <h4>Recent Tasks</h4>
-            {stats.totalTasks > 0 ? (
+            {tasks && tasks.length > 0 ? (
               <>
                 {tasks.slice(0, 2).map((task, index) => (
-                  <div key={index} className="task-item">
+                  <div key={task.id || index} className="task-item">
                     <div className={`task-status ${task.completed ? 'completed' : 'pending'}`}></div>
                     <div className="task-info">
                       <p>{task.title}</p>
