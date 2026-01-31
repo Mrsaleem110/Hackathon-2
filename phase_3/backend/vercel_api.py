@@ -1,6 +1,7 @@
 import sys
 import os
 import logging
+from typing import Optional
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
@@ -14,15 +15,16 @@ logger.info(f"Working dir contents: {os.listdir('.')}")
 
 # Create the simplest possible FastAPI app that will definitely work
 try:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, HTTPException, Depends
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse
+    from pydantic import BaseModel
 
     # Create app with minimal setup
     app = FastAPI(
-        title="AI-Powered Todo Chatbot API - Emergency Fallback",
-        description="Minimal API that always works on Vercel",
-        version="1.0.0-emergency"
+        title="AI-Powered Todo Chatbot API - Auth Compatible",
+        description="API with essential auth routes for frontend compatibility",
+        version="1.0.0-auth-compatible"
     )
 
     # Simple CORS middleware
@@ -40,34 +42,118 @@ try:
         allow_headers=["*"],
     )
 
+    # Pydantic models for auth
+    class UserLogin(BaseModel):
+        email: str
+        password: str
+
+    class UserRegister(BaseModel):
+        email: str
+        password: str
+        name: str
+
     # Basic routes that will always work
     @app.get("/")
     def read_root():
         return {
-            "message": "Emergency fallback API is running",
+            "message": "Auth-compatible API is running",
             "status": "operational",
             "vercel_compatible": True,
-            "notes": "This is a minimal version to prevent crashes. Please configure proper environment variables."
+            "notes": "This version includes essential auth routes for frontend compatibility."
         }
 
     @app.get("/health")
     def health_check():
-        return {"status": "healthy", "service": "fallback-api", "timestamp": "now"}
+        return {"status": "healthy", "service": "auth-compatible-api", "timestamp": "now"}
 
     @app.get("/status")
     def status_check():
         return {
             "status": "operational",
-            "mode": "emergency-fallback",
+            "mode": "auth-compatible",
             "working": True,
-            "routes_count": 3  # /, /health, /status
+            "routes_count": len(app.routes)
         }
 
-    @app.get("/api/health")
-    def api_health():
-        return {"status": "operational", "service": "api", "fallback": True}
+    # Essential authentication routes for frontend compatibility
+    @app.post("/auth/login")
+    def login(user_login: UserLogin):
+        return {
+            "status": "error",
+            "message": "Auth service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True,
+            "hint": "Set DATABASE_URL and SECRET_KEY in Vercel environment variables"
+        }
 
-    logger.info("Emergency fallback API created successfully")
+    @app.post("/auth/register")
+    def register(user_register: UserRegister):
+        return {
+            "status": "error",
+            "message": "Auth service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True,
+            "hint": "Set DATABASE_URL and SECRET_KEY in Vercel environment variables"
+        }
+
+    @app.get("/auth/me")
+    def get_current_user():
+        return {
+            "status": "error",
+            "message": "Auth service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True,
+            "hint": "Set DATABASE_URL and SECRET_KEY in Vercel environment variables"
+        }
+
+    @app.post("/auth/logout")
+    def logout():
+        return {
+            "status": "success",
+            "message": "Logged out successfully"
+        }
+
+    # Task-related routes for frontend compatibility
+    @app.get("/tasks")
+    def get_tasks():
+        return {
+            "status": "error",
+            "message": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True
+        }
+
+    @app.post("/tasks")
+    def create_task():
+        return {
+            "status": "error",
+            "message": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True
+        }
+
+    # Chat-related routes for frontend compatibility
+    @app.post("/chat")
+    def chat():
+        return {
+            "status": "error",
+            "message": "Chat service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True
+        }
+
+    # Dashboard and analysis routes
+    @app.get("/dashboard/stats")
+    def dashboard_stats():
+        return {
+            "status": "error",
+            "message": "Dashboard service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True
+        }
+
+    @app.get("/analysis/user-insights")
+    def user_insights():
+        return {
+            "status": "error",
+            "message": "Analysis service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True
+        }
+
+    logger.info("Auth-compatible API created successfully")
 
 except Exception as e:
     # If even this minimal setup fails, we have a serious problem
