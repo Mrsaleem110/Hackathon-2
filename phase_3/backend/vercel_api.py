@@ -113,44 +113,59 @@ try:
     # Task-related routes for frontend compatibility
     @app.get("/tasks")
     def get_tasks():
-        return {
-            "status": "error",
-            "message": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
-            "needs_configuration": True
-        }
+        # Return an empty array to prevent "filter is not a function" error in frontend
+        return []
 
     @app.post("/tasks")
     def create_task():
         return {
+            "id": None,
+            "title": "Configuration Required",
+            "description": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
             "status": "error",
-            "message": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
-            "needs_configuration": True
+            "needs_configuration": True,
+            "message": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard."
         }
 
     # Chat-related routes for frontend compatibility
     @app.post("/chat")
     def chat():
+        # Return a structure that matches what frontend expects
         return {
-            "status": "error",
-            "message": "Chat service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
-            "needs_configuration": True
+            "response": "Chat service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "conversationId": None,
+            "timestamp": "now",
+            "needs_configuration": True,
+            "message": "Chat service temporarily unavailable. Please configure environment variables in Vercel dashboard."
         }
 
-    # Dashboard and analysis routes
+    # Dashboard and analysis routes - return data structures that match frontend expectations
     @app.get("/dashboard/stats")
     def dashboard_stats():
+        # Return the data structure that frontend expects to avoid "filter is not a function" error
         return {
-            "status": "error",
-            "message": "Dashboard service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
-            "needs_configuration": True
+            "totalTasks": 0,
+            "completedTasks": 0,
+            "pendingTasks": 0,
+            "overdueTasks": 0,
+            "tasksByPriority": [],
+            "tasksByCategory": [],
+            "weeklyProgress": [],
+            "monthlyStats": {},
+            "needsConfiguration": True,
+            "message": "Dashboard service temporarily unavailable. Please configure environment variables in Vercel dashboard."
         }
 
     @app.get("/analysis/user-insights")
     def user_insights():
+        # Return the data structure that frontend expects
         return {
-            "status": "error",
-            "message": "Analysis service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
-            "needs_configuration": True
+            "productivityInsights": [],
+            "usagePatterns": {},
+            "recommendations": [],
+            "trends": {},
+            "needsConfiguration": True,
+            "message": "Analysis service temporarily unavailable. Please configure environment variables in Vercel dashboard."
         }
 
     logger.info("Auth-compatible API created successfully")
