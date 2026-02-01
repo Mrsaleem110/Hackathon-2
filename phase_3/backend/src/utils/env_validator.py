@@ -183,11 +183,11 @@ class EnvValidator:
             sys.exit(1)
 
         if results["warnings"]:
-            print("⚠️  Environment validation warnings:")
+            print("Warning: Environment validation warnings:")
             for warning in results["warnings"]:
                 print(f"  - {warning}")
 
-        print("✅ Environment validation passed")
+        print("Environment validation passed")
         return results
 
 

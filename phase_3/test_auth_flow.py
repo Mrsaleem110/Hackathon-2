@@ -35,7 +35,7 @@ def test_auth_flow():
     token = registration_data.get('access_token')
     user = registration_data.get('user')
     
-    print(f"   ✓ Registration successful!")
+    print(f"   OK Registration successful!")
     print(f"   Token: {token[:20]}...")
     print(f"   User: {user}")
     
@@ -54,7 +54,7 @@ def test_auth_flow():
         print("   ✗ Get current user failed!")
         return False
     
-    print("   ✓ Get current user successful!")
+    print("   OK Get current user successful!")
     
     # Test 3: Create a Task
     print("\n3. Testing Create Task...")
@@ -73,7 +73,7 @@ def test_auth_flow():
         print("   ✗ Create task failed!")
         return False
     
-    print("   ✓ Create task successful!")
+    print("   OK Create task successful!")
     
     # Test 4: Get Tasks
     print("\n4. Testing Get Tasks...")
@@ -87,7 +87,7 @@ def test_auth_flow():
         print("   ✗ Get tasks failed!")
         return False
     
-    print("   ✓ Get tasks successful!")
+    print("   OK Get tasks successful!")
     
     # Test 5: Test Login with same user
     print("\n5. Testing Login...")
@@ -107,7 +107,7 @@ def test_auth_flow():
     login_data_response = response.json()
     new_token = login_data_response.get('access_token')
     
-    print("   ✓ Login successful!")
+    print("   OK Login successful!")
     print(f"   New Token: {new_token[:20]}...")
     
     # Test 6: Get tasks with new token
@@ -122,10 +122,10 @@ def test_auth_flow():
         print("   ✗ Get tasks with new token failed!")
         return False
     
-    print("   ✓ Get tasks with new token successful!")
+    print("   OK Get tasks with new token successful!")
     
     print("\n" + "=" * 60)
-    print("✓ All tests passed!")
+    print("OK All tests passed!")
     print("=" * 60)
     
     return True
