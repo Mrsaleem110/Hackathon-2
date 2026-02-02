@@ -44,7 +44,8 @@ const RegisterPage = () => {
     const result = await register(registrationData);
 
     if (result.success) {
-      navigate('/dashboard'); // Redirect to dashboard or home after registration
+      // Redirect to dashboard after successful registration
+      navigate('/dashboard');
     } else {
       setError(result.error || 'Registration failed');
     }
