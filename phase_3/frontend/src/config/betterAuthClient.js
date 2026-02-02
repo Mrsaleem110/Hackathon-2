@@ -87,8 +87,19 @@ const betterAuthAPI = {
 
         // Store token in localStorage for API requests - CRITICAL FIX
         if (tokenToStore) {
-          localStorage.setItem('auth-token', tokenToStore);
-          console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
+          // Check if the token looks like an error message instead of a proper JWT
+          // JWT tokens have 3 parts separated by dots, while error messages typically don't
+          const tokenParts = tokenToStore.split('.');
+          if (tokenParts.length === 3 && tokenParts[0].length > 0 && tokenParts[1].length > 0 && tokenParts[2].length > 0) {
+            // This looks like a proper JWT token
+            localStorage.setItem('auth-token', tokenToStore);
+            console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
+          } else {
+            // This looks like an error message, not a JWT token
+            console.error('Received error message instead of token:', tokenToStore);
+            console.error('Full response data:', data, rawData);
+            tokenToStore = null; // Don't store error messages as tokens
+          }
         } else {
           console.error('No token found in response to store:', data, rawData); // Debug log
 
@@ -98,10 +109,13 @@ const betterAuthAPI = {
               if (typeof value === 'string' && value.includes('.')) { // JWT tokens have dots
                 const parts = value.split('.');
                 if (parts.length === 3) { // JWT has 3 parts separated by dots
-                  tokenToStore = value;
-                  console.log('Found potential JWT token in field:', key);
-                  localStorage.setItem('auth-token', tokenToStore);
-                  break;
+                  // Double-check that this looks like a proper JWT and not an error message
+                  if (parts[0].length > 0 && parts[1].length > 0 && parts[2].length > 0) {
+                    tokenToStore = value;
+                    console.log('Found potential JWT token in field:', key);
+                    localStorage.setItem('auth-token', tokenToStore);
+                    break;
+                  }
                 }
               }
             }
@@ -111,9 +125,16 @@ const betterAuthAPI = {
           if (!tokenToStore) {
             // Backend returns {access_token: "...", token_type: "...", user: {...}}
             if (rawData && rawData.access_token) {
-              tokenToStore = rawData.access_token;
-              localStorage.setItem('auth-token', tokenToStore);
-              console.log('Extracted token from rawData:', tokenToStore.substring(0, 10) + '...');
+              const rawToken = rawData.access_token;
+              const rawTokenParts = rawToken.split('.');
+              if (rawTokenParts.length === 3 && rawTokenParts[0].length > 0 && rawTokenParts[1].length > 0 && rawTokenParts[2].length > 0) {
+                // This looks like a proper JWT token
+                tokenToStore = rawToken;
+                localStorage.setItem('auth-token', tokenToStore);
+                console.log('Extracted token from rawData:', tokenToStore.substring(0, 10) + '...');
+              } else {
+                console.error('Raw data contained error message instead of token:', rawToken);
+              }
             }
           }
         }
@@ -235,8 +256,19 @@ const betterAuthAPI = {
 
         // Store token in localStorage for API requests - CRITICAL FIX
         if (tokenToStore) {
-          localStorage.setItem('auth-token', tokenToStore);
-          console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
+          // Check if the token looks like an error message instead of a proper JWT
+          // JWT tokens have 3 parts separated by dots, while error messages typically don't
+          const tokenParts = tokenToStore.split('.');
+          if (tokenParts.length === 3 && tokenParts[0].length > 0 && tokenParts[1].length > 0 && tokenParts[2].length > 0) {
+            // This looks like a proper JWT token
+            localStorage.setItem('auth-token', tokenToStore);
+            console.log('Token stored in localStorage:', tokenToStore.substring(0, 10) + '...'); // Debug log
+          } else {
+            // This looks like an error message, not a JWT token
+            console.error('Received error message instead of token:', tokenToStore);
+            console.error('Full response data:', data, rawData);
+            tokenToStore = null; // Don't store error messages as tokens
+          }
         } else {
           console.error('No token found in response to store:', data, rawData); // Debug log
 
@@ -246,10 +278,13 @@ const betterAuthAPI = {
               if (typeof value === 'string' && value.includes('.')) { // JWT tokens have dots
                 const parts = value.split('.');
                 if (parts.length === 3) { // JWT has 3 parts separated by dots
-                  tokenToStore = value;
-                  console.log('Found potential JWT token in field:', key);
-                  localStorage.setItem('auth-token', tokenToStore);
-                  break;
+                  // Double-check that this looks like a proper JWT and not an error message
+                  if (parts[0].length > 0 && parts[1].length > 0 && parts[2].length > 0) {
+                    tokenToStore = value;
+                    console.log('Found potential JWT token in field:', key);
+                    localStorage.setItem('auth-token', tokenToStore);
+                    break;
+                  }
                 }
               }
             }
@@ -259,9 +294,16 @@ const betterAuthAPI = {
           if (!tokenToStore) {
             // Backend returns {access_token: "...", token_type: "...", user: {...}}
             if (rawData && rawData.access_token) {
-              tokenToStore = rawData.access_token;
-              localStorage.setItem('auth-token', tokenToStore);
-              console.log('Extracted token from rawData:', tokenToStore.substring(0, 10) + '...');
+              const rawToken = rawData.access_token;
+              const rawTokenParts = rawToken.split('.');
+              if (rawTokenParts.length === 3 && rawTokenParts[0].length > 0 && rawTokenParts[1].length > 0 && rawTokenParts[2].length > 0) {
+                // This looks like a proper JWT token
+                tokenToStore = rawToken;
+                localStorage.setItem('auth-token', tokenToStore);
+                console.log('Extracted token from rawData:', tokenToStore.substring(0, 10) + '...');
+              } else {
+                console.error('Raw data contained error message instead of token:', rawToken);
+              }
             }
           }
         }
@@ -316,8 +358,17 @@ const betterAuthAPI = {
   async getSession() {
     const token = localStorage.getItem('auth-token');
     console.log('Getting session - token exists:', !!token); // Debug log
+
     if (!token) {
       console.log('No auth token found in localStorage'); // Debug log
+      return null;
+    }
+
+    // First, validate that the token looks like a proper JWT before using it
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3 || tokenParts[0].length === 0 || tokenParts[1].length === 0 || tokenParts[2].length === 0) {
+      console.error('Invalid token format detected, removing from storage:', token); // Debug log
+      localStorage.removeItem('auth-token');
       return null;
     }
 
@@ -342,6 +393,14 @@ const betterAuthAPI = {
 
         // Check the actual structure of the response
         console.log('Session response structure:', Object.keys(data || {})); // Debug log
+
+        // Check if the response contains an error message instead of user data
+        if (data && typeof data === 'object' && (data.error || data.detail || data.message)) {
+          console.error('Session response contains error:', data.error || data.detail || data.message); // Debug log
+          // Remove invalid token
+          localStorage.removeItem('auth-token');
+          return null;
+        }
 
         // Return proper format expected by AuthContext
         // The user property might be in a different field
@@ -383,8 +442,13 @@ const betterAuthAPI = {
   },
 
   async signOut() {
-    // Just remove the token from localStorage
+    // Remove the token from localStorage
     localStorage.removeItem('auth-token');
+
+    // Also clear any related auth data that might be stored
+    localStorage.removeItem('better-auth.session_token');
+    localStorage.removeItem('better-auth.expires');
+
     return true;
   }
 };
