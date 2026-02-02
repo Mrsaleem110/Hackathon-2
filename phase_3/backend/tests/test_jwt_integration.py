@@ -6,8 +6,12 @@ from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
 # Import the main FastAPI app and auth components
-from backend.src.main import app
-from backend.src.auth import require_auth, decode_jwt_token, validate_token_payload
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from src.api.main import app
+from src.auth import require_auth, decode_jwt_token, validate_token_payload
 
 
 @pytest.fixture
