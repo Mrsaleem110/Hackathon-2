@@ -5,7 +5,11 @@ from jose import jwt
 from fastapi.testclient import TestClient
 
 # Import the main FastAPI app
-from backend.src.main import app
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from src.api.main import app
 
 
 @pytest.fixture

@@ -7,9 +7,13 @@ from jose import jwt
 from datetime import datetime, timedelta
 
 # Import the main FastAPI app
-from backend.src.main import app
-from backend.src.auth import require_auth
-from backend.src.api.chat import router as chat_router
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from src.api.main import app
+from src.auth import require_auth
+from src.api.chat import router as chat_router
 
 
 @pytest.fixture

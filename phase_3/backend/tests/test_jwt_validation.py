@@ -5,7 +5,11 @@ from jose import jwt
 from unittest.mock import patch
 
 # Import JWT utility functions from the auth module
-from backend.src.auth import decode_jwt_token, validate_token_payload
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from src.auth import decode_jwt_token, validate_token_payload
 
 
 def create_test_token(user_id: str, custom_payload: dict = None, expires_delta: timedelta = None):
