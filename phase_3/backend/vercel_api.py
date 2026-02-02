@@ -133,21 +133,23 @@ try:
     @app.get("/tasks")
     def get_tasks():
         # Return an empty array to prevent "filter is not a function" error in frontend
+        # This ensures no sample tasks appear
         return []
 
     @app.post("/tasks")
     def create_task():
+        # Return a proper response structure without sample data
         return {
-            "id": 1,
-            "title": "Sample Task",
-            "description": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
-            "status": "pending",
+            "id": None,  # Will be set by actual backend
+            "title": "",
+            "description": "",
+            "completed": False,
             "priority": "medium",
-            "dueDate": None,
-            "createdAt": "2024-01-01T00:00:00Z",
-            "updatedAt": "2024-01-01T00:00:00Z",
-            "needs_configuration": True,
-            "message": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard."
+            "due_date": None,
+            "created_at": None,
+            "updated_at": None,
+            "error": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+            "needs_configuration": True
         }
 
     @app.delete("/tasks/{task_id}")
@@ -163,7 +165,7 @@ try:
     def update_task(task_id: int):
         return {
             "id": task_id,
-            "title": "Updated Sample Task",
+            "title": "",
             "status": "updated",
             "needs_configuration": True,
             "message": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard."
