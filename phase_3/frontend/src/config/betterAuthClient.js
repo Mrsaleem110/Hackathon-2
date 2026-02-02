@@ -455,7 +455,7 @@ const betterAuthAPI = {
 
 export { betterAuthAPI as authClient };
 // 🔑 SINGLE SOURCE OF TRUTH FOR USER ID
-export function resolveUserId(session: any): string | null {
+export function resolveUserId(session) {
   if (!session) return null;
 
   const user = session.user;
