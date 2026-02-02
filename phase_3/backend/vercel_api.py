@@ -1,6 +1,7 @@
 import sys
 import os
 import logging
+import traceback
 from typing import Optional
 
 # Set up basic logging
@@ -129,47 +130,55 @@ try:
             "message": "Logged out successfully"
         }
 
+    # Import and include the modular routers to support the full API
+    try:
+        from src.api.chat import router as chat_router
+        app.include_router(chat_router)
+        logger.info("Successfully included chat router with full API routes")
+    except Exception as e:
+        logger.error(f"Failed to import/include chat router: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+
+        # Fallback: simple chat route for compatibility
+        @app.post("/chat")
+        def chat():
+            # Return a structure that matches what frontend expects
+            return {
+                "response": "Chat service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
+                "conversationId": None,
+                "timestamp": "now",
+                "needs_configuration": True,
+                "message": "Chat service temporarily unavailable. Please configure environment variables in Vercel dashboard."
+            }
+
+    # Import and include other modular routers to support the full API
+    try:
+        from src.api.tasks import router as tasks_router
+        app.include_router(tasks_router, prefix="/tasks")
+        logger.info("Successfully included tasks router with full API routes")
+    except Exception as e:
+        logger.error(f"Failed to import/include tasks router: {e}")
+
+    try:
+        from src.api.dashboard import router as dashboard_router
+        app.include_router(dashboard_router, prefix="/dashboard")
+        logger.info("Successfully included dashboard router with full API routes")
+    except Exception as e:
+        logger.error(f"Failed to import/include dashboard router: {e}")
+
+    try:
+        from src.api.analysis import router as analysis_router
+        app.include_router(analysis_router, prefix="/analysis")
+        logger.info("Successfully included analysis router with full API routes")
+    except Exception as e:
+        logger.error(f"Failed to import/include analysis router: {e}")
+
     # Task-related routes for frontend compatibility
-    @app.get("/tasks")
-    def get_tasks():
-        # Return an empty array to prevent "filter is not a function" error in frontend
-        # This ensures no sample tasks appear
-        return []
-
-    @app.post("/tasks")
-    def create_task():
-        # Return a proper response structure without sample data
-        return {
-            "id": None,  # Will be set by actual backend
-            "title": "",
-            "description": "",
-            "completed": False,
-            "priority": "medium",
-            "due_date": None,
-            "created_at": None,
-            "updated_at": None,
-            "error": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard.",
-            "needs_configuration": True
-        }
-
-    @app.delete("/tasks/{task_id}")
-    async def delete_task(task_id: int):
-        return {
-            "id": task_id,
-            "deleted": True,
-            "message": f"Task {task_id} deleted successfully (simulation)",
-            "needs_configuration": True
-        }
-
-    @app.put("/tasks/{task_id}")
-    def update_task(task_id: int):
-        return {
-            "id": task_id,
-            "title": "",
-            "status": "updated",
-            "needs_configuration": True,
-            "message": "Task service temporarily unavailable. Please configure environment variables in Vercel dashboard."
-        }
+    # NOTE: These are replaced by modular routes from src.api.tasks
+    # The modular routes are included above and provide full functionality
+    pass  # Placeholder to maintain code structure
 
     # Chat-related routes for frontend compatibility
     @app.post("/chat")
@@ -183,34 +192,9 @@ try:
             "message": "Chat service temporarily unavailable. Please configure environment variables in Vercel dashboard."
         }
 
-    # Dashboard and analysis routes - return data structures that match frontend expectations
-    @app.get("/dashboard/stats")
-    def dashboard_stats():
-        # Return the data structure that frontend expects to avoid "filter is not a function" error
-        return {
-            "totalTasks": 0,
-            "completedTasks": 0,
-            "pendingTasks": 0,
-            "overdueTasks": 0,
-            "tasksByPriority": [],
-            "tasksByCategory": [],
-            "weeklyProgress": [],
-            "monthlyStats": {},
-            "needsConfiguration": True,
-            "message": "Dashboard service temporarily unavailable. Please configure environment variables in Vercel dashboard."
-        }
-
-    @app.get("/analysis/user-insights")
-    def user_insights():
-        # Return the data structure that frontend expects
-        return {
-            "productivityInsights": [],
-            "usagePatterns": {},
-            "recommendations": [],
-            "trends": {},
-            "needsConfiguration": True,
-            "message": "Analysis service temporarily unavailable. Please configure environment variables in Vercel dashboard."
-        }
+    # Dashboard and analysis routes are handled by modular routes
+    # The modular routes are included above and provide full functionality
+    pass  # Placeholder to maintain code structure
 
     logger.info("Auth-compatible API created successfully")
 
