@@ -46,12 +46,15 @@ const ChatKitUI = ({
   const getSessionData = async () => {
     // In a real implementation, this would call the backend API
     // to get session information
+    const baseUrl = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL || '') : 'https://hackathon-2-p-3-backend.vercel.app';
     if (sessionId) {
       // Retrieve existing session
-      return await fetch(`/api/chatkit/session/${sessionId}`).then(r => r.json());
+      const url = baseUrl ? `${baseUrl}/api/chatkit/session/${sessionId}` : `/api/chatkit/session/${sessionId}`;
+      return await fetch(url).then(r => r.json());
     } else {
       // Create new session
-      return await fetch('/api/chatkit/session', {
+      const url = baseUrl ? `${baseUrl}/api/chatkit/session` : '/api/chatkit/session';
+      return await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workflowId, userId })

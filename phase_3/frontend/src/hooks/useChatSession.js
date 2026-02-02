@@ -10,7 +10,9 @@ const useChatSession = () => {
     setError(null);
 
     try {
-      const response = await fetch('/api/chatkit/session', {
+      const baseUrl = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL || '') : 'https://hackathon-2-p-3-backend.vercel.app';
+      const url = baseUrl ? `${baseUrl}/api/chatkit/session` : '/api/chatkit/session';
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,7 +43,9 @@ const useChatSession = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/chatkit/session/${sessionId}/refresh`, {
+      const baseUrl = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL || '') : 'https://hackathon-2-p-3-backend.vercel.app';
+      const url = baseUrl ? `${baseUrl}/api/chatkit/session/${sessionId}/refresh` : `/api/chatkit/session/${sessionId}/refresh`;
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
