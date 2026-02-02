@@ -10,7 +10,7 @@ const ChatInterface = ({ userId }) => {
   const inputRef = useRef(null);
 
   // Check if userId is available
-  const isAuthResolved = userId !== undefined && userId !== null;
+  const isAuthResolved = userId !== undefined && userId !== null && userId !== '';
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -31,7 +31,7 @@ const ChatInterface = ({ userId }) => {
     if (!message.trim()) return;
 
     // Early return if userId is not available
-    if (!userId) {
+    if (!userId || userId === '') {
       console.warn('Cannot send message: User ID is not available');
 
       // Add error message to the chat
