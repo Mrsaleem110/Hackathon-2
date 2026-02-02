@@ -2,11 +2,11 @@
  * API service for task operations - For FastAPI backend (NOT Better Auth)
  * Better Auth is handled separately via authClient
  */
-// Use relative paths in production to leverage Vercel rewrites, absolute URLs in development
+// Always use the backend URL in production to ensure API calls reach the correct server
 const isDevelopment = import.meta.env.DEV;
 const API_BASE_URL = isDevelopment
   ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001')
-  : ''; // Use relative paths in production to leverage Vercel rewrites
+  : 'https://hackathon-2-p-3-backend.vercel.app'; // Use absolute backend URL in production
 
 class TaskApiService {
   static async getAuthHeaders() {
