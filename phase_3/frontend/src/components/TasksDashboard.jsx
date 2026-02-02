@@ -72,12 +72,16 @@ const TasksDashboard = () => {
     e.preventDefault();
     if (newTask.title.trim()) {
       try {
+        // Set due date to a reasonable default (today or tomorrow) instead of just today
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 1); // Tomorrow by default
+
         const taskData = {
-          title: newTask.title,
-          description: newTask.description,
+          title: newTask.title.trim(), // Ensure no leading/trailing whitespace
+          description: newTask.description.trim(),
           priority: newTask.priority,
           completed: false,
-          due_date: new Date().toISOString().split('T')[0]  // Use the correct field name expected by backend
+          due_date: dueDate.toISOString().split('T')[0]  // Use the correct field name expected by backend
         };
 
         const newTaskResult = await TaskApiService.createTask(taskData);
@@ -91,6 +95,9 @@ const TasksDashboard = () => {
 
         setTasks([...tasks, normalizedTask]);
         setNewTask({ title: '', description: '', priority: 'medium' });
+
+        // Show success message
+        setError(null); // Clear any previous errors
       } catch (err) {
         setError('Failed to create task. Please try again.');
         console.error('Error creating task:', err);

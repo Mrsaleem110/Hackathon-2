@@ -143,7 +143,7 @@ const Dashboard = () => {
         {/* Main Content Area */}
         <div className="dashboard-content-area">
           <div className="welcome-section">
-            <h2>Welcome back, {user?.name || user?.email || 'User'}!</h2>
+            <h2>Welcome {user?.name || user?.email || 'User'}!</h2>
             <p>How can I help you today?</p>
           </div>
 

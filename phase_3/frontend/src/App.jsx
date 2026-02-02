@@ -7,6 +7,7 @@ import ChatInterface from './components/ChatInterface';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import LandingPage from './pages/LandingPage';
 import DashboardLayout from './components/DashboardLayout';
 import Dashboard from './components/Dashboard';
 import TasksDashboard from './components/TasksDashboard';
@@ -67,15 +68,29 @@ const MainApp = () => {
         </PublicRoute>
       } />
 
+      {/* Public route - landing page accessible to all users */}
+      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
+
       {/* Protected routes - only accessible when authenticated */}
-      <Route path="/" element={!user ? <Navigate to="/login" replace /> : <Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={user ? <ProtectedLayout user={user}><Dashboard /></ProtectedLayout> : <Navigate to="/login" replace />} />
       <Route path="/tasks" element={user ? <ProtectedLayout user={user}><TasksDashboard /></ProtectedLayout> : <Navigate to="/login" replace />} />
       <Route path="/analytics" element={user ? <ProtectedLayout user={user}><AnalyticsDashboard /></ProtectedLayout> : <Navigate to="/login" replace />} />
       <Route path="/chat" element={user && user.id ? <ProtectedLayout user={user}><ChatInterface userId={user.id} /></ProtectedLayout> : <Navigate to="/login" replace />} />
 
-      {/* Catch-all route for undefined paths - redirect to dashboard if authenticated, login if not */}
-      <Route path="*" element={!user ? <Navigate to="/login" replace /> : <Navigate to="/dashboard" replace />} />
+      {/* Public routes - accessible when not authenticated */}
+      <Route path="/login" element={
+        <PublicRoute>
+          <LoginPage />
+        </PublicRoute>
+      } />
+      <Route path="/register" element={
+        <PublicRoute>
+          <RegisterPage />
+        </PublicRoute>
+      } />
+
+      {/* Catch-all route for undefined paths - redirect to dashboard if authenticated, home if not */}
+      <Route path="*" element={!user ? <Navigate to="/" replace /> : <Navigate to="/dashboard" replace />} />
     </Routes>
   );
 };
