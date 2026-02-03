@@ -2,11 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "better_auth_fixed.js",
+      "src": "better_auth_debug.js",
       "use": "@vercel/node"
     }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/better_auth_fixed.js" }
+    { "source": "/(.*)", "destination": "/better_auth_debug.js" }
   ]
 }
