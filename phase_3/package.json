@@ -2,9 +2,9 @@
   "name": "todo-ai-chatbot-hybrid",
   "version": "1.0.0",
   "description": "Todo AI Chatbot with Better Auth and FastAPI backend",
-  "main": "better_auth_fixed.js",
+  "main": "better_auth_debug.js",
   "scripts": {
-    "start": "node better_auth_fixed.js",
+    "start": "node better_auth_debug.js",
     "dev": "nodemon better_auth_server.js",
     "dev-all": "concurrently \"npm run dev\" \"cd backend && uvicorn src.api.main:app --reload --port 8001\"",
     "build": "cd frontend && npm ci && npm run build"
