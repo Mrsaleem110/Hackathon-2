@@ -28,16 +28,26 @@ try:
         version="1.0.0-auth-compatible"
     )
 
-    # Simple CORS middleware
+    # Enhanced CORS middleware
+    frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.vercel.app")
+    cors_origins_env = os.getenv("CORS_ORIGINS", "") or os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
+    cors_origins_list = cors_origins_env.split(",") if cors_origins_env else []
+
+    cors_origins = [
+        "http://localhost:5173", "http://localhost:3000", "http://localhost:8000",
+        "http://127.0.0.1:5173", "http://127.0.0.1:3000", "http://127.0.0.1:8000",
+        "https://hackathon-2-p-3-frontend.vercel.app",
+        "https://hackathon-2-p-3-backend.vercel.app",
+        "https://*.vercel.app",  # Wildcard for all Vercel deployments
+        frontend_url,
+    ] + [origin.strip() for origin in cors_origins_list if origin.strip()]
+
+    # Remove duplicates while preserving order
+    cors_origins = list(dict.fromkeys(cors_origins))
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173", "http://localhost:3000", "http://localhost:8000",
-            "http://127.0.0.1:5173", "http://127.0.0.1:3000", "http://127.0.0.1:8000",
-            "https://hackathon-2-p-3-frontend.vercel.app",
-            "https://hackathon-2-p-3-backend.vercel.app",
-            os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.vercel.app")
-        ],
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

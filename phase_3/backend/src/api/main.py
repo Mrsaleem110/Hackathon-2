@@ -32,6 +32,7 @@ frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.verce
 cors_origins_env = os.getenv("CORS_ORIGINS", "") or os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
 cors_origins_list = cors_origins_env.split(",") if cors_origins_env else []
 
+# Ensure we always include the main frontend URL regardless of environment variables
 cors_origins = [
     "http://localhost:5173",
     "http://localhost:5174",
@@ -52,8 +53,12 @@ cors_origins = [
     "https://hackathon-2-p-3-backend.vercel.app",
     "https://hackathon-2-phase-3-backend.vercel.app",
     "https://hackathon-2-phase-3.vercel.app",
+    "https://*.vercel.app",  # Wildcard for all Vercel deployments
     frontend_url,
 ] + [origin.strip() for origin in cors_origins_list if origin.strip()]
+
+# Remove duplicates while preserving order
+cors_origins = list(dict.fromkeys(cors_origins))
 
 app.add_middleware(
     CORSMiddleware,
@@ -129,6 +134,7 @@ async def preflight_handler(request, full_path: str):
     # Check if the request is from a Vercel preview deployment (dynamic subdomains)
     if origin and ".vercel.app" in origin:
         # For Vercel deployments, allow the specific origin if it matches our domain patterns
+        # Or if it matches the wildcard pattern
         allowed_vercel_domains = [
             "hackathon-2-p-3-frontend.vercel.app",
             "hackathon-2-p-3-backend.vercel.app",
@@ -141,12 +147,11 @@ async def preflight_handler(request, full_path: str):
         # Check if the origin ends with one of our allowed domains
         is_allowed_vercel = any(origin.endswith(domain) for domain in allowed_vercel_domains)
 
-        if is_allowed_vercel:
+        # Also check if any of our cors_origins contain a wildcard that matches
+        wildcard_match = any(cors_origin.startswith("https://*.") and origin.endswith(cors_origin[8:]) for cors_origin in cors_origins if cors_origin.startswith("https://*."))
+
+        if is_allowed_vercel or wildcard_match or origin in cors_origins:
             response.headers["Access-Control-Allow-Origin"] = origin
-        else:
-            # Check if it's in the explicit cors_origins list (which includes env var origins)
-            if origin in cors_origins:
-                response.headers["Access-Control-Allow-Origin"] = origin
     # For development, allow localhost origins dynamically
     elif origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
         response.headers["Access-Control-Allow-Origin"] = origin
@@ -157,7 +162,7 @@ async def preflight_handler(request, full_path: str):
 
     # Additional headers that are important for authentication
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By, Set-Cookie"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Max-Age"] = "86400"  # Cache preflight for 24 hours
     return response
@@ -184,7 +189,10 @@ async def cors_and_content_type_middleware(request: Request, call_next):
 
             is_allowed_vercel = any(origin.endswith(domain) for domain in allowed_vercel_domains)
 
-            if is_allowed_vercel or origin in cors_origins:
+            # Check for wildcard pattern match
+            wildcard_match = any(cors_origin.startswith("https://*.") and origin.endswith(cors_origin[8:]) for cors_origin in cors_origins if cors_origin.startswith("https://*."))
+
+            if is_allowed_vercel or wildcard_match or origin in cors_origins:
                 response.headers["Access-Control-Allow-Origin"] = origin
         elif origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
             response.headers["Access-Control-Allow-Origin"] = origin
@@ -192,7 +200,7 @@ async def cors_and_content_type_middleware(request: Request, call_next):
             response.headers["Access-Control-Allow-Origin"] = origin
 
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By, Set-Cookie"
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Max-Age"] = "86400"
         return response
@@ -216,7 +224,10 @@ async def cors_and_content_type_middleware(request: Request, call_next):
 
             is_allowed_vercel = any(origin.endswith(domain) for domain in allowed_vercel_domains)
 
-            if is_allowed_vercel or origin in cors_origins:
+            # Check for wildcard pattern match
+            wildcard_match = any(cors_origin.startswith("https://*.") and origin.endswith(cors_origin[8:]) for cors_origin in cors_origins if cors_origin.startswith("https://*."))
+
+            if is_allowed_vercel or wildcard_match or origin in cors_origins:
                 response.headers["Access-Control-Allow-Origin"] = origin
         elif origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
             response.headers["Access-Control-Allow-Origin"] = origin
@@ -224,7 +235,7 @@ async def cors_and_content_type_middleware(request: Request, call_next):
             response.headers["Access-Control-Allow-Origin"] = origin
 
         response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Requested-With, X-Total-Count, X-Content-Type-Options, X-Frame-Options, X-Powered-By, Set-Cookie"
 
         # If response doesn't have a content-type or it's not JSON, and it's an API endpoint, set it to JSON
         content_type = response.headers.get('content-type', '')
@@ -259,7 +270,10 @@ async def cors_and_content_type_middleware(request: Request, call_next):
 
             is_allowed_vercel = any(origin.endswith(domain) for domain in allowed_vercel_domains)
 
-            if is_allowed_vercel or origin in cors_origins:
+            # Check for wildcard pattern match
+            wildcard_match = any(cors_origin.startswith("https://*.") and origin.endswith(cors_origin[8:]) for cors_origin in cors_origins if cors_origin.startswith("https://*."))
+
+            if is_allowed_vercel or wildcard_match or origin in cors_origins:
                 error_response.headers["Access-Control-Allow-Origin"] = origin
         elif origin and (origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")):
             error_response.headers["Access-Control-Allow-Origin"] = origin
