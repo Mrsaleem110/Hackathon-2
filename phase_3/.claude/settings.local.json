@@ -8,7 +8,9 @@
       "Bash(dir backendrequirements-*.txt)",
       "Bash(dir backend/)",
       "Bash(dir backendvercel.json)",
-      "Bash(python -c \"from src.utils.env_validator import validate_environment; validate_environment\\(\\)\")"
+      "Bash(python -c \"from src.utils.env_validator import validate_environment; validate_environment\\(\\)\")",
+      "Bash(copy backendvercel_crash_fix.json backendvercel.json)",
+      "Bash(copy \"C:\\\\Users\\\\Chohan Laptop''s\\\\Documents\\\\GitHub\\\\Hackathon-2\\\\phase_3\\\\backend\\\\vercel_crash_fix.json\" \"C:\\\\Users\\\\Chohan Laptop''s\\\\Documents\\\\GitHub\\\\Hackathon-2\\\\phase_3\\\\backend\\\\vercel.json\")"
     ]
   }
 }
