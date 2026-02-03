@@ -1,25 +1,25 @@
 // FastAPI Auth API client (replacing Better Auth with custom JWT auth)
-// Use relative paths in development to leverage Vite proxy, absolute URLs in development when explicitly configured
+// Use direct backend URL for auth endpoints to avoid CORS issues with Vercel rewrites
 const isDevelopment = import.meta.env.DEV;
 
-// Fallback to a default backend URL if none is provided in production
-const getApiBaseUrl = () => {
+// Use direct backend URL for auth endpoints to ensure proper CORS handling
+const getDirectAuthBaseUrl = () => {
   if (isDevelopment) {
-    return import.meta.env.VITE_API_BASE_URL || '';
+    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
   } else {
-    // In production, use the environment variable or fall back to the deployed backend
+    // In production, always use the direct backend URL for auth endpoints
     return import.meta.env.VITE_API_BASE_URL || 'https://hackathon-2-p-3-backend.vercel.app';
   }
 };
 
-const apiBaseURL = getApiBaseUrl();
+const authApiBaseURL = getDirectAuthBaseUrl();
 
-// API wrapper for FastAPI auth endpoints
+// API wrapper for FastAPI auth endpoints - using direct backend URL
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
-    const url = apiBaseURL ? `${apiBaseURL}/auth/register` : '/auth/register';
+    const url = `${authApiBaseURL}/auth/register`;
     console.log('Making registration request to:', url); // Debug log
-    console.log('API Base URL:', apiBaseURL); // Debug log
+    console.log('Auth API Base URL:', authApiBaseURL); // Debug log
 
     const response = await fetch(url, {
       method: 'POST',
@@ -187,9 +187,9 @@ const betterAuthAPI = {
   },
 
   async signInEmail({ email, password }) {
-    const url = apiBaseURL ? `${apiBaseURL}/auth/login` : '/auth/login';
+    const url = `${authApiBaseURL}/auth/login`;
     console.log('Making login request to:', url); // Debug log
-    console.log('API Base URL:', apiBaseURL); // Debug log
+    console.log('Auth API Base URL:', authApiBaseURL); // Debug log
 
     const response = await fetch(url, {
       method: 'POST',
@@ -373,7 +373,7 @@ const betterAuthAPI = {
     }
 
     console.log('Getting session with token'); // Debug log
-    const url = apiBaseURL ? `${apiBaseURL}/auth/me` : '/auth/me';
+    const url = `${authApiBaseURL}/auth/me`;
     console.log('Session URL:', url); // Debug log
 
     try {
