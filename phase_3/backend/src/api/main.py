@@ -1,6 +1,15 @@
-# Validate environment variables at startup
-from ..utils.env_validator import validate_environment
-validate_environment()
+# Validate environment variables at startup (make it more resilient for Vercel)
+try:
+    from ..utils.env_validator import validate_environment
+    validate_environment()
+except ImportError as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Environment validator import failed: {e}. This may be expected in some serverless environments.")
+except Exception as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error(f"Environment validation failed: {e}. Continuing with existing environment variables.")
 
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -301,7 +310,16 @@ except ImportError as e:
     logger.error(f"Import error during app initialization: {e}")
 
 # Only include the startup event if not in serverless environment
-if os.getenv("VERCEL_ENV") is None:
+# Expanded serverless detection to handle various Vercel configurations
+is_serverless_env = (
+    os.getenv("VERCEL") == "1" or
+    os.getenv("VERCEL_ENV") is not None or
+    os.getenv("SERVERLESS") is not None or
+    os.getenv("NOW_BUILDER") is not None or
+    os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None
+)
+
+if not is_serverless_env:
     @app.on_event("startup")
     async def startup_event():
         """Create database tables on startup"""
