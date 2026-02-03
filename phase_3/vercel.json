@@ -2,12 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distPath": "dist",
-        "rootDir": "frontend"
-      }
+      "src": "better_auth_fixed.js",
+      "use": "@vercel/node"
     }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/better_auth_fixed.js" }
   ]
 }
