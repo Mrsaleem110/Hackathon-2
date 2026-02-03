@@ -70,7 +70,12 @@ class EnvValidator:
         }
 
         # Check if we're in a serverless environment
-        is_serverless = os.getenv("VERCEL_ENV") is not None or os.getenv("SERVERLESS") is not None
+        is_serverless = (
+            os.getenv("VERCEL_ENV") is not None or
+            os.getenv("SERVERLESS") is not None or
+            os.getenv("VERCEL") == "1" or  # Newer Vercel detection
+            os.getenv("NOW_BUILDER") is not None  # Legacy Vercel detection
+        )
 
         # Validate required variables
         for var_name, config in cls.REQUIRED_VARS.items():
@@ -158,7 +163,12 @@ class EnvValidator:
         results = cls.validate()
 
         # Check if we're in a serverless environment
-        is_serverless = os.getenv("VERCEL_ENV") is not None or os.getenv("SERVERLESS") is not None
+        is_serverless = (
+            os.getenv("VERCEL_ENV") is not None or
+            os.getenv("SERVERLESS") is not None or
+            os.getenv("VERCEL") == "1" or  # Newer Vercel detection
+            os.getenv("NOW_BUILDER") is not None  # Legacy Vercel detection
+        )
 
         # In serverless environments, we'll allow certain validation errors to be treated as warnings
         if not results["valid"] and is_serverless:
