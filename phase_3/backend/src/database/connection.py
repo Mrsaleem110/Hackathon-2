@@ -3,14 +3,23 @@ from typing import Generator
 import os
 
 # Database URL from environment - use NeonDB as required
-NEON_DB_URL = os.getenv("NEON_DATABASE_URL")
-DATABASE_URL = NEON_DB_URL or os.getenv("DATABASE_URL", "sqlite:///./todo_chatbot_local.db")
+NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL")
+DATABASE_URL = NEON_DATABASE_URL or os.getenv("DATABASE_URL", "sqlite:///./todo_chatbot_local.db")
 
 # If using NeonDB, ensure SSL is properly configured
 if DATABASE_URL and "neon.tech" in DATABASE_URL:
     # Ensure the NeonDB URL has proper SSL parameters
     if "?sslmode=" not in DATABASE_URL:
-        DATABASE_URL += "?sslmode=require"
+        if "?" in DATABASE_URL:
+            DATABASE_URL += "&sslmode=require"
+        else:
+            DATABASE_URL += "?sslmode=require"
+    # Also add other Neon-specific parameters that might be needed
+    if "options=" not in DATABASE_URL:
+        if "?" in DATABASE_URL and "&options=" not in DATABASE_URL:
+            DATABASE_URL += "&options=--statement_timeout%3D30000ms"
+        elif "?" not in DATABASE_URL:
+            DATABASE_URL += "?options=--statement_timeout%3D30000ms"
 
 # Create engine with serverless-friendly settings
 def get_engine():

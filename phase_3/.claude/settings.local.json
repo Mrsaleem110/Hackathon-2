@@ -3,7 +3,12 @@
     "allow": [
       "Bash(curl -X GET http://localhost:8001/tasks/ -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMWIzODIxNC03ZDIwLTQ2NWUtYjg3Mi05YTBiNmQ0NGU1Y2IiLCJlbWFpbCI6InRlc3QyQHRlc3QuY29tIiwibmFtZSI6IlRlc3QgVXNlciAyIiwiZXhwIjoxNzY4NTY3ODQyfQ.r-gU4JCnSBy0JHOX_dAqJJjzht0f-gIIq1RO3XkF3iA\" --max-time 15)",
       "Bash(python db_test.py)",
-      "Bash(dir \"C:\\\\Users\\\\Chohan Laptop''s\\\\Documents\\\\GitHub\\\\Hackathon-2\\\\phase_3\\\\backend\" /s)"
+      "Bash(dir \"C:\\\\Users\\\\Chohan Laptop''s\\\\Documents\\\\GitHub\\\\Hackathon-2\\\\phase_3\\\\backend\" /s)",
+      "Bash(dir vercel.json next.config.js package.json)",
+      "Bash(dir backendrequirements-*.txt)",
+      "Bash(dir backend/)",
+      "Bash(dir backendvercel.json)",
+      "Bash(python -c \"from src.utils.env_validator import validate_environment; validate_environment\\(\\)\")"
     ]
   }
 }
