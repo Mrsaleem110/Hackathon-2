@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "app_crash_fix.py",
+      "src": "app_static_handling.py",
       "use": "@vercel/python",
       "config": {
         "runtime": "python3.11",
@@ -13,23 +13,23 @@
   "routes": [
     {
       "src": "/api/auth/(.*)",
-      "dest": "app_crash_fix.py"
+      "dest": "app_static_handling.py"
     },
     {
       "src": "/auth/(.*)",
-      "dest": "app_crash_fix.py"
+      "dest": "app_static_handling.py"
     },
     {
       "src": "/api/(.*)",
-      "dest": "app_crash_fix.py"
+      "dest": "app_static_handling.py"
     },
     {
       "src": "/(.*)",
-      "dest": "app_crash_fix.py"
+      "dest": "app_static_handling.py"
     }
   ],
   "functions": {
-    "app_crash_fix.py": {
+    "app_static_handling.py": {
       "maxDuration": 60,
       "memory": 1024
     }
