@@ -1,4 +1,4 @@
-# Vercel entry point for FastAPI application
+# Minimal Vercel entry point for FastAPI application
 import sys
 import os
 import logging
@@ -19,21 +19,9 @@ try:
     if not os.getenv("BETTER_AUTH_SECRET"):
         os.environ["BETTER_AUTH_SECRET"] = "fallback-better-auth-secret-change-in-production"
 
-    # Ensure VERCEL environment detection
+    # Force VERCEL environment detection
     os.environ["VERCEL_ENV"] = os.environ.get("VERCEL_ENV", "development")
     os.environ["VERCEL"] = os.environ.get("VERCEL", "1")
-    os.environ["DEBUG"] = os.environ.get("DEBUG", "false")
-
-    # Import the environment validator but handle it gracefully
-    try:
-        from src.utils.env_validator import validate_environment
-        validate_environment()
-    except Exception as e:
-        logger.warning(f"Environment validation failed: {e}. Using fallback values.")
-        # Set fallback values if validation fails
-        os.environ.setdefault("SECRET_KEY", "fallback-vercel-secret-key-change-in-production-please-make-it-at-least-32-chars-long")
-        os.environ.setdefault("DATABASE_URL", "sqlite:///./vercel_fallback.db")
-        os.environ.setdefault("BETTER_AUTH_SECRET", "fallback-better-auth-secret-change-in-production")
 
     # Import the FastAPI app from the main module with error handling
     from src.api.main import app
@@ -44,6 +32,10 @@ except ImportError as e:
     logger.error(f"Import error: {e}")
     # Create a minimal app as fallback
     from fastapi import FastAPI
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
     app = FastAPI(title="Minimal API Fallback", description="Fallback API for Vercel deployment")
 
