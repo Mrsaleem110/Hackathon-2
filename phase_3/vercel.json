@@ -2,11 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "better_auth_final.js",
-      "use": "@vercel/node"
+      "src": "backend/app.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python3.11",
+        "installCommand": "pip install -r backend/requirements-vercel.txt"
+      }
     }
   ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/better_auth_final.js" }
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "backend/app.py"
+    }
   ]
 }
