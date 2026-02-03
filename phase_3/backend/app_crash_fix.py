@@ -31,6 +31,7 @@ try:
 
     # Try to import and include main functionality if possible
     try:
+        # Add CORS middleware to handle frontend requests
         from fastapi.middleware.cors import CORSMiddleware
 
         app.add_middleware(
