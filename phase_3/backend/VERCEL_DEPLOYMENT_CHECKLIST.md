@@ -1,60 +1,58 @@
-# Vercel Backend Deployment Checklist
-
-This document provides a step-by-step checklist to successfully deploy the backend to Vercel and resolve common issues.
+# Vercel Deployment Checklist for FastAPI + Neon + Better Auth
 
 ## Pre-Deployment Checklist
 
 ### 1. Environment Variables Setup
-Before deploying, ensure the following environment variables are properly configured:
-
-**Required Variables:**
-- `DATABASE_URL`: PostgreSQL database connection string (e.g., `postgresql://username:password@host:port/database`)
-- `SECRET_KEY`: Strong secret key for JWT token signing (at least 32 characters)
-- `BETTER_AUTH_SECRET`: Secret for authentication (at least 32 characters)
-
-**Optional Variables:**
-- `OPENAI_API_KEY`: Your OpenAI API key (required for AI features)
-- `FRONTEND_URL`: Your frontend URL (e.g., `https://your-frontend.vercel.app`)
+- [ ] `NEON_DATABASE_URL`: PostgreSQL connection string from Neon
+- [ ] `SECRET_KEY`: At least 32 characters long (for JWT)
+- [ ] `BETTER_AUTH_SECRET`: At least 32 characters long (for Better Auth)
+- [ ] `BETTER_AUTH_URL`: Your Vercel backend URL
+- [ ] `FRONTEND_URL`: Your frontend URL
+- [ ] `OPENAI_API_KEY`: (optional) for AI features
 
 ### 2. Security Checks
-- [ ] SECRET_KEY is at least 32 characters long
-- [ ] BETTER_AUTH_SECRET is at least 32 characters long
+- [ ] All secrets are at least 32 characters long
 - [ ] No hardcoded secrets in the codebase
-- [ ] Database connection string is properly formatted
+- [ ] Database URL is properly formatted
+- [ ] SSL is enabled for database connections
 
 ### 3. Dependencies Verification
 - [ ] `requirements-vercel.txt` contains all necessary packages
-- [ ] No conflicting dependencies
-- [ ] Python runtime is set to 3.11 in `vercel.json`
+- [ ] Python runtime set to 3.11 in `vercel.json`
+- [ ] All dependencies compatible with Vercel
+
+### 4. Better Auth Integration
+- [ ] Better Auth server is configured separately (if using)
+- [ ] JWT validation works with Better Auth tokens
+- [ ] Callback endpoints are properly configured
 
 ## Deployment Steps
 
-### Step 1: Prepare the Repository
+### Step 1: Verify Local Setup
 ```bash
 # Navigate to backend directory
 cd backend
 
-# Verify environment variables are set
+# Test environment validation
 python -c "from src.utils.env_validator import validate_environment; validate_environment()"
 ```
 
-### Step 2: Link to Vercel Project
+### Step 2: Install Vercel CLI
 ```bash
-# Install Vercel CLI if not already installed
 npm install -g vercel
-
-# Link your project to Vercel
-vercel
 ```
 
 ### Step 3: Set Environment Variables in Vercel Dashboard
 1. Go to your Vercel dashboard
 2. Select your backend project
 3. Navigate to Settings → Environment Variables
-4. Add the required environment variables listed above
+4. Add all required environment variables listed above
 
-### Step 4: Deploy to Production
+### Step 4: Deploy
 ```bash
+# Deploy to preview
+vercel
+
 # Deploy to production
 vercel --prod
 ```
@@ -64,110 +62,87 @@ vercel --prod
 ### 1. Health Check
 Visit `https://your-project-name.vercel.app/health` to verify the API is operational.
 
-### 2. CORS Test
-Test CORS headers by making a request from your frontend domain to verify cross-origin requests work properly.
-
-### 3. Authentication Test
-Test the authentication endpoints:
+### 2. Authentication Test
+Test authentication endpoints:
 - `POST /auth/login`
 - `POST /auth/register`
 - `GET /auth/me`
 
-### 4. API Endpoints Test
-Verify that all major API endpoints are working:
-- `/tasks` endpoints
-- `/chat` endpoints
-- `/dashboard` endpoints
-- `/analysis` endpoints
+### 3. Database Connection
+- Verify that database operations work properly
+- Test creating and retrieving data
 
-## Troubleshooting Common Issues
+### 4. Better Auth Integration
+- Test JWT token validation
+- Verify compatibility with Better Auth tokens
+
+### 5. CORS Configuration
+- Test cross-origin requests from your frontend
+- Verify preflight requests work properly
+
+## Common Issues and Solutions
 
 ### Issue: Environment Variables Not Loading
 **Symptoms:**
 - Database connection errors
 - Authentication failures
-- Validation errors
 
 **Solution:**
-1. Double-check that all required environment variables are set in the Vercel dashboard
-2. Verify variable names match exactly (case-sensitive)
-3. Check that variables are set for the correct environment (production vs preview)
+1. Verify all required environment variables are set in Vercel dashboard
+2. Check variable names match exactly (case-sensitive)
+3. Ensure variables are set for the correct environment (production vs preview)
+
+### Issue: Database Connection Failures
+**Symptoms:**
+- 500 errors on database-dependent endpoints
+- Connection timeouts
+
+**Solution:**
+1. Verify `NEON_DATABASE_URL` is correctly formatted
+2. Check Neon database settings allow external connections
+3. Ensure the database credentials are correct
+
+### Issue: Authentication Problems
+**Symptoms:**
+- Login/register not working
+- JWT validation failing
+
+**Solution:**
+1. Ensure `SECRET_KEY` and `BETTER_AUTH_SECRET` are properly set
+2. Verify they are at least 32 characters long
+3. Check JWT token format and validation logic
 
 ### Issue: CORS Errors
 **Symptoms:**
 - Cross-origin requests failing
-- Preflight requests returning errors
+- Preflight requests blocked
 
 **Solution:**
-1. Ensure `FRONTEND_URL` is set to your frontend deployment URL
-2. Check that the CORS configuration in `main.py` includes your frontend domain
-3. Verify that your frontend is making requests to the correct backend URL
+1. Ensure `FRONTEND_URL` is set correctly
+2. Verify CORS configuration in `main.py`
+3. Check that frontend is making requests to correct backend URL
 
-### Issue: Database Connection Failures
-**Symptoms:**
-- Database errors in logs
-- API endpoints returning 500 errors
-- Authentication not working
-
-**Solution:**
-1. Verify the `DATABASE_URL` is correctly formatted
-2. Check that your database provider allows connections from Vercel IP ranges
-3. Ensure the database credentials are correct
-4. Test the database connection string separately
-
-### Issue: Build Failures
-**Symptoms:**
-- Deployment fails during build step
-- Package installation errors
-- Python runtime compatibility issues
-
-**Solution:**
-1. Verify `requirements-vercel.txt` contains all necessary dependencies
-2. Check that the Python runtime in `vercel.json` matches your local version
-3. Ensure all dependencies are compatible with Vercel's build environment
-4. Look for specific error messages in the build logs
-
-## Configuration Files Overview
-
-### `vercel.json`
-Configures the Vercel deployment with:
-- Python runtime (3.11)
-- Build command using `requirements-vercel.txt`
-- Route configuration for FastAPI
-
-### `requirements-vercel.txt`
-Production dependencies specifically for Vercel deployment, including:
-- FastAPI framework
-- Database drivers (PostgreSQL)
-- Authentication libraries
-- AI integration libraries
-
-### `src/utils/env_validator.py`
-Validates environment variables at startup and provides:
-- Serverless-compatible fallback values
-- Security checks for required variables
-- Detailed error messages for troubleshooting
-
-### `src/api/main.py`
-Main FastAPI application with:
-- Comprehensive CORS configuration
-- Error handling with proper response formats
-- Dynamic origin detection for Vercel deployments
-- Middleware for request processing
-
-## Best Practices for Vercel Deployment
-
-1. **Environment Variables:** Always use Vercel's environment variable system rather than local `.env` files
-2. **Secret Keys:** Generate strong, random secret keys for production deployments
-3. **Database Connections:** Use connection pooling appropriate for serverless environments
-4. **Error Handling:** Implement proper error responses that work well in serverless context
-5. **Logging:** Use structured logging for easier debugging in production
-6. **Testing:** Thoroughly test all endpoints after deployment
-
-## Rollback Procedure
+## Rollback Plan
 
 If deployment issues occur:
-1. Identify the problematic changes from the deployment logs
-2. Revert the code changes in your repository
-3. Trigger a new deployment to revert to a working state
-4. Alternatively, use Vercel's deployment history to rollback to a previous version
+1. Identify the problematic changes from deployment logs
+2. Revert code changes in repository
+3. Trigger new deployment to revert to working state
+4. Or use Vercel's deployment history to rollback
+
+## Monitoring and Maintenance
+
+### Logging
+- Monitor Vercel logs for errors
+- Check for authentication failures
+- Track database connection issues
+
+### Performance
+- Monitor response times
+- Check for database query performance
+- Verify authentication token validation speed
+
+### Security
+- Regularly rotate secrets
+- Monitor for suspicious authentication attempts
+- Keep dependencies updated

@@ -139,27 +139,22 @@ def verify_custom_token(token: str) -> User:
 
 
 def verify_better_auth_token(token: str) -> User:
-    """Verify a JWT token issued by Better Auth by calling the Better Auth server."""
+    """Verify a JWT token issued by Better Auth by decoding it locally."""
     try:
-        # For serverless environments, we'll just decode the JWT locally since
-        # making HTTP requests to verify tokens can cause timeouts
-        # This is a simplified approach that ensures consistent JWT payload handling
-
         # Get the Better Auth secret key
         BETTER_AUTH_SECRET = os.getenv("BETTER_AUTH_SECRET")
         if not BETTER_AUTH_SECRET:
-            # Instead of raising an error, try to use the default SECRET_KEY as fallback
-            # This allows the system to work even without Better Auth configuration
-            print("Warning: BETTER_AUTH_SECRET not configured, falling back to default SECRET_KEY")
-            BETTER_AUTH_SECRET = os.getenv("SECRET_KEY", "your-default-secret-key-change-in-production")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Better Auth secret not configured",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         # Decode the token using the Better Auth secret
         payload = jwt.decode(token, BETTER_AUTH_SECRET, algorithms=["HS256"])
 
-        # Normalize the JWT payload to ensure consistent user identification
-        normalized_payload = normalize_jwt_payload(payload)
-
-        user_id = normalized_payload.get("user_id", "")
+        # Better Auth typically uses "sub" for user ID, but we'll normalize to handle different formats
+        user_id = payload.get("sub") or payload.get("user_id") or payload.get("id")
         if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -167,51 +162,27 @@ def verify_better_auth_token(token: str) -> User:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        # Extract user information from the token
+        email = payload.get("email", "")
+        name = payload.get("name", payload.get("firstName", "") + " " + payload.get("lastName", "")).strip()
+
         user = User(
-            id=user_id,
-            email=normalized_payload.get("email", ""),
-            name=normalized_payload.get("name", "")
+            id=str(user_id),  # Ensure user_id is a string
+            email=email,
+            name=name
         )
         return user
 
-        # Original approach with HTTP request (commented out for serverless compatibility)
-        # BETTER_AUTH_URL = os.getenv("BETTER_AUTH_URL", "http://localhost:3000")
-        #
-        # response = requests.get(
-        #     f"{BETTER_AUTH_URL}/api/auth/session",
-        #     headers={
-        #         "Authorization": f"Bearer {token}",
-        #         "Content-Type": "application/json"
-        #     },
-        #     timeout=5  # Shorter timeout for serverless
-        # )
-        #
-        # if response.status_code == 200:
-        #     session_data = response.json()
-        #     user_data = session_data.get("user", {})
-        #
-        #     user = User(
-        #         id=user_data.get("id", ""),
-        #         email=user_data.get("email", ""),
-        #         name=user_data.get("name", "")
-        #     )
-        #     return user
-        # else:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #         detail="Could not validate Better Auth credentials",
-        #         headers={"WWW-Authenticate": "Bearer"},
-        #     )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
+            detail="Better Auth token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate Better Auth credentials",
+            detail="Invalid Better Auth token",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except Exception as e:

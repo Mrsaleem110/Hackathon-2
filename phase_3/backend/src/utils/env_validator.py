@@ -35,6 +35,11 @@ class EnvValidator:
             "fallback": "fallback-serverless-secret-key-change-in-production-please",
             "description": "Fallback secret key for serverless environments",
             "validation": lambda x: len(x) >= 32 if x else False
+        },
+        "NEON_DATABASE_URL": {
+            "fallback": os.getenv("DATABASE_URL", "sqlite:///./todo_app_serverless.db"),
+            "description": "Fallback to DATABASE_URL if NEON_DATABASE_URL not set",
+            "validation": lambda x: x is not None and x.startswith(('postgresql://', 'postgresql+asyncpg://', 'sqlite:///'))
         }
     }
 
@@ -49,8 +54,16 @@ class EnvValidator:
             "validation": lambda x: x.isdigit() and int(x) > 0
         },
         "BETTER_AUTH_SECRET": {
-            "default": "your-default-secret-key-change-in-production",
-            "validation": lambda x: len(x) >= 16
+            "default": "fallback-better-auth-secret-change-in-production",
+            "validation": lambda x: len(x) >= 32 if x else False
+        },
+        "BETTER_AUTH_URL": {
+            "default": "https://your-backend.vercel.app",
+            "validation": lambda x: x is not None and len(x) > 0
+        },
+        "FRONTEND_URL": {
+            "default": "https://your-frontend.vercel.app",
+            "validation": lambda x: x is not None and len(x) > 0
         }
     }
 
