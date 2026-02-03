@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "app_serverless_crash_fix.py",
+      "src": "app_ultimate_fix.py",
       "use": "@vercel/python",
       "config": {
         "runtime": "python3.11",
@@ -13,27 +13,27 @@
   "routes": [
     {
       "src": "/api/auth/(.*)",
-      "dest": "app_serverless_crash_fix.py"
+      "dest": "app_ultimate_fix.py"
     },
     {
       "src": "/auth/(.*)",
-      "dest": "app_serverless_crash_fix.py"
+      "dest": "app_ultimate_fix.py"
     },
     {
       "src": "/api/(.*)",
-      "dest": "app_serverless_crash_fix.py"
+      "dest": "app_ultimate_fix.py"
     },
     {
       "src": "/(.*)",
-      "dest": "app_serverless_crash_fix.py"
+      "dest": "app_ultimate_fix.py"
     }
   ],
   "functions": {
-    "app_serverless_crash_fix.py": {
-      "maxDuration": 10,
-      "memory": 512,
+    "app_ultimate_fix.py": {
+      "maxDuration": 5,
+      "memory": 256,
       "includeFiles": "requirements-vercel.txt"
     }
   },
-  "regions": ["dub1"]
+  "regions": ["iad1"]
 }
