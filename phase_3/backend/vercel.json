@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "app_ultimate_fix.py",
+      "src": "serverless_stable.py",
       "use": "@vercel/python",
       "config": {
         "runtime": "python3.11",
@@ -13,25 +13,25 @@
   "routes": [
     {
       "src": "/api/auth/(.*)",
-      "dest": "app_ultimate_fix.py"
+      "dest": "serverless_stable.py"
     },
     {
       "src": "/auth/(.*)",
-      "dest": "app_ultimate_fix.py"
+      "dest": "serverless_stable.py"
     },
     {
       "src": "/api/(.*)",
-      "dest": "app_ultimate_fix.py"
+      "dest": "serverless_stable.py"
     },
     {
       "src": "/(.*)",
-      "dest": "app_ultimate_fix.py"
+      "dest": "serverless_stable.py"
     }
   ],
   "functions": {
-    "app_ultimate_fix.py": {
-      "maxDuration": 5,
-      "memory": 256,
+    "serverless_stable.py": {
+      "maxDuration": 3,
+      "memory": 128,
       "includeFiles": "requirements-vercel.txt"
     }
   },
