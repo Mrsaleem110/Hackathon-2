@@ -1,16 +1,14 @@
-# Minimal FastAPI app for Vercel deployment
+# Minimal FastAPI app for Vercel deployment - No external dependencies
 import os
 import logging
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
-import jwt
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
-from sqlmodel import Field, SQLModel, create_engine, Session, select
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
+import hashlib
+import secrets
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,43 +16,31 @@ logger = logging.getLogger(__name__)
 
 # Set environment variables defaults
 os.environ.setdefault("SECRET_KEY", "fallback-secret-key-change-in-production")
-os.environ.setdefault("DATABASE_URL", "sqlite:///./minimal_fallback.db")
-os.environ.setdefault("BETTER_AUTH_SECRET", "fallback-auth-secret-change-in-production")
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# JWT settings
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key-change-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Simple in-memory user store for serverless demo (replace with proper DB in production)
 users_db = {}
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def simple_hash(password: str) -> str:
+    """Simple hash function without external dependencies"""
+    return hashlib.sha256(password.encode()).hexdigest()
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def simple_verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Simple password verification without external dependencies"""
+    return simple_hash(plain_password) == hashed_password
+
+def simple_create_token(username: str) -> str:
+    """Simple token creation without external dependencies"""
+    # Create a simple token (in production, use proper JWT)
+    token_data = f"{username}:{datetime.utcnow().isoformat()}:{secrets.token_hex(16)}"
+    return hashlib.sha256(token_data.encode()).hexdigest()
 
 def authenticate_user(username: str, password: str):
-    # In a real app, this would query the database
+    """Authenticate user without external dependencies"""
     if username in users_db:
         user = users_db[username]
-        if verify_password(password, user["hashed_password"]):
+        if simple_verify_password(password, user["hashed_password"]):
             return user
     return None
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -110,7 +96,7 @@ async def login(login_request: LoginRequest):
     if not users_db:
         users_db["admin"] = {
             "username": "admin",
-            "hashed_password": get_password_hash("admin123"),  # Default password
+            "hashed_password": simple_hash("admin123"),  # Default password
             "email": "admin@example.com"
         }
         logger.info("Created default admin user for testing")
@@ -119,10 +105,7 @@ async def login(login_request: LoginRequest):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user["username"]}, expires_delta=access_token_expires
-    )
+    access_token = simple_create_token(user["username"])
 
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -132,7 +115,7 @@ async def register(login_request: LoginRequest):
     if login_request.username in users_db:
         raise HTTPException(status_code=400, detail="Username already registered")
 
-    hashed_password = get_password_hash(login_request.password)
+    hashed_password = simple_hash(login_request.password)
     users_db[login_request.username] = {
         "username": login_request.username,
         "hashed_password": hashed_password,
@@ -140,10 +123,7 @@ async def register(login_request: LoginRequest):
     }
 
     # Return login response after registration
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": login_request.username}, expires_delta=access_token_expires
-    )
+    access_token = simple_create_token(login_request.username)
 
     return {"access_token": access_token, "token_type": "bearer"}
 
