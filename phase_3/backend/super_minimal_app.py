@@ -28,8 +28,13 @@ app.add_middleware(
 users_db = {}
 
 class LoginRequest(BaseModel):
-    username: str
+    username: str = None
+    email: str = None  # Allow email as well
     password: str
+
+    def get_username(self) -> str:
+        # Use username if provided, otherwise use email
+        return self.username if self.username else self.email
 
 class LoginResponse(BaseModel):
     access_token: str
@@ -53,39 +58,57 @@ def health_check():
 
 @app.post("/auth/login")
 async def login(request: LoginRequest):
-    """Simple login endpoint"""
+    """Simple login endpoint - accepts both username and email"""
     # Create default user if none exists
     if not users_db:
         users_db["admin"] = {
             "username": "admin",
+            "email": "admin@example.com",  # Add email for compatibility
             "password_hash": hashlib.sha256("admin123".encode()).hexdigest()
         }
+        # Also create a user with email as key for email login
+        users_db["admin@example.com"] = users_db["admin"]
+
+    # Get the identifier (either username or email)
+    identifier = request.get_username()
 
     # Check credentials
     password_hash = hashlib.sha256(request.password.encode()).hexdigest()
-    if (request.username in users_db and
-        users_db[request.username]["password_hash"] == password_hash):
+    if (identifier in users_db and
+        users_db[identifier]["password_hash"] == password_hash):
 
         # Generate simple token
-        token = hashlib.sha256(f"{request.username}_{secrets.token_hex(8)}".encode()).hexdigest()
+        token = hashlib.sha256(f"{identifier}_{secrets.token_hex(8)}".encode()).hexdigest()
         return {"access_token": token, "token_type": "bearer"}
     else:
         return {"error": "Invalid credentials", "status_code": 401}
 
+class RegisterRequest(BaseModel):
+    username: str = None
+    email: str = None  # Allow email as well
+    password: str
+
+    def get_identifier(self) -> str:
+        # Use username if provided, otherwise use email
+        return self.username if self.username else self.email
+
 @app.post("/auth/register")
-async def register(request: LoginRequest):
-    """Simple registration endpoint"""
-    if request.username in users_db:
+async def register(request: RegisterRequest):
+    """Simple registration endpoint - accepts both username and email"""
+    identifier = request.get_identifier()
+
+    if identifier in users_db:
         return {"error": "User already exists", "status_code": 400}
 
     # Register new user
-    users_db[request.username] = {
-        "username": request.username,
+    users_db[identifier] = {
+        "username": identifier,
+        "email": request.email if request.email else identifier,
         "password_hash": hashlib.sha256(request.password.encode()).hexdigest()
     }
 
     # Generate token for new user
-    token = hashlib.sha256(f"{request.username}_{secrets.token_hex(8)}".encode()).hexdigest()
+    token = hashlib.sha256(f"{identifier}_{secrets.token_hex(8)}".encode()).hexdigest()
     return {"access_token": token, "token_type": "bearer"}
 
 @app.get("/auth/me")
