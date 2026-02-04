@@ -51,6 +51,31 @@ def health_check():
         "serverless": True
     }
 
+
+@app.get("/debug/test")
+def debug_test():
+    """Simple test endpoint to confirm basic functionality"""
+    return {"test": "success", "message": "Backend is receiving requests properly", "platform": "vercel"}
+
+
+@app.get("/debug/routes")
+def debug_routes():
+    """Debug endpoint to list all registered routes"""
+    routes_info = []
+    for route in app.routes:
+        if hasattr(route, 'methods') and hasattr(route, 'path'):
+            routes_info.append({
+                "path": route.path,
+                "methods": list(route.methods) if hasattr(route, 'methods') else ["UNKNOWN"]
+            })
+
+    return {
+        "total_routes": len(routes_info),
+        "routes": routes_info,
+        "platform": "vercel",
+        "serverless": True
+    }
+
 # Import routes with error handling
 try:
     from src.api.auth import router as auth_router
