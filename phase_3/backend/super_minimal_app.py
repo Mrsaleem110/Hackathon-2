@@ -80,16 +80,23 @@ async def login(request: LoginRequest):
         # Generate simple token
         token = hashlib.sha256(f"{identifier}_{secrets.token_hex(8)}".encode()).hexdigest()
 
-        # Return in the expected format
-        return {
+        # Return in multiple formats to ensure frontend compatibility
+        response_data = {
             "access_token": token,
+            "token": token,  # Some frontends expect 'token' instead of 'access_token'
             "token_type": "bearer",
+            "id_token": token,  # Some systems expect id_token
+            "refresh_token": token,  # Include refresh token for completeness
             "user": {
                 "id": identifier,
                 "username": identifier,
-                "email": users_db[identifier].get("email", f"{identifier}@example.com")
-            }
+                "email": users_db[identifier].get("email", f"{identifier}@example.com"),
+                "user_id": identifier
+            },
+            "expires_in": 3600  # Token expiry in seconds
         }
+
+        return response_data
     else:
         # Return proper error format
         from fastapi import status
@@ -131,16 +138,23 @@ async def register(request: RegisterRequest):
     # Generate token for new user
     token = hashlib.sha256(f"{identifier}_{secrets.token_hex(8)}".encode()).hexdigest()
 
-    # Return in the expected format
-    return {
+    # Return in multiple formats to ensure frontend compatibility
+    response_data = {
         "access_token": token,
+        "token": token,  # Some frontends expect 'token' instead of 'access_token'
         "token_type": "bearer",
+        "id_token": token,  # Some systems expect id_token
+        "refresh_token": token,  # Include refresh token for completeness
         "user": {
             "id": identifier,
             "username": identifier,
-            "email": request.email if request.email else f"{identifier}@example.com"
-        }
+            "email": request.email if request.email else f"{identifier}@example.com",
+            "user_id": identifier
+        },
+        "expires_in": 3600  # Token expiry in seconds
     }
+
+    return response_data
 
 @app.get("/auth/me")
 async def get_current_user():
