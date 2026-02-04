@@ -15,7 +15,8 @@
       "Bash(copy backendrequirements-vercel.txt backendrequirements.txt)",
       "Bash(copy \"backend\\\\requirements-vercel.txt\" \"backend\\\\requirements.txt\")",
       "Bash(powershell Copy-Item \"backend\\\\requirements-vercel.txt\" \"backend\\\\requirements.txt\")",
-      "Bash(ls backend/requirements*)"
+      "Bash(ls backend/requirements*)",
+      "Bash(dir backend*.py)"
     ]
   }
 }
