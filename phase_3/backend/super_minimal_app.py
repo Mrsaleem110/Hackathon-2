@@ -79,9 +79,25 @@ async def login(request: LoginRequest):
 
         # Generate simple token
         token = hashlib.sha256(f"{identifier}_{secrets.token_hex(8)}".encode()).hexdigest()
-        return {"access_token": token, "token_type": "bearer"}
+
+        # Return in the expected format
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": {
+                "id": identifier,
+                "username": identifier,
+                "email": users_db[identifier].get("email", f"{identifier}@example.com")
+            }
+        }
     else:
-        return {"error": "Invalid credentials", "status_code": 401}
+        # Return proper error format
+        from fastapi import status
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Invalid credentials"}
+        )
 
 class RegisterRequest(BaseModel):
     username: str = None
@@ -98,7 +114,12 @@ async def register(request: RegisterRequest):
     identifier = request.get_identifier()
 
     if identifier in users_db:
-        return {"error": "User already exists", "status_code": 400}
+        from fastapi import status
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "User already exists"}
+        )
 
     # Register new user
     users_db[identifier] = {
@@ -109,7 +130,17 @@ async def register(request: RegisterRequest):
 
     # Generate token for new user
     token = hashlib.sha256(f"{identifier}_{secrets.token_hex(8)}".encode()).hexdigest()
-    return {"access_token": token, "token_type": "bearer"}
+
+    # Return in the expected format
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": identifier,
+            "username": identifier,
+            "email": request.email if request.email else f"{identifier}@example.com"
+        }
+    }
 
 @app.get("/auth/me")
 async def get_current_user():
