@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "minimal_app.py",
+      "src": "super_minimal_app.py",
       "use": "@vercel/python",
       "config": {
         "runtime": "python3.11"
@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "minimal_app.py"
+      "dest": "super_minimal_app.py"
     }
   ]
 }
