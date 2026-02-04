@@ -69,7 +69,7 @@ app = FastAPI(lifespan=lifespan, title="Minimal API for Vercel")
 # CORS middleware for Vercel deployment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend URL
+    allow_origins=["https://hackathon-2-p-3-frontend.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
