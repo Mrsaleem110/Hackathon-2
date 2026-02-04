@@ -10,7 +10,12 @@
       "Bash(dir backendvercel.json)",
       "Bash(python -c \"from src.utils.env_validator import validate_environment; validate_environment\\(\\)\")",
       "Bash(copy backendvercel_crash_fix.json backendvercel.json)",
-      "Bash(copy \"C:\\\\Users\\\\Chohan Laptop''s\\\\Documents\\\\GitHub\\\\Hackathon-2\\\\phase_3\\\\backend\\\\vercel_crash_fix.json\" \"C:\\\\Users\\\\Chohan Laptop''s\\\\Documents\\\\GitHub\\\\Hackathon-2\\\\phase_3\\\\backend\\\\vercel.json\")"
+      "Bash(copy \"C:\\\\Users\\\\Chohan Laptop''s\\\\Documents\\\\GitHub\\\\Hackathon-2\\\\phase_3\\\\backend\\\\vercel_crash_fix.json\" \"C:\\\\Users\\\\Chohan Laptop''s\\\\Documents\\\\GitHub\\\\Hackathon-2\\\\phase_3\\\\backend\\\\vercel.json\")",
+      "Bash(dir *.env *.env.* backend/*.env* backend/.env*)",
+      "Bash(copy backendrequirements-vercel.txt backendrequirements.txt)",
+      "Bash(copy \"backend\\\\requirements-vercel.txt\" \"backend\\\\requirements.txt\")",
+      "Bash(powershell Copy-Item \"backend\\\\requirements-vercel.txt\" \"backend\\\\requirements.txt\")",
+      "Bash(ls backend/requirements*)"
     ]
   }
 }

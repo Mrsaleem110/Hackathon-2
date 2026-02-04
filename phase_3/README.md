@@ -138,9 +138,36 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## Deployment
 
-The application is designed to be deployed with:
+### Backend Deployment
+
+The backend is designed for deployment on Vercel as serverless functions. Follow these steps:
+
+1. **Prepare Environment Variables**:
+   - Create a `.env` file in the `backend` directory with all required variables
+   - Ensure your NeonDB connection string is properly configured
+   - Generate strong secrets for `SECRET_KEY` and `BETTER_AUTH_SECRET`
+
+2. **Deploy to Vercel**:
+   - Install Vercel CLI: `npm install -g vercel`
+   - Navigate to the backend directory: `cd backend`
+   - Deploy to production: `vercel --prod`
+   - Or use the deployment helper: `python ../deploy_backend.py`
+
+3. **Configure Environment Variables in Vercel**:
+   - Go to your Vercel dashboard
+   - Add the environment variables from your `.env` file
+   - Ensure CORS settings match your frontend deployment
+
+4. **Verify Deployment**:
+   - Test the health endpoint: `https://your-backend-url.vercel.app/health`
+   - Test the debug endpoint: `https://your-backend-url.vercel.app/debug/test`
+   - Confirm all API routes are accessible
+
+For detailed instructions, see the [BACKEND_DEPLOYMENT_GUIDE.md](BACKEND_DEPLOYMENT_GUIDE.md) file.
+
+### Frontend Deployment
+
 - Frontend: Static hosting (Vercel, Netlify, etc.)
-- Backend: Containerized with Docker (see Dockerfile)
 - MCP Server: Containerized with Docker
 - Database: Neon Serverless PostgreSQL
 
