@@ -76,40 +76,80 @@ def debug_routes():
         "serverless": True
     }
 
-# Import routes with error handling
+# Import routes with better error handling
+# Import routes with better error handling
 try:
+    # Add the src directory to the path for proper imports
+    import sys
+    import os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+
     from src.api.auth import router as auth_router
     app.include_router(auth_router, prefix="/auth")
+    logger.info("Auth router loaded successfully")
 except ImportError as e:
     logger.error(f"Could not import auth router: {e}")
+    logger.error(f"Available files in src/api/: {os.listdir('src/api/') if os.path.exists('src/api/') else 'Directory does not exist'}")
 
     @app.get("/auth/health")
     def auth_health():
-        return {"status": "auth_router_not_loaded"}
+        return {"status": "auth_router_not_loaded", "error": str(e)}
+
+    @app.post("/auth/login")
+    async def login_stub():
+        return {"error": "Auth router not loaded", "message": str(e)}
+
+    @app.post("/auth/register")
+    async def register_stub():
+        return {"error": "Auth router not loaded", "message": str(e)}
+
+    @app.get("/auth/me")
+    async def me_stub():
+        return {"error": "Auth router not loaded", "message": str(e)}
 
 try:
     from src.api.tasks import router as tasks_router
     app.include_router(tasks_router, prefix="/tasks")
+    logger.info("Tasks router loaded successfully")
 except ImportError as e:
     logger.error(f"Could not import tasks router: {e}")
+
+    @app.get("/tasks")
+    async def tasks_stub():
+        return {"error": "Tasks router not loaded", "message": str(e)}
 
 try:
     from src.api.chat import router as chat_router
     app.include_router(chat_router)
+    logger.info("Chat router loaded successfully")
 except ImportError as e:
     logger.error(f"Could not import chat router: {e}")
+
+    @app.get("/")
+    async def chat_stub():
+        return {"error": "Chat router not loaded", "message": str(e)}
 
 try:
     from src.api.dashboard import router as dashboard_router
     app.include_router(dashboard_router, prefix="/dashboard")
+    logger.info("Dashboard router loaded successfully")
 except ImportError as e:
     logger.error(f"Could not import dashboard router: {e}")
+
+    @app.get("/dashboard")
+    async def dashboard_stub():
+        return {"error": "Dashboard router not loaded", "message": str(e)}
 
 try:
     from src.api.analysis import router as analysis_router
     app.include_router(analysis_router, prefix="/analysis")
+    logger.info("Analysis router loaded successfully")
 except ImportError as e:
     logger.error(f"Could not import analysis router: {e}")
+
+    @app.get("/analysis")
+    async def analysis_stub():
+        return {"error": "Analysis router not loaded", "message": str(e)}
 
 # Error handler for Vercel
 @app.exception_handler(Exception)
