@@ -115,6 +115,9 @@ async def chat_endpoint(
 
                 # Debug logging to see what the AI agent returns
                 print(f"DEBUG: AI Agent result for message '{message_content}': {result}")
+
+                # Store original response to potentially modify after tool execution
+                original_response = result["response"]
             except Exception as e:
                 print(f"ERROR: Failed to process message with AI agent: {e}")
                 # Fallback response if AI agent fails
@@ -132,6 +135,8 @@ async def chat_endpoint(
         # Execute any tool calls returned by the AI agent
         print(f"DEBUG: Checking for tool calls in result: {result['tool_calls']}")
         if result["tool_calls"]:
+            tool_executions = []  # Track what tools were executed for response generation
+
             for tool_call in result["tool_calls"]:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["arguments"]
@@ -157,24 +162,78 @@ async def chat_endpoint(
                         created_task = TaskService.create_task(session, task_create)
                         print(f"DEBUG: Successfully created task with ID: {created_task.id}, Title: {created_task.title}")
 
+                        tool_executions.append({
+                            "name": "add_task",
+                            "success": True,
+                            "task_title": created_task.title,
+                            "task_id": str(created_task.id)
+                        })
+
                     elif tool_name == "list_tasks":
-                        # Listing tasks doesn't require execution here since the frontend will make a separate API call
-                        print(f"DEBUG: list_tasks tool called")
-                        pass
+                        from ..services.task_service import TaskService
+
+                        print(f"DEBUG: Attempting to list tasks for user: {user_id}")
+                        user_tasks = TaskService.get_tasks_by_user(session, user_id)
+
+                        # Format tasks for the AI to include in its response
+                        if user_tasks:
+                            task_list_text = "Here are your current tasks:\n"
+                            for task in user_tasks:
+                                status = "✓ Completed" if task.completed else "○ Pending"
+                                task_list_text += f"- [{status}] {task.title}"
+                                if task.description:
+                                    task_list_text += f": {task.description}"
+                                task_list_text += f" (ID: {task.id})\n"
+                        else:
+                            task_list_text = "You don't have any tasks yet."
+
+                        # Update the result response to include the task list
+                        result["response"] = task_list_text
+                        tool_executions.append({
+                            "name": "list_tasks",
+                            "success": True,
+                            "task_count": len(user_tasks)
+                        })
+                        print(f"DEBUG: Listed {len(user_tasks)} tasks for user")
 
                     elif tool_name == "complete_task":
                         from ..services.task_service import TaskService
 
                         task_id = uuid.UUID(tool_args["task_id"])
                         print(f"DEBUG: Attempting to complete task with ID: {task_id}")
-                        TaskService.complete_task(session, task_id)
+                        completed_task = TaskService.complete_task(session, task_id)
+
+                        if completed_task:
+                            tool_executions.append({
+                                "name": "complete_task",
+                                "success": True,
+                                "task_title": completed_task.title
+                            })
+                        else:
+                            tool_executions.append({
+                                "name": "complete_task",
+                                "success": False,
+                                "error": "Task not found"
+                            })
 
                     elif tool_name == "delete_task":
                         from ..services.task_service import TaskService
 
                         task_id = uuid.UUID(tool_args["task_id"])
                         print(f"DEBUG: Attempting to delete task with ID: {task_id}")
-                        TaskService.delete_task(session, task_id)
+                        success = TaskService.delete_task(session, task_id)
+
+                        if success:
+                            tool_executions.append({
+                                "name": "delete_task",
+                                "success": True
+                            })
+                        else:
+                            tool_executions.append({
+                                "name": "delete_task",
+                                "success": False,
+                                "error": "Task not found"
+                            })
 
                     elif tool_name == "update_task":
                         from ..services.task_service import TaskService
@@ -187,12 +246,30 @@ async def chat_endpoint(
                             description=tool_args.get("description"),
                             completed=tool_args.get("completed")
                         )
-                        TaskService.update_task(session, task_id, task_update)
+                        updated_task = TaskService.update_task(session, task_id, task_update)
+
+                        if updated_task:
+                            tool_executions.append({
+                                "name": "update_task",
+                                "success": True,
+                                "task_title": updated_task.title
+                            })
+                        else:
+                            tool_executions.append({
+                                "name": "update_task",
+                                "success": False,
+                                "error": "Task not found"
+                            })
 
                 except KeyError as e:
                     # Specific error for missing keys in tool_args
                     print(f"ERROR: Missing required argument for {tool_name} tool: {str(e)}")
                     print(f"Tool args received: {tool_args}")
+                    tool_executions.append({
+                        "name": tool_name,
+                        "success": False,
+                        "error": f"Missing required argument: {str(e)}"
+                    })
                     continue
 
                 except Exception as e:
@@ -200,7 +277,51 @@ async def chat_endpoint(
                     print(f"ERROR executing tool call {tool_name}: {str(e)}")
                     import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
+                    tool_executions.append({
+                        "name": tool_name,
+                        "success": False,
+                        "error": str(e)
+                    })
                     continue
+
+            # Generate a consolidated response based on tool executions
+            if tool_executions:
+                # If list_tasks was executed and already updated the response, keep that
+                list_task_execution = next((te for te in tool_executions if te["name"] == "list_tasks"), None)
+                if list_task_execution:
+                    # The response was already set by the list_tasks execution
+                    pass
+                else:
+                    # Build a response summarizing the tool executions
+                    success_actions = [te for te in tool_executions if te["success"]]
+                    failed_actions = [te for te in tool_executions if not te["success"]]
+
+                    if success_actions:
+                        action_descriptions = []
+                        for action in success_actions:
+                            if action["name"] == "add_task":
+                                action_descriptions.append(f"Added task '{action['task_title']}'")
+                            elif action["name"] == "complete_task":
+                                action_descriptions.append(f"Completed task '{action['task_title']}'")
+                            elif action["name"] == "delete_task":
+                                action_descriptions.append("Deleted a task")
+                            elif action["name"] == "update_task":
+                                action_descriptions.append(f"Updated task '{action['task_title']}'")
+
+                        if action_descriptions:
+                            result["response"] = "I've completed the following actions:\n" + "\n".join([f"• {desc}" for desc in action_descriptions])
+
+                            # Add any failures to the response as well
+                            if failed_actions:
+                                failure_descriptions = []
+                                for action in failed_actions:
+                                    failure_descriptions.append(f"Failed to {action['name'].replace('_', ' ')}: {action.get('error', 'Unknown error')}")
+                                result["response"] += "\n\nSome actions failed:\n" + "\n".join([f"• {desc}" for desc in failure_descriptions])
+                    elif failed_actions:
+                        failure_descriptions = []
+                        for action in failed_actions:
+                            failure_descriptions.append(f"Failed to {action['name'].replace('_', ' ')}: {action.get('error', 'Unknown error')}")
+                        result["response"] = "Some actions failed:\n" + "\n".join([f"• {desc}" for desc in failure_descriptions])
 
         # Create assistant message with the AI response
         assistant_message = MessageCreate(
