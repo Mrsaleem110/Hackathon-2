@@ -153,9 +153,10 @@ const ChatInterface = ({ userId }) => {
 
         // If task operations were performed, notify all components to refresh tasks
         if (hasTaskOperations) {
+          // Add a small delay to ensure DB transaction completes before refreshing
           setTimeout(() => {
             triggerTaskUpdate(); // Trigger global task refresh
-          }, 1000); // Small delay to ensure DB transaction completes
+          }, 1500); // Increased delay to ensure transaction completes
         }
       }
 
