@@ -309,7 +309,6 @@ try:
 except ImportError as e:
     logger.error(f"Import error during app initialization: {e}")
 
-# Only include the startup event if not in serverless environment
 # Expanded serverless detection to handle various Vercel configurations
 is_serverless_env = (
     os.getenv("VERCEL") == "1" or
@@ -319,20 +318,28 @@ is_serverless_env = (
     os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None
 )
 
-if not is_serverless_env:
+# Create tables either in startup event or immediately for serverless environments
+def ensure_tables_exist():
+    """Ensure database tables exist, for both serverful and serverless environments"""
+    try:
+        logger.info("Ensuring database tables exist...")
+        from sqlmodel import SQLModel
+        engine = get_engine()
+        SQLModel.metadata.create_all(bind=engine)
+        logger.info("Database tables verified/created successfully!")
+    except Exception as e:
+        logger.error(f"Error ensuring database tables exist: {e}")
+
+# For serverless environments, create tables immediately when the app loads
+if is_serverless_env:
+    ensure_tables_exist()
+
+# For traditional environments, use startup event
+else:
     @app.on_event("startup")
     async def startup_event():
         """Create database tables on startup"""
-        try:
-            logger.info("Initializing database tables...")
-            from sqlmodel import SQLModel
-            engine = get_engine()
-            SQLModel.metadata.create_all(bind=engine)
-            logger.info("Database tables initialized successfully!")
-        except Exception as e:
-            logger.error(f"Error initializing database tables: {e}")
-            # Continue without raising the exception to allow the app to start
-            # The database might be connected later when the first request comes
+        ensure_tables_exist()
 
 @app.get("/")
 def read_root():
