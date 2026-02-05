@@ -26,10 +26,36 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 # Create FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
-# CORS middleware for Vercel deployment
+# Enhanced CORS middleware for Vercel deployment with specific domains
+frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.vercel.app")
+cors_origins_env = os.getenv("CORS_ORIGINS", "")
+
+# Build the list of allowed origins
+cors_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://localhost:8080",
+    "https://hackathon-2-p-3-frontend.vercel.app",  # Your specific frontend
+    "https://hackathon-2-p-3-backend.vercel.app",   # Your backend domain
+    "https://*.vercel.app",  # Wildcard for Vercel preview deployments
+]
+
+# Add frontend URL from environment
+if frontend_url and frontend_url not in cors_origins:
+    cors_origins.append(frontend_url)
+
+# Add any additional origins from environment variable
+if cors_origins_env:
+    additional_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+    for origin in additional_origins:
+        if origin not in cors_origins:
+            cors_origins.append(origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For Vercel deployments, adjust as needed
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
