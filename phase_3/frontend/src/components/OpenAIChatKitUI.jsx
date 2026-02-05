@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTask } from '../contexts/TaskContext';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 
-const OpenAIChatKitUI = ({ userId, backendUrl, onTaskUpdate }) => {
+const OpenAIChatKitUI = ({ userId, backendUrl }) => {
+  const { triggerTaskUpdate } = useTask();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -123,10 +125,10 @@ const OpenAIChatKitUI = ({ userId, backendUrl, onTaskUpdate }) => {
           ['add_task', 'complete_task', 'delete_task', 'update_task', 'list_tasks'].includes(call.name)
         );
 
-        // If task operations were performed, notify parent component to refresh tasks
-        if (hasTaskOperations && onTaskUpdate) {
+        // If task operations were performed, notify all components to refresh tasks
+        if (hasTaskOperations) {
           setTimeout(() => {
-            onTaskUpdate(); // Trigger parent component to refresh tasks
+            triggerTaskUpdate(); // Trigger global task refresh
           }, 1000); // Small delay to ensure DB transaction completes
         }
       }

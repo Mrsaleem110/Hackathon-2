@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTask } from '../contexts/TaskContext';
 import TaskApiService from '../services/taskApi';
 
-const TasksDashboard = ({ onTaskUpdate }) => {
+const TasksDashboard = () => {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { taskUpdateTrigger, triggerTaskUpdate } = useTask();
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium' });
   const [filter, setFilter] = useState('all');
@@ -60,10 +62,8 @@ const TasksDashboard = ({ onTaskUpdate }) => {
           t.id === taskId ? normalizedTask : t
         ));
 
-        // Notify parent component of task update
-        if (onTaskUpdate) {
-          onTaskUpdate();
-        }
+        // Notify all components of task update
+        triggerTaskUpdate();
       } catch (err) {
         setError('Failed to update task. Please try again.');
         console.error('Error updating task:', err);
@@ -102,10 +102,8 @@ const TasksDashboard = ({ onTaskUpdate }) => {
         // Show success message
         setError(null); // Clear any previous errors
 
-        // Notify parent component of task update
-        if (onTaskUpdate) {
-          onTaskUpdate();
-        }
+        // Notify all components of task update
+        triggerTaskUpdate();
       } catch (err) {
         setError('Failed to create task. Please try again.');
         console.error('Error creating task:', err);
@@ -118,10 +116,8 @@ const TasksDashboard = ({ onTaskUpdate }) => {
       await TaskApiService.deleteTask(taskId);
       setTasks(tasks.filter(task => task.id !== taskId));
 
-        // Notify parent component of task update
-        if (onTaskUpdate) {
-          onTaskUpdate();
-        }
+        // Notify all components of task update
+        triggerTaskUpdate();
     } catch (err) {
       setError('Failed to delete task. Please try again.');
       console.error('Error deleting task:', err);
@@ -136,6 +132,13 @@ const TasksDashboard = ({ onTaskUpdate }) => {
       setLoading(false);
     }
   }, [isAuthenticated, user, authLoading]);
+
+  useEffect(() => {
+    // Reload tasks when taskUpdateTrigger changes (e.g., when tasks are updated via chatbot)
+    if (isAuthenticated && user) {
+      loadTasks();
+    }
+  }, [taskUpdateTrigger, user, isAuthenticated]);
 
   const getPriorityColor = (priority) => {
     switch (priority) {

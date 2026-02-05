@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { TaskProvider, useTask } from './contexts/TaskContext';
 import OpenAIChatKitUI from './components/OpenAIChatKitUI';
 import ChatInterface from './components/ChatInterface';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -98,9 +99,11 @@ const MainApp = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <Router>
-        <MainApp />
-      </Router>
+      <TaskProvider>
+        <Router>
+          <MainApp />
+        </Router>
+      </TaskProvider>
     </AuthProvider>
   );
 };
