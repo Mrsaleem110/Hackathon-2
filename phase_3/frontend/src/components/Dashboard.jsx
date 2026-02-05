@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTask } from '../contexts/TaskContext';
 import { useNavigate } from 'react-router-dom';
 import OpenAIChatKitUI from './OpenAIChatKitUI';
 import DashboardApiService from '../services/dashboardApi';
 
 const Dashboard = () => {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { taskUpdateTrigger } = useTask();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalTasks: 0,
@@ -92,6 +94,13 @@ const Dashboard = () => {
     }
   }, [user, isAuthenticated, authLoading]);
 
+  useEffect(() => {
+    // Refresh stats when taskUpdateTrigger changes (e.g., when tasks are updated via chatbot)
+    if (isAuthenticated && user) {
+      fetchStats();
+    }
+  }, [taskUpdateTrigger, user, isAuthenticated]);
+
   if (loading && !error) {
     return (
       <div className="dashboard">
@@ -154,7 +163,7 @@ const Dashboard = () => {
               <span className="status-indicator online">● Online</span>
             </div>
             <div className="chat-container">
-              <OpenAIChatKitUI userId={user?.id} onTaskUpdate={fetchStats} />
+              <OpenAIChatKitUI userId={user?.id} />
             </div>
           </div>
 

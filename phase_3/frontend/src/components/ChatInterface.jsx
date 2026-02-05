@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTask } from '../contexts/TaskContext';
 
 const ChatInterface = ({ userId }) => {
+  const { triggerTaskUpdate } = useTask();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -141,6 +143,20 @@ const ChatInterface = ({ userId }) => {
       } else {
         // Fallback to JSON stringification
         responseContent = JSON.stringify(data.response, null, 2);
+      }
+
+      // Check if any tool calls were made that affect tasks
+      if (data.tool_calls && data.tool_calls.length > 0) {
+        const hasTaskOperations = data.tool_calls.some(call =>
+          ['add_task', 'complete_task', 'delete_task', 'update_task', 'list_tasks'].includes(call.name)
+        );
+
+        // If task operations were performed, notify all components to refresh tasks
+        if (hasTaskOperations) {
+          setTimeout(() => {
+            triggerTaskUpdate(); // Trigger global task refresh
+          }, 1000); // Small delay to ensure DB transaction completes
+        }
       }
 
       // Update the assistant message with the complete response
