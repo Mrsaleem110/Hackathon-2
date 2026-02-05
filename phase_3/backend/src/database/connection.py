@@ -14,12 +14,6 @@ if DATABASE_URL and "neon.tech" in DATABASE_URL:
             DATABASE_URL += "&sslmode=require"
         else:
             DATABASE_URL += "?sslmode=require"
-    # Also add other Neon-specific parameters that might be needed
-    if "options=" not in DATABASE_URL:
-        if "?" in DATABASE_URL and "&options=" not in DATABASE_URL:
-            DATABASE_URL += "&options=--statement_timeout%3D30000ms"
-        elif "?" not in DATABASE_URL:
-            DATABASE_URL += "?options=--statement_timeout%3D30000ms"
 
 # Create engine with serverless-friendly settings
 def get_engine():
@@ -33,9 +27,8 @@ def get_engine():
             "pool_size": 1,
             "max_overflow": 0,
             "connect_args": {
-                "sslmode": "require",
-                "statement_timeout": 30000,  # 30 seconds timeout
-                "command_timeout": 30000
+                "sslmode": "require"
+                # Removed statement_timeout and command_timeout as they're not supported in connection string
             }
         }
 
