@@ -17,70 +17,70 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchStats = async () => {
+    try {
+      console.log('Fetching dashboard stats from API...'); // Debug log
+      setLoading(true);
+
+      // Get dashboard stats from API
+      const statsData = await DashboardApiService.getDashboardStats();
+      console.log('Dashboard stats received:', statsData); // Debug log
+
+      // Update stats with data from API
+      const newStats = {
+        totalTasks: statsData.total_tasks || 0,
+        completedTasks: statsData.completed_tasks || 0,
+        pendingTasks: statsData.pending_tasks || 0,
+        activeConversations: statsData.total_chats || 1  // Default to 1 for the current chat
+      };
+
+      // Get dashboard overview to get recent tasks
+      const overviewData = await DashboardApiService.getDashboardOverview();
+      console.log('Dashboard overview received:', overviewData); // Debug log
+
+      // Set recent tasks from the overview
+      setTasks(overviewData.recent_tasks || []);
+
+      console.log('Fetched stats:', newStats); // Debug log
+      setStats(newStats);
+
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+      console.error('Error details:', err.message); // Debug log
+      console.error('Error stack:', err.stack); // Debug log
+
+      // Provide more specific error messages based on the error
+      let errorMsg = 'Failed to load dashboard data. ';
+      if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+        errorMsg += 'Authentication failed - please log in again.';
+      } else if (err.message.includes('403')) {
+        errorMsg += 'Access forbidden - please check your permissions.';
+      } else if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+        errorMsg += 'Backend may be unreachable - please check your connection.';
+      } else {
+        errorMsg += 'Backend may be unreachable.';
+      }
+
+      setError(errorMsg);
+
+      // Set default values on error
+      const defaultStats = {
+        totalTasks: 0,
+        completedTasks: 0,
+        pendingTasks: 0,
+        activeConversations: 0
+      };
+      console.log('Setting default stats due to error:', defaultStats); // Debug log
+      setStats(defaultStats);
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     console.log('Dashboard useEffect running - auth state:', { isAuthenticated, user, authLoading }); // Debug log
-
-    const fetchStats = async () => {
-      try {
-        console.log('Fetching dashboard stats from API...'); // Debug log
-        setLoading(true);
-
-        // Get dashboard stats from API
-        const statsData = await DashboardApiService.getDashboardStats();
-        console.log('Dashboard stats received:', statsData); // Debug log
-
-        // Update stats with data from API
-        const newStats = {
-          totalTasks: statsData.total_tasks || 0,
-          completedTasks: statsData.completed_tasks || 0,
-          pendingTasks: statsData.pending_tasks || 0,
-          activeConversations: statsData.total_chats || 1  // Default to 1 for the current chat
-        };
-
-        // Get dashboard overview to get recent tasks
-        const overviewData = await DashboardApiService.getDashboardOverview();
-        console.log('Dashboard overview received:', overviewData); // Debug log
-
-        // Set recent tasks from the overview
-        setTasks(overviewData.recent_tasks || []);
-
-        console.log('Fetched stats:', newStats); // Debug log
-        setStats(newStats);
-
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
-        console.error('Error details:', err.message); // Debug log
-        console.error('Error stack:', err.stack); // Debug log
-
-        // Provide more specific error messages based on the error
-        let errorMsg = 'Failed to load dashboard data. ';
-        if (err.message.includes('401') || err.message.includes('Unauthorized')) {
-          errorMsg += 'Authentication failed - please log in again.';
-        } else if (err.message.includes('403')) {
-          errorMsg += 'Access forbidden - please check your permissions.';
-        } else if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
-          errorMsg += 'Backend may be unreachable - please check your connection.';
-        } else {
-          errorMsg += 'Backend may be unreachable.';
-        }
-
-        setError(errorMsg);
-
-        // Set default values on error
-        const defaultStats = {
-          totalTasks: 0,
-          completedTasks: 0,
-          pendingTasks: 0,
-          activeConversations: 0
-        };
-        console.log('Setting default stats due to error:', defaultStats); // Debug log
-        setStats(defaultStats);
-        setTasks([]);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     if (isAuthenticated && user) {
       console.log('User authenticated, fetching stats...'); // Debug log
@@ -154,7 +154,7 @@ const Dashboard = () => {
               <span className="status-indicator online">● Online</span>
             </div>
             <div className="chat-container">
-              <OpenAIChatKitUI userId={user?.id} />
+              <OpenAIChatKitUI userId={user?.id} onTaskUpdate={fetchStats} />
             </div>
           </div>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 
-const OpenAIChatKitUI = ({ userId, backendUrl }) => {
+const OpenAIChatKitUI = ({ userId, backendUrl, onTaskUpdate }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -115,6 +115,20 @@ const OpenAIChatKitUI = ({ userId, backendUrl }) => {
       } else {
         // Fallback to JSON stringification
         responseContent = JSON.stringify(data.response, null, 2);
+      }
+
+      // Check if any tool calls were made that affect tasks
+      if (data.tool_calls && data.tool_calls.length > 0) {
+        const hasTaskOperations = data.tool_calls.some(call =>
+          ['add_task', 'complete_task', 'delete_task', 'update_task', 'list_tasks'].includes(call.name)
+        );
+
+        // If task operations were performed, notify parent component to refresh tasks
+        if (hasTaskOperations && onTaskUpdate) {
+          setTimeout(() => {
+            onTaskUpdate(); // Trigger parent component to refresh tasks
+          }, 1000); // Small delay to ensure DB transaction completes
+        }
       }
 
       // Update the assistant message with the complete response
