@@ -49,13 +49,8 @@ description: "Task list template for feature implementation"
 **Purpose**: Project initialization and basic structure
 
 - [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize Python project with FastAPI dependencies
+- [ ] T002 Initialize [language] project with [framework] dependencies
 - [ ] T003 [P] Configure linting and formatting tools
-- [ ] T004 Setup SQLModel ORM for database interactions
-- [ ] T005 Configure Neon Serverless PostgreSQL connection
-- [ ] T006 Setup Better Auth for authentication
-- [ ] T007 Configure MCP server with Official MCP SDK
-- [ ] T008 Setup OpenAI Agents SDK for AI logic
 
 ---
 
@@ -67,15 +62,12 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T009 Setup database schema and migrations framework with SQLModel
-- [ ] T010 [P] Implement Better Auth authentication/authorization framework
-- [ ] T011 [P] Setup FastAPI routing and middleware structure (stateless)
-- [ ] T012 Create base models/entities that all stories depend on (SQLModel only)
-- [ ] T013 Configure error handling and logging infrastructure
-- [ ] T014 Setup environment configuration management
-- [ ] T015 Implement MCP tools framework (business logic externalization)
-- [ ] T016 Configure stateless chat endpoint with database persistence
-- [ ] T017 Setup OpenAI ChatKit frontend integration
+- [ ] T004 Setup database schema and migrations framework
+- [ ] T005 [P] Implement authentication/authorization framework
+- [ ] T006 [P] Setup API routing and middleware structure
+- [ ] T007 Create base models/entities that all stories depend on
+- [ ] T008 Configure error handling and logging infrastructure
+- [ ] T009 Setup environment configuration management
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -164,10 +156,6 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
-- [ ] TXXX Verify all constitution compliance requirements are met
-- [ ] TXXX Test server restart scenario to ensure conversation persistence
-- [ ] TXXX Validate that agent only interacts via MCP tools
-- [ ] TXXX Confirm database is single source of truth for all data
 
 ---
 

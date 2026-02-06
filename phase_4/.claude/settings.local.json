@@ -18,7 +18,11 @@
       "Bash(ls backend/requirements*)",
       "Bash(dir backend*.py)",
       "Bash(powershell Get-Content \"C:\\\\Users\\\\CHOHAN~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Chohan-Laptop-s-Documents-GitHub-Hackathon-2-phase-3\\\\tasks\\\\b4d5039.output\" -Tail 20)",
-      "Bash(curl -X POST https://hackathon-2-p-3-backend.vercel.app/auth/login -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"test@example.com\"\", \"\"password\"\":\"\"testpassword\"\"}')"
+      "Bash(curl -X POST https://hackathon-2-p-3-backend.vercel.app/auth/login -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"test@example.com\"\", \"\"password\"\":\"\"testpassword\"\"}')",
+      "Bash(move:*)",
+      "Bash(where minikube:*)",
+      "Bash(curl:*)",
+      "Bash(unzip:*)"
     ]
   }
 }

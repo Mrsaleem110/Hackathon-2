@@ -31,42 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-### Spec-driven development compliance
-- [ ] Specification exists in `/specs/[feature-name]/spec.md` before any implementation
-- [ ] All features trace back to a spec requirement
-- [ ] User stories and acceptance criteria clearly defined
-
-### Architecture compliance
-- [ ] Backend is stateless (no session state, no in-memory persistence)
-- [ ] Database is single source of truth (SQLModel ORM only)
-- [ ] MCP tools handle all business logic (not in agent)
-- [ ] Frontend uses OpenAI ChatKit only
-- [ ] Backend uses FastAPI (Python)
-- [ ] AI logic uses OpenAI Agents SDK
-- [ ] MCP server uses Official MCP SDK
-- [ ] Database is Neon Serverless PostgreSQL
-- [ ] Authentication uses Better Auth
-- [ ] Chat endpoint is stateless
-
-### Agent compliance
-- [ ] Agent NEVER directly accesses database
-- [ ] Agent ONLY interacts via MCP tools
-- [ ] Agent confirms successful actions to user
-- [ ] Agent gracefully handles errors
-- [ ] Agent infers intent from natural language
-
-### State management compliance
-- [ ] Conversation state persisted in database
-- [ ] MCP tools are stateless
-- [ ] Chat endpoint holds no memory between requests
-- [ ] Server restarts do not break conversations
-
-### Delivery compliance
-- [ ] Working chatbot produced
-- [ ] Resume after server restart supported
-- [ ] Specs folder with complete specifications included
-- [ ] Database migrations included
-- [ ] Comprehensive README included
+[Gates determined based on constitution file]
 
 ## Project Structure
 

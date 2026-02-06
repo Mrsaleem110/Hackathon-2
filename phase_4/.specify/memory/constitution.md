@@ -1,77 +1,55 @@
-<!--
-Sync Impact Report:
-- Version change: 1.0.0 → 2.0.0
-- Modified principles: All principles replaced with project-specific ones
-- Added sections: Architecture Rules, Agent Rules, State Management, Delivery Rules
-- Removed sections: Previous general principles
-- Templates requiring updates:
-  - .specify/templates/plan-template.md: ⚠ pending
-  - .specify/templates/spec-template.md: ⚠ pending
-  - .specify/templates/tasks-template.md: ⚠ pending
-- Follow-up TODOs: None
--->
-# Phase III AI-Powered Todo Chatbot Constitution
+# [PROJECT_NAME] Constitution
+<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
 
 ## Core Principles
 
-### Spec-driven development only
-All development must follow the spec-driven development methodology. No implementation before specification. All features MUST trace back to a spec.
+### [PRINCIPLE_1_NAME]
+<!-- Example: I. Library-First -->
+[PRINCIPLE_1_DESCRIPTION]
+<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
-### Stateless backend architecture
-The backend API MUST be stateless. Server restarts MUST NOT break conversations. All state is persisted in the database, not in memory or session state.
+### [PRINCIPLE_2_NAME]
+<!-- Example: II. CLI Interface -->
+[PRINCIPLE_2_DESCRIPTION]
+<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
 
-### All AI actions must go through MCP tools
-AI agents MUST interact with the system ONLY through MCP tools. The agent NEVER directly accesses database and can ONLY interact via MCP tools.
+### [PRINCIPLE_3_NAME]
+<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+[PRINCIPLE_3_DESCRIPTION]
+<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
 
-### No business logic inside the agent
-Business logic lives inside MCP tools. Decision-making lives inside the AI agent, but business logic is externalized to maintain separation of concerns.
+### [PRINCIPLE_4_NAME]
+<!-- Example: IV. Integration Testing -->
+[PRINCIPLE_4_DESCRIPTION]
+<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
 
-### Database is the single source of truth
-Conversation state MUST be persisted in the database. Database access is via SQLModel only. The database is the authoritative source for all data.
+### [PRINCIPLE_5_NAME]
+<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+[PRINCIPLE_5_DESCRIPTION]
+<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
-### Production-ready code quality
-All code must meet production-ready quality standards. This includes proper error handling, testing, security considerations, and performance optimization.
+### [PRINCIPLE_6_NAME]
 
-### Authentication-driven messaging
-System must never send a chat message without a verified authenticated userId. Frontend MUST derive userId ONLY from auth session, never from assumptions. Backend MUST reject chat requests without JWT user context. Auth state MUST be resolved before ChatKit initialization.
 
-### Cross-Origin Resource Sharing (CORS) requirements
-Backend MUST allow cross-origin requests from the deployed frontend. All auth endpoints MUST support OPTIONS preflight requests. CORS configuration MUST be environment-aware and adapt to deployment scenarios. No auth request should fail due to missing Access-Control-Allow-Origin headers. Authentication flows MUST work seamlessly across different deployment domains.
+[PRINCIPLE__DESCRIPTION]
 
-## Architecture Rules
-- Frontend MUST use OpenAI ChatKit only
-- Backend MUST use FastAPI (Python)
-- AI logic MUST use OpenAI Agents SDK
-- MCP server MUST use Official MCP SDK
-- ORM MUST be SQLModel only
-- Database MUST be Neon Serverless PostgreSQL
-- Authentication MUST use Better Auth
-- Chat endpoint MUST be stateless
-- Backend MUST support CORS for frontend deployment scenarios
-- All auth endpoints MUST support OPTIONS preflight requests
-- CORS configuration MUST be environment-aware and dynamic
+## [SECTION_2_NAME]
+<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
 
-## Agent Rules
-- Agent NEVER directly accesses database
-- Agent can ONLY interact via MCP tools
-- Agent MUST confirm every successful action to the user
-- Agent MUST gracefully handle errors
-- Agent MUST infer intent from natural language
+[SECTION_2_CONTENT]
+<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
 
-## State Management
-- Conversation state MUST be persisted in database
-- MCP tools MUST be stateless and store state only in the database
-- Chat endpoint MUST hold no memory between requests
-- Server restarts MUST NOT break conversations
+## [SECTION_3_NAME]
+<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
 
-## Delivery Rules
-- Must produce working chatbot
-- Must support resume after server restart
-- Must include specs folder with complete specifications
-- Must include database migrations
-- Must include comprehensive README
+[SECTION_3_CONTENT]
+<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
 
 ## Governance
-All development follows the spec-driven development process with clear separation of concerns. FastAPI routes handle HTTP only, business logic lives inside MCP tools, decision-making lives inside the AI agent, and database access is via SQLModel only. All write actions MUST be confirmed to the user, and errors MUST be handled gracefully. Authentication via Better Auth is mandatory, and user data MUST be scoped by user_id. Chat messaging MUST require verified authentication, with userId derived ONLY from auth session. Backend MUST validate JWT user context before processing chat requests. Auth state MUST be resolved before ChatKit initialization. Backend MUST support CORS for cross-origin requests from frontend deployments, and all auth endpoints MUST support OPTIONS preflight requests to ensure seamless authentication across different deployment domains.
+<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-**Version**: 2.1.0 | **Ratified**: 2026-01-06 | **Last Amended**: 2026-01-30
+[GOVERNANCE_RULES]
+<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+
+**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
+<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->

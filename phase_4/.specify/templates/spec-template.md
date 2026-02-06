@@ -84,35 +84,21 @@
 
 ### Functional Requirements
 
-- **FR-001**: System MUST follow spec-driven development methodology (no implementation before specification)
-- **FR-002**: System MUST be stateless (no session state, no in-memory persistence between requests)
-- **FR-003**: System MUST persist all state in the database (SQLModel ORM only)
-- **FR-004**: System MUST route all AI actions through MCP tools (agent never directly accesses database)
-- **FR-005**: System MUST use OpenAI ChatKit for frontend
-- **FR-006**: System MUST use FastAPI (Python) for backend
-- **FR-007**: System MUST use OpenAI Agents SDK for AI logic
-- **FR-008**: System MUST use Official MCP SDK for MCP server
-- **FR-009**: System MUST use Neon Serverless PostgreSQL as database
-- **FR-010**: System MUST use Better Auth for authentication
-- **FR-011**: System MUST support resume after server restart
-- **FR-012**: System MUST handle errors gracefully and confirm successful actions to user
+- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
+- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
+- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
+- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
+- **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
 *Example of marking unclear requirements:*
 
-- **FR-013**: [Additional capability] - [NEEDS CLARIFICATION: specific requirement not specified]
-
-### Constitution Compliance Requirements
-
-- **CC-001**: All business logic MUST be externalized to MCP tools (not in AI agent)
-- **CC-002**: Database MUST be single source of truth for all data
-- **CC-003**: Agent MUST infer intent from natural language
-- **CC-004**: MCP tools MUST be stateless and store state only in database
-- **CC-005**: Chat endpoint MUST hold no memory between requests
+- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
+- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
 ### Key Entities *(include if feature involves data)*
 
-- **[Entity 1]**: [What it represents, key attributes without implementation, must use SQLModel]
-- **[Entity 2]**: [What it represents, relationships to other entities, must use SQLModel]
+- **[Entity 1]**: [What it represents, key attributes without implementation]
+- **[Entity 2]**: [What it represents, relationships to other entities]
 
 ## Success Criteria *(mandatory)*
 
