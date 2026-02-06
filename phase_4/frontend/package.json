@@ -1,0 +1,29 @@
+{
+  "name": "ai-todo-chatbot-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for AI-Powered Todo Chatbot",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@better-auth/client": "^0.0.2-alpha.3",
+    "@daveyplate/better-auth-ui": "^3.3.15",
+    "@openai/chatkit": "^1.0.0",
+    "@openai/chatkit-react": "^1.0.0",
+    "better-auth": "^1.4.12",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.12.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.4",
+    "@testing-library/react": "^14.0.0",
+    "@vitejs/plugin-react": "^4.1.0",
+    "jest": "^29.7.0",
+    "vite": "^4.5.0"
+  }
+}

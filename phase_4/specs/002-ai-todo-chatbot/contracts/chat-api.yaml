@@ -1,0 +1,131 @@
+openapi: 3.0.0
+info:
+  title: AI-Powered Todo Chatbot API
+  version: 1.0.0
+  description: API for the AI-Powered Todo Chatbot that enables users to manage tasks using natural language
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Process a chat message and return AI response
+      description: |
+        Processes a user's natural language message and returns an AI response along with any tool calls.
+        Maintains conversation state using the conversation_id.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user making the request
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response with AI output and tool calls
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+          description: Optional conversation ID to maintain context. If not provided, a new conversation is started.
+        message:
+          type: string
+          description: The user's message in natural language
+          example: "Add a task to buy groceries"
+      example:
+        conversation_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        message: "Add a task to buy groceries"
+
+    ChatResponse:
+      type: object
+      required:
+        - conversation_id
+        - response
+        - tool_calls
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+          description: The conversation ID, either provided or newly created
+        response:
+          type: string
+          description: The AI's natural language response to the user
+          example: "I've added the task 'buy groceries' to your list. Is there anything else I can help you with?"
+        tool_calls:
+          type: array
+          description: List of MCP tools to be executed as a result of the user's message
+          items:
+            $ref: '#/components/schemas/ToolCall'
+      example:
+        conversation_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        response: "I've added the task 'buy groceries' to your list. Is there anything else I can help you with?"
+        tool_calls:
+          - name: "add_task"
+            arguments:
+              user_id: "user123"
+              title: "buy groceries"
+              description: ""
+
+    ToolCall:
+      type: object
+      required:
+        - name
+        - arguments
+      properties:
+        name:
+          type: string
+          description: The name of the MCP tool to call
+          enum: [add_task, list_tasks, complete_task, delete_task, update_task]
+        arguments:
+          type: object
+          description: Arguments to pass to the MCP tool
+          additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+      example:
+        error: "VALIDATION_ERROR"
+        message: "Message field is required"
