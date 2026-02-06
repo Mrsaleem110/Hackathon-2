@@ -1,0 +1,2 @@
+# Requirements for Better Auth Skills
+better-auth>=0.0.0

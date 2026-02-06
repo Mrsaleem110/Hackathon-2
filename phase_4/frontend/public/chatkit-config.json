@@ -1,0 +1,14 @@
+{
+  "chatkit_widget": {
+    "enabled": true,
+    "default_workflow_id": "default-workflow",
+    "session_expiry_minutes": 60,
+    "cdn_url": "https://cdn.openai.com/chatkit.js",
+    "features": {
+      "file_attachments": true,
+      "rich_text": true,
+      "typing_indicators": true,
+      "message_history": true
+    }
+  }
+}
