@@ -5,7 +5,10 @@ const isDevelopment = import.meta.env.DEV;
 // Use direct backend URL for auth endpoints to ensure proper CORS handling
 const getDirectAuthBaseUrl = () => {
   if (isDevelopment) {
-    return ''; // Use relative path for proxy to http://localhost:3001
+    if (import.meta.env.VITE_DOCKER_DEV === 'true') {
+      return 'http://auth-server:3001'; // Direct to auth-server service in Docker Compose
+    }
+    return ''; // Use relative path for proxy to http://localhost:3001 for local non-docker dev
   } else {
     // In production, always use the direct backend URL for auth endpoints
     return import.meta.env.VITE_API_BASE_URL || 'https://hackathon-2-p-3-backend.vercel.app';

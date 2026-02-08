@@ -74,6 +74,8 @@ services:
     container_name: todo-frontend
     ports:
       - "80:80"
+    environment:
+      - VITE_DOCKER_DEV=true # New environment variable for Dockerized development
     depends_on:
       - backend
       - auth-server
