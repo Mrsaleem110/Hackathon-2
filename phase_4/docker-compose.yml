@@ -55,6 +55,18 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  auth-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.auth
+    container_name: todo-auth-server
+    ports:
+      - "3001:3001"
+    environment:
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-$@!eem1234}
+      - BETTER_AUTH_URL=http://auth-server:3001
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
@@ -62,8 +74,12 @@ services:
     container_name: todo-frontend
     ports:
       - "80:80"
+    environment:
+      # This ensures the frontend in Docker knows how to reach the auth-server
+      - VITE_API_BASE_URL=http://auth-server:3001
     depends_on:
       - backend
+      - auth-server
     restart: unless-stopped
 
 volumes:
