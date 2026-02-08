@@ -75,8 +75,7 @@ services:
     ports:
       - "80:80"
     environment:
-      # This ensures the frontend in Docker knows how to reach the auth-server
-      - VITE_API_BASE_URL=http://auth-server:3001
+      # The frontend should make relative calls, and Nginx will proxy them.
     depends_on:
       - backend
       - auth-server
