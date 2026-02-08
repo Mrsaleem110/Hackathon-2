@@ -5,7 +5,7 @@ const isDevelopment = import.meta.env.DEV;
 // Use direct backend URL for auth endpoints to ensure proper CORS handling
 const getDirectAuthBaseUrl = () => {
   if (isDevelopment) {
-    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
+    return ''; // Use relative path for proxy to http://localhost:3001
   } else {
     // In production, always use the direct backend URL for auth endpoints
     return import.meta.env.VITE_API_BASE_URL || 'https://hackathon-2-p-3-backend.vercel.app';
@@ -17,7 +17,7 @@ const authApiBaseURL = getDirectAuthBaseUrl();
 // API wrapper for FastAPI auth endpoints - using direct backend URL
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
-    const url = `${authApiBaseURL}/auth/register`;
+    const url = `${authApiBaseURL}/api/auth/register`;
     console.log('Making registration request to:', url); // Debug log
     console.log('Auth API Base URL:', authApiBaseURL); // Debug log
 
@@ -187,7 +187,7 @@ const betterAuthAPI = {
   },
 
   async signInEmail({ email, password }) {
-    const url = `${authApiBaseURL}/auth/login`;
+    const url = `${authApiBaseURL}/api/auth/login`;
     console.log('Making login request to:', url); // Debug log
     console.log('Auth API Base URL:', authApiBaseURL); // Debug log
 
@@ -373,7 +373,7 @@ const betterAuthAPI = {
     }
 
     console.log('Getting session with token'); // Debug log
-    const url = `${authApiBaseURL}/auth/me`;
+    const url = `${authApiBaseURL}/api/auth/me`;
     console.log('Session URL:', url); // Debug log
 
     try {
