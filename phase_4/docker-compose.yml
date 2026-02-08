@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:13-alpine
     container_name: todo-postgres
     environment:
       POSTGRES_DB: todo_db
@@ -14,50 +14,56 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     container_name: todo-backend
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/todo_db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SECRET_KEY=${SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-fake-key-for-local-testing}
+      - SECRET_KEY=${SECRET_KEY:-supersecretkeyfortesting}
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   mcp-server:
     build:
       context: ./mcp_server
+      dockerfile: Dockerfile
     container_name: todo-mcp-server
     ports:
       - "8001:8001"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/todo_db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-fake-key-for-local-testing}
     depends_on:
       postgres:
         condition: service_healthy
-      backend:
-        condition: service_started
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     container_name: todo-frontend
     ports:
       - "80:80"
     depends_on:
       - backend
-      - mcp-server
     restart: unless-stopped
 
 volumes:

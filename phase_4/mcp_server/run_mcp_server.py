@@ -4,43 +4,49 @@ MCP Server Entry Point for Docker Container
 """
 import asyncio
 import uvicorn
-from official_server import create_official_server
+from official_server import SampleMcpServer
+import sys
+import os
+from fastapi import FastAPI
 
-def main():
-    """Main entry point for the MCP server."""
-    print("Starting MCP Server...")
+# Create a simple FastAPI app for health checks
+app = FastAPI(title="MCP Server")
 
-    # For production use with Docker, we'll run the server differently
-    import sys
-    import os
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "mcp-server"}
 
-    # Add the current directory to the Python path
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Global server instance
+server_instance = None
 
-    # Import and run the official server
-    from official_server import SampleMcpServer
-
-    # Create and run the server
-    server = SampleMcpServer()
+async def initialize_server():
+    global server_instance
+    print("Initializing MCP Server...")
+    server_instance = SampleMcpServer()
 
     try:
-        # Connect to the server
-        import asyncio
-        asyncio.run(server.connect())
-
-        # Keep the server running
-        print("MCP Server is running on port 8001...")
-        print("Press Ctrl+C to stop")
-
-        # Keep the event loop running
-        try:
-            asyncio.run(asyncio.sleep(float('inf')))
-        except KeyboardInterrupt:
-            print("\nShutting down...")
-
+        await server_instance.connect()
+        print("MCP Server connected successfully!")
     except Exception as e:
-        print(f"Error running MCP server: {e}")
-        sys.exit(1)
+        print(f"Error connecting MCP server: {e}")
+        raise
+
+@app.on_event("startup")
+async def startup_event():
+    await initialize_server()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global server_instance
+    if server_instance:
+        await server_instance.cleanup()
 
 if __name__ == "__main__":
-    main()
+    # Run with uvicorn
+    uvicorn.run(
+        "run_mcp_server:app",
+        host="0.0.0.0",
+        port=8001,
+        reload=False,
+        log_level="info"
+    )
