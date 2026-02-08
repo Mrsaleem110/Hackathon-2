@@ -74,8 +74,6 @@ services:
     container_name: todo-frontend
     ports:
       - "80:80"
-    environment:
-      # The frontend should make relative calls, and Nginx will proxy them.
     depends_on:
       - backend
       - auth-server
