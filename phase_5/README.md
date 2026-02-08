@@ -1,0 +1,225 @@
+# AI-Powered Todo Chatbot (Phase III)
+
+An AI-powered todo chatbot that enables users to manage tasks using natural language through an intelligent chat interface.
+
+## Overview
+
+This project implements a conversational todo management system where users can interact with an AI assistant using natural language to:
+- Add new tasks
+- List existing tasks
+- Mark tasks as complete
+- Update task details
+- Delete tasks
+
+The system follows a clean architecture with:
+- Frontend: OpenAI ChatKit UI
+- Backend: FastAPI server with stateless architecture
+- MCP Server: Official MCP SDK handling business logic
+- Database: Neon PostgreSQL with SQLModel ORM
+
+## Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Frontend      │    │    Backend       │    │    MCP Server   │
+│  (ChatKit UI)   │───▶│   (FastAPI)      │───▶│  (MCP Tools)    │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                            │
+                            ▼
+                      ┌─────────────────┐
+                      │   Database      │
+                      │ (Neon PostgreSQL)│
+                      └─────────────────┘
+```
+
+## Setup Instructions
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- PostgreSQL (or Neon Serverless PostgreSQL account)
+- OpenAI API key
+- OpenAI ChatKit domain key (for production deployment)
+
+### Backend Setup
+1. Navigate to the backend directory: `cd backend`
+2. Create a virtual environment: `python -m venv venv`
+3. Activate the virtual environment:
+   - On Linux/Mac: `source venv/bin/activate`
+   - On Windows: `venv\Scripts\activate`
+4. Install dependencies: `pip install -r requirements.txt`
+5. Create a `.env` file with your environment variables
+6. Run database migrations: `alembic upgrade head`
+7. Start the server: `uvicorn src.api.main:app --reload --port 8000`
+
+### Frontend Setup
+1. Navigate to the frontend directory: `cd frontend`
+2. Install dependencies: `npm install`
+3. Create a `.env` file with your environment variables
+4. Start the development server: `npm run dev`
+
+### MCP Server Setup
+1. Navigate to the mcp directory: `cd mcp`
+2. Create and activate a virtual environment
+3. Install dependencies: `pip install -r requirements.txt`
+4. Start the MCP server: `python -m src.server.main`
+
+### OpenAI ChatKit Domain Allowlist Configuration (Required for Production)
+
+Before deploying your chatbot frontend to production, you must configure OpenAI's domain allowlist for security:
+
+1. Deploy your frontend first to get a production URL:
+   - Vercel: `https://your-app.vercel.app`
+   - GitHub Pages: `https://username.github.io/repo-name`
+   - Custom domain: `https://yourdomain.com`
+
+2. Add your domain to OpenAI's allowlist:
+   - Navigate to: https://platform.openai.com/settings/organization/security/domain-allowlist
+   - Click "Add domain"
+   - Enter your frontend URL (without trailing slash)
+   - Save changes
+
+3. Get your ChatKit domain key:
+   - After adding the domain, OpenAI will provide a domain key
+   - Add this key to your frontend environment variables
+
+### Frontend Environment Variables
+Create a `.env` file in the frontend directory:
+
+```
+VITE_CHATKIT_DOMAIN_KEY=your-chatkit-domain-key-here
+VITE_API_BASE_URL=http://localhost:8000  # For local development
+# For production, update to your backend URL
+```
+
+### Backend Environment Variables
+Create a `.env` file in the backend directory:
+
+```
+DATABASE_URL=postgresql://username:password@localhost:5432/todo_chatbot
+OPENAI_API_KEY=your_openai_api_key
+NEON_DATABASE_URL=your_neon_database_url
+BETTER_AUTH_SECRET=your_auth_secret
+BETTER_AUTH_URL=http://localhost:3000
+```
+
+Note: The hosted ChatKit option only works after adding the correct domains under Security → Domain Allowlist. Local development (`localhost`) typically works without this configuration.
+
+## Environment Variables
+
+### Backend (.env)
+```
+DATABASE_URL=postgresql://username:password@localhost:5432/todo_chatbot
+OPENAI_API_KEY=your_openai_api_key
+NEON_DATABASE_URL=your_neon_database_url
+BETTER_AUTH_SECRET=your_auth_secret
+BETTER_AUTH_URL=http://localhost:3000
+```
+
+### Frontend (.env)
+```
+VITE_CHATKIT_DOMAIN_KEY=your_chatkit_domain_key
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+## API Endpoints
+
+- `POST /api/{user_id}/chat` - Process natural language chat messages
+
+## Development
+
+### Running Tests
+- Backend: `cd backend && pytest tests/`
+- Frontend: `cd frontend && npm test`
+
+### Database Migrations
+- Create migration: `alembic revision --autogenerate -m "description"`
+- Apply migrations: `alembic upgrade head`
+
+## Deployment
+
+### Backend Deployment
+
+The backend is designed for deployment on Vercel as serverless functions. Follow these steps:
+
+1. **Prepare Environment Variables**:
+   - Create a `.env` file in the `backend` directory with all required variables
+   - Ensure your NeonDB connection string is properly configured
+   - Generate strong secrets for `SECRET_KEY` and `BETTER_AUTH_SECRET`
+
+2. **Deploy to Vercel**:
+   - Install Vercel CLI: `npm install -g vercel`
+   - Navigate to the backend directory: `cd backend`
+   - Deploy to production: `vercel --prod`
+   - Or use the deployment helper: `python ../deploy_backend.py`
+
+3. **Configure Environment Variables in Vercel**:
+   - Go to your Vercel dashboard
+   - Add the environment variables from your `.env` file
+   - Ensure CORS settings match your frontend deployment
+
+4. **Verify Deployment**:
+   - Test the health endpoint: `https://your-backend-url.vercel.app/health`
+   - Test the debug endpoint: `https://your-backend-url.vercel.app/debug/test`
+   - Confirm all API routes are accessible
+
+For detailed instructions, see the [BACKEND_DEPLOYMENT_GUIDE.md](BACKEND_DEPLOYMENT_GUIDE.md) file.
+
+### Frontend Deployment
+
+- Frontend: Static hosting (Vercel, Netlify, etc.)
+- MCP Server: Containerized with Docker
+- Database: Neon Serverless PostgreSQL
+
+## Authentication Troubleshooting Guide
+
+### Common Issues and Solutions
+
+1. **Chat messages not sending / User ID missing**
+   - Verify that the auth session contains a user.id field
+   - Check that the JWT token includes proper user identification
+   - Ensure the frontend waits for complete auth state resolution before enabling chat
+
+2. **Authentication fails after deployment**
+   - Verify that environment variables are properly set in the deployment environment
+   - Check that BETTER_AUTH_URL is set correctly for your deployment
+   - Ensure CORS settings allow requests from your frontend domain
+
+3. **JWT validation errors**
+   - Verify that JWT tokens contain required fields (sub or user_id)
+   - Check that JWT secret keys match between frontend and backend
+   - Ensure token expiration times are reasonable
+
+4. **Environment variable validation**
+   - Run `npm run dev` or `npm start` to trigger frontend environment validation
+   - Check browser console for environment validation errors
+   - Verify all required VITE_* variables are set in your environment
+
+### Verification Steps
+
+1. **Frontend Auth Verification**
+   - Check that AuthContext shows user.id after login
+   - Verify ProtectedRoute waits for auth resolution
+   - Confirm ChatInterface only loads after user.id is available
+
+2. **Backend Auth Verification**
+   - Test that /chat endpoint rejects requests without valid JWT
+   - Verify JWT payload normalization works with different field names (sub vs user_id)
+   - Confirm user ID is properly extracted and validated
+
+3. **Integration Verification**
+   - Test complete auth flow from login to chat message
+   - Verify error handling when auth fails
+   - Confirm proper error messages are shown to users
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+[Specify your license here]
