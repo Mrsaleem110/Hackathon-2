@@ -1,0 +1,56 @@
+﻿# FIXES APPLIED TO RESOLVE CONTAINER ERRORS
+
+## Issues Fixed:
+
+### 1. Backend PostgreSQL SSL Error - FIXED ✅
+**Problem:** Backend couldn't connect to PostgreSQL due to SSL requirement
+**Solution:** Added ?sslmode=disable to all DATABASE_URL environment variables
+
+### 2. Auth-Server ESM Module Error - FIXED ✅
+**Problem:** better-auth is an ESM module, but the server was using CommonJS require()
+**Solution:** 
+- Created new etter_auth_server.mjs file with ESM imports
+- Updated Dockerfile.auth to use the .mjs file
+- Added proper CORS headers for frontend communication
+
+### 3. MCP-Server Missing Modules - DISABLED ⚠️
+**Problem:** Module 'src.agents.mcp' not found
+**Solution:** Commented out mcp-server service in docker-compose.yml (not critical for auth)
+
+## Next Steps:
+
+1. Stop all running containers:
+   Press CTRL+C in the terminal where docker-compose is running
+
+2. Remove the old containers:
+   docker-compose down
+
+3. Rebuild the auth-server with the new configuration:
+   docker-compose build auth-server
+
+4. Start all services again:
+   docker-compose up
+
+5. Test your signup/signin:
+   - Open browser to http://localhost
+   - Try signing up with email/password
+   - The frontend should now successfully communicate with:
+     * Backend API (http://localhost:8000)
+     * Auth Server (http://localhost:3001)
+
+## Expected Result:
+- ✅ postgres: Running and healthy
+- ✅ backend: Running on port 8000
+- ✅ auth-server: Running on port 3001 (no more ESM errors)
+- ✅ frontend: Running on port 80
+- ⚠️  mcp-server: Disabled (not needed for basic auth)
+
+## If You Still Get "Failed to Fetch":
+1. Open browser DevTools (F12)
+2. Check Console tab for exact error
+3. Check Network tab to see which API call is failing
+4. Verify in docker logs:
+   - docker logs todo-backend
+   - docker logs todo-auth-server
+   - docker logs todo-frontend
+

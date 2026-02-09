@@ -9,7 +9,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install project dependencies
-# Use `npm ci` for clean installs in CI/CD environments and Docker builds
+# Use 
+pm ci for clean installs in CI/CD environments and Docker builds
 RUN npm ci
 
 # Copy the rest of the application code to the working directory
@@ -19,4 +20,4 @@ COPY . .
 EXPOSE 3001
 
 # Define the command to run your application
-CMD ["node", "better_auth_server.js"]
+CMD ["node", "better_auth_server.mjs"]
