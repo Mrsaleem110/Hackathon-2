@@ -22,7 +22,10 @@
       "Bash(move:*)",
       "Bash(where minikube:*)",
       "Bash(curl:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(dir:*)",
+      "Bash(docker-compose logs:*)"
     ]
   }
 }
