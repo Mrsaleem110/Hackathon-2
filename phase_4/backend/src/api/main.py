@@ -41,8 +41,7 @@ frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.verce
 cors_origins_env = os.getenv("CORS_ORIGINS", "") or os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
 cors_origins_list = cors_origins_env.split(",") if cors_origins_env else []
 
-# Ensure we always include the main frontend URL regardless of environment variables
-cors_origins = [
+    "http://localhost",
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5183",  # Added the port from the error message
