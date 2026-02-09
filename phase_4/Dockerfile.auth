@@ -10,7 +10,7 @@ COPY package*.json ./
 
 # Install project dependencies
 # Use 
-pm ci for clean installs in CI/CD environments and Docker builds
+RUN npm ci
 RUN npm ci
 
 # Copy the rest of the application code to the working directory
