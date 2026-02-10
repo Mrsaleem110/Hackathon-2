@@ -1,11 +1,12 @@
 import http from 'http';
 import { betterAuth } from 'better-auth';
-import url from 'url';
+import { URL } from 'url'; // Import URL from 'url'
+// Do not import url from 'url' here.
 
 // Initialize Better Auth with email password provider
 const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || '$@!eem1234', // Use the secret from .env
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL: process.env.BETTER_AUTH_URL || `http://localhost:${process.env.PORT || 3001}`, // Use the actual server port for baseURL
   trustHost: true,
   origin: [
     'http://localhost', 
@@ -41,7 +42,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Parse the URL
-  const parsedUrl = url.parse(req.url, true);
+  const parsedUrl = new URL(req.url, `http://${req.headers.host}`); // Use new URL for robust parsing
 
   // Health check endpoint
   if (parsedUrl.pathname === '/health') {
@@ -51,38 +52,50 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Handle Better Auth requests
-  try {
-    const response = await auth.handler(req);
-    
-    // If Better Auth returns a response, send it
-    if (response) {
-      res.writeHead(response.status || 200, {
-        'Content-Type': 'application/json',
-        ...response.headers
+  if (parsedUrl.pathname.startsWith('/api/auth')) { // Only process /api/auth paths with better-auth
+    try {
+      let body = '';
+      if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+        for await (const chunk of req) {
+          body += chunk.toString();
+        }
+      }
+
+      // Construct a Request object suitable for better-auth
+      const request = new Request(parsedUrl.toString(), {
+        method: req.method,
+        headers: req.headers,
+        body: body || undefined,
       });
+
+      const response = await auth.handler(request);
       
+      // Set response status and headers
+      res.writeHead(response.status, Object.fromEntries(response.headers.entries()));
+
       if (response.body) {
-        res.end(JSON.stringify(response.body));
+        const responseBody = await response.text();
+        res.end(responseBody);
       } else {
         res.end();
       }
-    } else {
-      // No response from Better Auth, return 404
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Not Found' }));
+    } catch (error) {
+      console.error('Auth handler error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        error: 'Internal Server Error',
+        message: error.message 
+      }));
     }
-  } catch (error) {
-    console.error('Auth handler error:', error);
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      error: 'Internal Server Error',
-      message: error.message 
-    }));
+  } else {
+    // Handle unknown routes outside of /api/auth
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not Found' }));
   }
 });
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Better Auth server listening on http://0.0.0.0:${PORT}`);
-  console.log(`Base URL: ${process.env.BETTER_AUTH_URL || 'http://localhost:3001'}`);
+  console.log(`Base URL: ${process.env.BETTER_AUTH_URL || `http://localhost:${PORT}`}`);
 });
