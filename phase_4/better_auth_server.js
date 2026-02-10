@@ -5,7 +5,7 @@ const url = require('url');
 // Initialize Better Auth with email password provider
 const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || '$@!eem1234', // Use the secret from .env
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL: process.env.BETTER_AUTH_URL || `http://localhost:${process.env.PORT || 3001}`, // Use the actual server port for baseURL
   trustHost: true,
   origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'], // Allow Vite dev server and other origins
   emailAndPassword: {
@@ -37,7 +37,7 @@ const server = http.createServer(async (req, res) => {
   if (req.url.startsWith('/api/auth')) {
     try {
       // Better Auth expects the full path including /api/auth
-      const internalUrl = `http://localhost:${server.address().port}${req.url}`;
+      const requestUrl = new URL(req.url, `http://localhost:${process.env.PORT || 3001}`); // Construct full URL for Request object
 
       // Create a Request object for Better Auth
       let body = '';
@@ -47,7 +47,7 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      const request = new Request(internalUrl, {
+      const request = new Request(requestUrl.toString(), {
         method: req.method,
         headers: req.headers,
         body: body || undefined
