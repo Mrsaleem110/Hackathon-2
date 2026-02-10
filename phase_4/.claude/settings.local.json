@@ -25,7 +25,8 @@
       "Bash(unzip:*)",
       "Bash(docker-compose up:*)",
       "Bash(dir:*)",
-      "Bash(docker-compose logs:*)"
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose ps:*)"
     ]
   }
 }
