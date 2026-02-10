@@ -6,9 +6,9 @@ const isDevelopment = import.meta.env.DEV;
 const getDirectAuthBaseUrl = () => {
   if (isDevelopment) {
     if (import.meta.env.VITE_DOCKER_DEV === 'true') {
-      return 'http://auth-server:3001'; // Direct to auth-server service in Docker Compose
+      return 'http://backend:8000'; // Direct to backend service in Docker Compose (where our auth routes are)
     }
-    return ''; // Use relative path for proxy to http://localhost:3001 for local non-docker dev
+    return 'http://localhost:8000'; // Point to backend port where our auth routes are located
   } else {
     // In production, always use the direct backend URL for auth endpoints
     return import.meta.env.VITE_API_BASE_URL || 'https://hackathon-2-p-3-backend.vercel.app';
@@ -20,7 +20,7 @@ const authApiBaseURL = getDirectAuthBaseUrl();
 // API wrapper for FastAPI auth endpoints - using direct backend URL
 const betterAuthAPI = {
   async signUpEmail({ email, password, name }) {
-    const url = `${authApiBaseURL}/api/auth/register`;
+    const url = `${authApiBaseURL}/auth/register`;
     console.log('Making registration request to:', url); // Debug log
     console.log('Auth API Base URL:', authApiBaseURL); // Debug log
 
@@ -190,7 +190,7 @@ const betterAuthAPI = {
   },
 
   async signInEmail({ email, password }) {
-    const url = `${authApiBaseURL}/api/auth/login`;
+    const url = `${authApiBaseURL}/auth/login`;
     console.log('Making login request to:', url); // Debug log
     console.log('Auth API Base URL:', authApiBaseURL); // Debug log
 
@@ -376,7 +376,7 @@ const betterAuthAPI = {
     }
 
     console.log('Getting session with token'); // Debug log
-    const url = `${authApiBaseURL}/api/auth/me`;
+    const url = `${authApiBaseURL}/auth/me`;
     console.log('Session URL:', url); // Debug log
 
     try {
