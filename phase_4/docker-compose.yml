@@ -76,7 +76,7 @@ services:
       - "3001:3001"
     environment:
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-$@!eem1234}
-      - BETTER_AUTH_URL=http://localhost:3001
+      - BETTER_AUTH_URL=http://localhost:3001/api/auth
       - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/todo_db?sslmode=disable
     depends_on:
