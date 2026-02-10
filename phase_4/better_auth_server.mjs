@@ -6,7 +6,7 @@ import { URL } from 'url'; // Import URL from 'url'
 // Initialize Better Auth with email password provider
 const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || '$@!eem1234', // Use the secret from .env
-  baseURL: process.env.BETTER_AUTH_URL || `http://localhost:${process.env.PORT || 3001}`, // Use the actual server port for baseURL
+  baseURL: process.env.BETTER_AUTH_URL || `http://localhost:${process.env.PORT || 3001}/api/auth`, // Use the actual server port for baseURL and include /api/auth
   trustHost: true,
   origin: [
     'http://localhost', 
