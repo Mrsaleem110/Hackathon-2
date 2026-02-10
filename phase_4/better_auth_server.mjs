@@ -83,6 +83,6 @@ const server = http.createServer(async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(Better Auth server listening on http://0.0.0.0:${PORT});
-  console.log(Base URL: ${process.env.BETTER_AUTH_URL || 'http://localhost:3001'});
+  console.log(`Better Auth server listening on http://0.0.0.0:${PORT}`);
+  console.log(`Base URL: ${process.env.BETTER_AUTH_URL || 'http://localhost:3001'}`);
 });

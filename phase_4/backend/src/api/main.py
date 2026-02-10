@@ -40,7 +40,7 @@ frontend_url = os.getenv("FRONTEND_URL", "https://hackathon-2-p-3-frontend.verce
 # Support both the requested CORS_ORIGINS and legacy ADDITIONAL_ALLOWED_ORIGINS for backward compatibility
 cors_origins_env = os.getenv("CORS_ORIGINS", "") or os.getenv("ADDITIONAL_ALLOWED_ORIGINS", "")
 cors_origins_list = cors_origins_env.split(",") if cors_origins_env else []
-
+cors_origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://localhost:5174",

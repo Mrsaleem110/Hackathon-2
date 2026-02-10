@@ -21,31 +21,31 @@ services:
     networks:
       - todo-network
 
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   container_name: todo-backend
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/todo_db?sslmode=disable
-  #     - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-fake-key-for-local-testing}
-  #     - SECRET_KEY=${SECRET_KEY:-supersecretkeyfortesting}
-  #     # CORS Configuration - Allow frontend to access backend
-  #     - CORS_ORIGINS=http://localhost,http://localhost:80,http://frontend:80,http://todo-frontend:80
-  #     - ALLOWED_HOSTS=localhost,backend,todo-backend,127.0.0.1
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #   networks:
-  #     - todo-network
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: todo-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/todo_db?sslmode=disable
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-fake-key-for-local-testing}
+      - SECRET_KEY=${SECRET_KEY:-supersecretkeyfortesting}
+      # CORS Configuration - Allow frontend to access backend
+      - CORS_ORIGINS=http://localhost,http://localhost:80,http://frontend:80,http://todo-frontend:80
+      - ALLOWED_HOSTS=localhost,backend,todo-backend,127.0.0.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - todo-network
 
   # MCP Server temporarily disabled due to missing modules
   # mcp-server:
@@ -106,6 +106,7 @@ services:
       - VITE_MCP_SERVER_URL=http://localhost:8001
       - NEXT_PUBLIC_OPENAI_API_KEY=${OPENAI_API_KEY:-sk-fake-key-for-local-testing}
     depends_on:
+      - backend
       - auth-server
     restart: unless-stopped
     networks:
