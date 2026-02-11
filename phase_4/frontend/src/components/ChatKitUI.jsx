@@ -46,7 +46,7 @@ const ChatKitUI = ({
   const getSessionData = async () => {
     // In a real implementation, this would call the backend API
     // to get session information
-    const baseUrl = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL || '') : 'https://hackathon-2-p-3-backend.vercel.app';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
     if (sessionId) {
       // Retrieve existing session
       const url = baseUrl ? `${baseUrl}/api/chatkit/session/${sessionId}` : `/api/chatkit/session/${sessionId}`;

@@ -4,15 +4,9 @@ const isDevelopment = import.meta.env.DEV;
 
 // Use direct backend URL for auth endpoints to ensure proper CORS handling
 const getDirectAuthBaseUrl = () => {
-  if (isDevelopment) {
-    if (import.meta.env.VITE_DOCKER_DEV === 'true') {
-      return 'http://backend:8000'; // Direct to backend service in Docker Compose (where our auth routes are)
-    }
-    return 'http://localhost:8000'; // Point to backend port where our auth routes are located
-  } else {
-    // In production, always use the direct backend URL for auth endpoints
-    return import.meta.env.VITE_API_BASE_URL || 'https://hackathon-2-p-3-backend.vercel.app';
-  }
+  // If VITE_API_BASE_URL is set, use it. Otherwise, default to http://localhost:8000.
+  // This ensures local builds (dev or "production" via Docker) point to the local backend.
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 };
 
 const authApiBaseURL = getDirectAuthBaseUrl();

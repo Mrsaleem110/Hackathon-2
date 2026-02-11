@@ -66,7 +66,7 @@ const OpenAIChatKitUI = ({ userId, backendUrl }) => {
       }
 
       // Send message to backend API
-      const baseUrl = backendUrl || (import.meta.env.DEV ? import.meta.env.VITE_API_BASE_URL : 'https://hackathon-2-p-3-backend.vercel.app');
+      const baseUrl = backendUrl || (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000');
       const url = `${baseUrl}/api/${userId}/chat`;
       const response = await fetch(url, {
         method: 'POST',

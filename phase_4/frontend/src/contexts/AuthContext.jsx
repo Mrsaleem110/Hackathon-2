@@ -33,10 +33,7 @@ export const AuthProvider = ({ children }) => {
 
   // API base URL for FastAPI backend (for tasks, not auth)
   // Use absolute URLs for production to avoid issues with Vercel rewrites and CORS
-  const isDevelopment = import.meta.env.DEV;
-  const API_BASE_URL = isDevelopment
-    ? (import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:8001')
-    : (import.meta.env.VITE_API_BASE_URL || 'https://hackathon-2-p-3-backend.vercel.app');
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
   // Register function using Better Auth
   const register = async (userData) => {

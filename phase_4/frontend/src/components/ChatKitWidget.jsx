@@ -9,7 +9,7 @@ const ChatKitWidget = ({ workflowId, userId }) => {
   // Function to fetch session token from backend
   const fetchSessionToken = async () => {
     try {
-      const baseUrl = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL || '') : 'https://hackathon-2-p-3-backend.vercel.app';
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       const url = baseUrl ? `${baseUrl}/api/chatkit/session` : '/api/chatkit/session';
       const response = await fetch(url, {
         method: 'POST',
