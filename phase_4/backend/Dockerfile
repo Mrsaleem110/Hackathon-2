@@ -1,14 +1,19 @@
-FROM python:3.11
+FROM python:3.11-slim
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
+    cargo \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-# Copy requirements and install (this layer will be cached)
 COPY requirements.txt .
+
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
 COPY . .
-
-EXPOSE 8000
-
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
