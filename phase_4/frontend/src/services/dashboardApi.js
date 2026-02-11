@@ -5,7 +5,7 @@
 // Use relative paths in production to leverage Vercel rewrites, absolute URLs in development
 const isDevelopment = import.meta.env.DEV;
 const API_BASE_URL = isDevelopment
-  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001')
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')
   : ''; // Use relative paths in production to leverage Vercel rewrites
 
 class DashboardApiService {

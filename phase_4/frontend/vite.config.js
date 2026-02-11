@@ -25,23 +25,23 @@ export default defineConfig({
       },
       // Proxy other specific API requests to the FastAPI backend
       '/auth': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       },
       '/tasks': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       },
       '/chat': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       },
       // Proxy all other /api requests to the FastAPI backend (most general last)
       '/api/': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       },
