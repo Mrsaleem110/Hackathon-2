@@ -1,3 +1,0 @@
-# Requirements for OpenAI ChatKit Frontend Subagent
-react>=18.0.0
-@openai/chatkit-react

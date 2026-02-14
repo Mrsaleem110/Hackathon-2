@@ -1,6 +1,14 @@
-version: '3.8'
-
 services:
+
+  auth_service:
+    build: ./auth_service
+    container_name: todo-auth
+    ports:
+      - "3001:3001"
+    environment:
+      - BETTER_AUTH_SECRET=Hnf9gPXIrABKBkMvDbkLS0wbDUu5665y90swejqqxQA=
+    depends_on:
+      - postgres
 
   backend:
     build: ./backend
@@ -18,9 +26,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - VITE_API_BASE_URL=http://backend:8000
+      - VITE_AUTH_BASE_URL=http://auth_service:3001
     depends_on:
       - backend
+      - auth_service
 
   postgres:
     image: postgres:15

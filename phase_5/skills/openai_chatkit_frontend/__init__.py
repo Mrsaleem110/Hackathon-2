@@ -1,3 +1,0 @@
-"""
-OpenAI ChatKit Frontend Skills
-"""

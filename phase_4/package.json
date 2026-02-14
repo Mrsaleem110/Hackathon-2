@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Todo AI Chatbot with Better Auth and FastAPI backend",
   "scripts": {
-    "dev": "nodemon better_auth_server.js",
+    "dev": "cd auth_service && npm run start",
     "dev-all": "concurrently \"npm run dev\" \"cd backend && uvicorn src.api.main:app --reload --port 8001\"",
     "build": "cd frontend && npm ci && npm run build"
   },

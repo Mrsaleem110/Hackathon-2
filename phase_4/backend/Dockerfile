@@ -1,8 +1,10 @@
-FROM python:3.11-slim
+FROM python:3.11
 
-# Install only essential build dependencies
+# Install system dependencies for psycopg2
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        postgresql-client \
+        libpq-dev \
         build-essential \
         libssl-dev \
         libffi-dev \
@@ -11,10 +13,15 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /app
-COPY requirements.txt .
 
-RUN pip install --upgrade pip
+# Copy and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application code
 COPY . .
+
+EXPOSE 8000
+
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

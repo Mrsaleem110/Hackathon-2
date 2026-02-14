@@ -3,8 +3,7 @@ from typing import Generator
 import os
 
 # Database URL from environment - use NeonDB as required
-NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL")
-DATABASE_URL = NEON_DATABASE_URL or os.getenv("DATABASE_URL", "sqlite:///./todo_chatbot_local.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./todo_chatbot_local.db")
 
 # If using NeonDB, ensure SSL is properly configured
 if DATABASE_URL and "neon.tech" in DATABASE_URL:
@@ -18,21 +17,21 @@ if DATABASE_URL and "neon.tech" in DATABASE_URL:
 # Create engine with serverless-friendly settings
 def get_engine():
     """Create database engine with appropriate settings for serverless environment"""
+    engine_kwargs = {
+        "echo": False
+    }
+
     # In serverless, we want to avoid connection pooling issues
-    connect_args = {}
     if DATABASE_URL.startswith("postgresql"):
-        connect_args = {
-            "pool_pre_ping": True,
-            "pool_recycle": 300,
-            "pool_size": 1,
-            "max_overflow": 0,
-            "connect_args": {
-                "sslmode": "require"
-                # Removed statement_timeout and command_timeout as they're not supported in connection string
-            }
+        engine_kwargs["pool_pre_ping"] = True
+        engine_kwargs["pool_recycle"] = 300
+        engine_kwargs["pool_size"] = 1
+        engine_kwargs["max_overflow"] = 0
+        engine_kwargs["connect_args"] = {
+            "sslmode": "require"
         }
 
-    return create_engine(DATABASE_URL, echo=False, **connect_args)
+    return create_engine(DATABASE_URL, **engine_kwargs)
 
 def get_session() -> Generator[Session, None, None]:
     engine = get_engine()

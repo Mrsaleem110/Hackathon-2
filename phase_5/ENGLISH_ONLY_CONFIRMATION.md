@@ -1,1 +1,0 @@
-Understood. I will use only English in our communication from now on.

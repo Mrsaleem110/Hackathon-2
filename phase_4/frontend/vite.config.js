@@ -16,7 +16,7 @@ export default defineConfig({
     proxy: {
       // Proxy Better Auth requests to the Better Auth server (most specific first)
       '/api/auth': {
-        target: 'http://localhost:3001',
+        target: process.env.VITE_AUTH_BASE_URL,
         changeOrigin: true,
         secure: false,
         // Preserve all headers to ensure Better Auth gets full request context
