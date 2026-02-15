@@ -16,7 +16,7 @@ export default defineConfig({
     proxy: {
       // Proxy Better Auth requests to the Better Auth server (most specific first)
       '/api/auth': {
-        target: process.env.VITE_AUTH_BASE_URL,
+        target: 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
         // Preserve all headers to ensure Better Auth gets full request context
@@ -25,23 +25,23 @@ export default defineConfig({
       },
       // Proxy other specific API requests to the FastAPI backend
       '/auth': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
       },
       '/tasks': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
       },
       '/chat': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
       },
       // Proxy all other /api requests to the FastAPI backend (most general last)
       '/api/': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
       },
