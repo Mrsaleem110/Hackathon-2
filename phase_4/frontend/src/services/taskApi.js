@@ -3,7 +3,10 @@
  * Better Auth is handled separately via authClient
  */
 // Always use the backend URL in production to ensure API calls reach the correct server
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const isDevelopment = import.meta.env.DEV;
+const API_BASE_URL = isDevelopment
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001')
+  : 'https://hackathon-2-p-3-backend.vercel.app'; // Use absolute backend URL in production
 
 class TaskApiService {
   static async getAuthHeaders() {

@@ -83,7 +83,7 @@ const ChatInterface = ({ userId }) => {
       }
 
       // Send message to backend API
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const baseUrl = import.meta.env.DEV ? import.meta.env.VITE_API_BASE_URL : 'https://hackathon-2-p-3-backend.vercel.app';
       const url = `${baseUrl}/api/${userId}/chat`;
       const response = await fetch(url, {
         method: 'POST',
