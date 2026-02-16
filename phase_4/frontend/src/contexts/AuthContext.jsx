@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authClient } from '../config/betterAuthClient'; // This now exports the BetterAuthClient instance
+import ApiService from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -31,23 +32,25 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null); // BetterAuthClient manages token internally
 
-  // Register function using Better Auth Client
+  // Register function using our FastAPI backend
   const register = async (userData) => {
     try {
       console.log('Starting registration with userData:', userData);
-      const response = await authClient.signUpEmail({
-        email: userData.email,
-        password: userData.password,
-        name: userData.name,
-      });
+      const response = await ApiService.register(userData);
 
       console.log('Registration response:', response);
 
       if (response && response.user) {
         setUser(response.user);
-        setSession(response.session); // Assuming BetterAuthClient returns session on successful registration
-        setToken(response.session?.token); // Store token from session if available
+        setSession(response.session); // Store session from API response
+        setToken(response.access_token); // Store token from API response
         console.log('Registration successful, user set in context:', response.user);
+
+        // Store token in localStorage for persistence
+        if (response.access_token) {
+          localStorage.setItem('auth-token', response.access_token);
+        }
+
         return { success: true, user: response.user };
       } else {
         console.error('Registration failed with error:', response?.error?.message || 'Unknown registration error');
@@ -62,22 +65,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login function using Better Auth Client
+  // Login function using our FastAPI backend
   const login = async (credentials) => {
     try {
       console.log('Starting login with credentials:', credentials);
-      const response = await authClient.signInEmail({
-        email: credentials.email,
-        password: credentials.password,
-      });
+      const response = await ApiService.login(credentials);
 
       console.log('Login response:', response);
 
       if (response && response.user) {
         setUser(response.user);
-        setSession(response.session); // Assuming BetterAuthClient returns session on successful login
-        setToken(response.session?.token); // Store token from session if available
+        setSession(response.session); // Store session from API response
+        setToken(response.access_token); // Store token from API response
         console.log('Login successful, user set in context:', response.user);
+
+        // Store token in localStorage for persistence
+        if (response.access_token) {
+          localStorage.setItem('auth-token', response.access_token);
+        }
+
         return { success: true, user: response.user };
       } else {
         console.error('Login failed with error:', response?.error?.message || 'Unknown login error');
@@ -95,7 +101,9 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      await authClient.signOut(); // BetterAuthClient handles clearing its internal state and localStorage
+      // Clear token from localStorage
+      localStorage.removeItem('auth-token');
+
       setUser(null);
       setSession(null);
       setToken(null);
@@ -103,6 +111,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
       // Still clear local state even if logout fails
+      localStorage.removeItem('auth-token');
       setUser(null);
       setSession(null);
       setToken(null);
@@ -112,13 +121,24 @@ export const AuthProvider = ({ children }) => {
   // Get user profile (session)
   const getUserProfile = async () => {
     try {
-      const response = await authClient.getSession(); // BetterAuthClient gets session from its internal storage
-      if (response && response.user) {
-        setUser(response.user);
-        setSession(response.session);
-        setToken(response.session?.token);
-        console.log('User profile loaded from session:', response.user);
-        return response.user;
+      // Get token from localStorage if available
+      const storedToken = localStorage.getItem('auth-token');
+
+      if (!storedToken) {
+        console.log('No stored token found.');
+        setUser(null);
+        setSession(null);
+        setToken(null);
+        return null;
+      }
+
+      const response = await ApiService.getCurrentUser(storedToken);
+      if (response && response.id) {
+        setUser(response);
+        setSession({ user: response, token: storedToken }); // Create a session-like object
+        setToken(storedToken);
+        console.log('User profile loaded from API:', response);
+        return response;
       }
       console.log('No active session found.');
       setUser(null);
@@ -127,7 +147,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // If getSession fails, it means no valid session, so log out
+      // If getting user fails, clear local state
       logout();
       return null;
     }
@@ -137,17 +157,37 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const response = await authClient.getSession(); // Get current session from BetterAuthClient
-        if (response && response.user) {
-          setUser(response.user);
-          setSession(response.session);
-          setToken(response.session?.token);
-          console.log('Initial auth check: user found.', response.user);
-        } else {
-          console.log('Initial auth check: no active session.');
+        // Get token from localStorage if available
+        const storedToken = localStorage.getItem('auth-token');
+
+        if (!storedToken) {
+          console.log('Initial auth check: no stored token found.');
           setUser(null);
           setSession(null);
           setToken(null);
+        } else {
+          // Verify the token by getting user profile
+          try {
+            const response = await ApiService.getCurrentUser(storedToken);
+            if (response && response.id) {
+              setUser(response);
+              setSession({ user: response, token: storedToken }); // Create a session-like object
+              setToken(storedToken);
+              console.log('Initial auth check: user found.', response);
+            } else {
+              console.log('Initial auth check: invalid token.');
+              setUser(null);
+              setSession(null);
+              setToken(null);
+              localStorage.removeItem('auth-token'); // Remove invalid token
+            }
+          } catch (error) {
+            console.error('Token validation failed:', error);
+            setUser(null);
+            setSession(null);
+            setToken(null);
+            localStorage.removeItem('auth-token'); // Remove invalid token
+          }
         }
       } catch (error) {
         console.error('Error during initial auth check:', error);

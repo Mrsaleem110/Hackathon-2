@@ -33,7 +33,8 @@
       "Bash(npm run dev)",
       "Bash(docker-compose build:*)",
       "Bash(findstr:*)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(node test-api.js)"
     ]
   }
 }
