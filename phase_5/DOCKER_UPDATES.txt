@@ -1,0 +1,85 @@
+﻿# UPDATED docker-compose.yml Configuration
+
+## Key Changes Made:
+
+### 1. Added Dedicated Docker Network
+- Created 'todo-network' for all services to communicate properly
+- All containers can now reference each other by service name
+
+### 2. Frontend Environment Variables Added:
+- VITE_API_BASE_URL=http://localhost:8000
+- VITE_AUTH_URL=http://localhost:3001
+- VITE_MCP_SERVER_URL=http://localhost:8001
+- These are set both as build args and runtime environment variables
+
+### 3. Backend CORS Configuration:
+- CORS_ORIGINS includes localhost variants
+- ALLOWED_HOSTS configured for Docker networking
+
+### 4. Auth Server Configuration:
+- BETTER_AUTH_URL set to http://localhost:3001
+- DATABASE_URL added to connect with postgres
+- NODE_ENV set to production
+
+### 5. MCP Server Configuration:
+- MCP_SERVER_HOST=0.0.0.0 (bind to all interfaces)
+- MCP_SERVER_PORT=8001
+
+## Next Steps to Fix Your Issue:
+
+1. Rebuild all containers with the new configuration:
+   cd "C:\Users\Chohan Laptop's\Documents\GitHub\Hackathon-2\phase_4"
+   docker-compose down -v
+   docker-compose build --no-cache
+   docker-compose up
+
+2. If you still see "failed to fetch" errors:
+   - Open browser DevTools (F12)
+   - Check Console tab for the exact error
+   - Check Network tab to see which API call is failing
+
+3. Verify backend CORS is working:
+   - Backend should accept requests from http://localhost
+   - Check backend logs: docker logs todo-backend
+
+4. Common Issues and Solutions:
+   
+   a) If frontend can't reach backend:
+      - Make sure you're accessing frontend at http://localhost (not http://localhost:80)
+      - The frontend API calls should go to http://localhost:8000
+   
+   b) If CORS errors persist:
+      - The backend already has comprehensive CORS configuration
+      - Check if there's a custom nginx.conf blocking requests
+   
+   c) If auth-server connection fails:
+      - Verify auth-server is running: docker ps | findstr auth
+      - Check auth-server logs: docker logs todo-auth-server
+
+## Environment Variables Summary:
+
+### Frontend (Build + Runtime):
+- VITE_API_BASE_URL → Backend API endpoint
+- VITE_AUTH_URL → Auth server endpoint
+- VITE_MCP_SERVER_URL → MCP server endpoint
+- VITE_DOCKER_DEV → Flag for Docker development mode
+
+### Backend:
+- DATABASE_URL → PostgreSQL connection
+- OPENAI_API_KEY → OpenAI API key
+- SECRET_KEY → JWT secret
+- CORS_ORIGINS → Allowed frontend origins
+- ALLOWED_HOSTS → Allowed backend hosts
+
+### Auth Server:
+- BETTER_AUTH_SECRET → Auth encryption secret
+- BETTER_AUTH_URL → Auth server URL
+- DATABASE_URL → PostgreSQL connection
+- NODE_ENV → Environment mode
+
+### MCP Server:
+- DATABASE_URL → PostgreSQL connection
+- OPENAI_API_KEY → OpenAI API key
+- MCP_SERVER_HOST → Bind address
+- MCP_SERVER_PORT → Server port
+

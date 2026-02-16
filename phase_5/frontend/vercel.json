@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/auth/(.*)", "destination": "https://hackathon-2-p-3-backend.vercel.app/auth/$1" },
+    { "source": "/api/(.*)", "destination": "https://hackathon-2-p-3-backend.vercel.app/api/$1" },
+    { "source": "/tasks/(.*)", "destination": "https://hackathon-2-p-3-backend.vercel.app/tasks/$1" },
+    { "source": "/chat/(.*)", "destination": "https://hackathon-2-p-3-backend.vercel.app/chat/$1" },
+    { "source": "/dashboard/(.*)", "destination": "https://hackathon-2-p-3-backend.vercel.app/dashboard/$1" },
+    { "source": "/analysis/(.*)", "destination": "https://hackathon-2-p-3-backend.vercel.app/analysis/$1" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}

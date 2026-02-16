@@ -1,0 +1,30 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+{{- if .Values.ingress.enabled }}
+APPLICATION ACCESS:
+  You can access the application at:
+  {{- range $host := .Values.ingress.hosts }}
+  http://{{ $host.host }}
+  {{- end }}
+{{- else }}
+SERVICE ACCESS:
+  Get the frontend service URL by running these commands:
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "todo-chatbot.frontend.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo http://$SERVICE_IP:{{ .Values.frontend.service.port }}
+{{- end }}
+
+DATABASE:
+  PostgreSQL database is available at: {{ include "todo-chatbot.fullname" . }}-postgresql:5432
+
+BACKEND API:
+  Backend API is available at: http://{{ include "todo-chatbot.backend.fullname" . }}:{{ .Values.backend.service.port }}
+
+MCP SERVER:
+  MCP Server is available at: http://{{ include "todo-chatbot.mcpServer.fullname" . }}:{{ .Values.mcpServer.service.port }}
