@@ -1,28 +1,42 @@
-const http = require('http');
+﻿const http = require('http');
 const { betterAuth } = require('better-auth');
 const url = require('url');
 
 // Initialize Better Auth with email password provider
 const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET || '$@!eem1234', // Use the secret from .env
-  baseURL: process.env.BETTER_AUTH_URL || `http://localhost:${process.env.PORT || 3001}`, // Use the actual server port for baseURL
+  secret: process.env.BETTER_AUTH_SECRET || '$@!eem1234',
+  baseURL: process.env.BETTER_AUTH_URL || `http://localhost:${process.env.PORT || 3001}`,
   trustHost: true,
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'], // Allow Vite dev server and other origins
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Don't require email verification for testing
+    requireEmailVerification: false,
     password: {
       enabled: true,
     }
   }
 });
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:3001'
+];
+
 // Create HTTP server
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
-
-  // Handle CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  
+  // Get the origin from the request
+  const origin = req.headers.origin;
+  
+  // Handle CORS - use specific origin instead of wildcard when credentials are needed
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -36,10 +50,8 @@ const server = http.createServer(async (req, res) => {
   // Handle Better Auth routes
   if (req.url.startsWith('/api/auth')) {
     try {
-      // Better Auth expects the full path including /api/auth
-      const requestUrl = new URL(req.url, `http://localhost:${process.env.PORT || 3001}`); // Construct full URL for Request object
+      const requestUrl = new URL(req.url, `http://localhost:${process.env.PORT || 3001}`);
 
-      // Create a Request object for Better Auth
       let body = '';
       if (req.method === 'POST' || req.method === 'PUT') {
         for await (const chunk of req) {
@@ -53,10 +65,8 @@ const server = http.createServer(async (req, res) => {
         body: body || undefined
       });
 
-      // Call Better Auth handler
       const response = await auth.handler(request);
 
-      // Set response status and headers
       res.statusCode = response.status;
       for (const [key, value] of response.headers) {
         res.setHeader(key, value);
@@ -92,7 +102,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// Start the server on port 3001 for consistent frontend connection (avoiding browser port restrictions)
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Better Auth server running on port ${PORT}`);

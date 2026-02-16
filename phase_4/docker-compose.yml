@@ -1,4 +1,4 @@
-services:
+﻿services:
 
   auth_service:
     build: ./auth_service
@@ -21,13 +21,15 @@ services:
       - postgres
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        # Frontend runs in the browser, so it needs to access backend/auth via localhost
+        VITE_API_BASE_URL: http://localhost:8000
+        VITE_AUTH_BASE_URL: http://localhost:3001
     container_name: todo-frontend
     ports:
       - "3000:3000"
-    environment:
-      - VITE_API_BASE_URL=http://backend:8000
-      - VITE_AUTH_BASE_URL=http://auth_service:3001
     depends_on:
       - backend
       - auth_service
