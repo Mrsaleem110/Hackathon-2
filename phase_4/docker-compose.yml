@@ -34,7 +34,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:4173"
     depends_on:
       - backend
       - auth-service # Added dependency on auth-service

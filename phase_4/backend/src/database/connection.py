@@ -26,11 +26,10 @@ def get_engine():
             "pool_recycle": 300,
             "pool_size": 1,
             "max_overflow": 0,
-            "connect_args": {
-                "sslmode": "require"
-                # Removed statement_timeout and command_timeout as they're not supported in connection string
-            }
         }
+        # Only add sslmode=require if it's a Neon DB connection
+        if NEON_DATABASE_URL or "neon.tech" in DATABASE_URL:
+            connect_args["connect_args"] = {"sslmode": "require"}
 
     return create_engine(DATABASE_URL, echo=False, **connect_args)
 
