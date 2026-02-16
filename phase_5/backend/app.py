@@ -2,10 +2,14 @@
 import sys
 import os
 import logging
+from dotenv import load_dotenv
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Load environment variables from .env file
+load_dotenv()
 
 try:
     # Add the src directory to the path so imports work correctly
