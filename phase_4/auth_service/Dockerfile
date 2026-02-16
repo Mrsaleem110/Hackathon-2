@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 3001
 
 # Define the command to run your app
-CMD [ "node", "better_auth_server.js" ]
+CMD [ "node", "better_auth_server.mjs" ]
