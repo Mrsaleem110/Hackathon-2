@@ -1,0 +1,19 @@
+# Dockerfile for Node.js Auth Service
+FROM node:lts-alpine
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application files
+COPY better_auth_server.js ./
+
+# Expose the port the app runs on
+EXPOSE 3001
+
+# Command to run the application
+CMD ["node", "better_auth_server.js"]
