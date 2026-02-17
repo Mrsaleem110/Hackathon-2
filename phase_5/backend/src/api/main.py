@@ -427,6 +427,17 @@ except Exception as e:
     logger.error(f"Traceback: {traceback.format_exc()}")
 
 try:
+    from .task_search import router as task_search_router
+    logger.info("Successfully imported task search router")
+    app.include_router(task_search_router, prefix="/tasks")
+    logger.info("Successfully included task search router")
+except Exception as e:
+    logger.error(f"Failed to import/include task search router: {e}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
+
+try:
     from .dashboard import router as dashboard_router
     logger.info("Successfully imported dashboard router")
     app.include_router(dashboard_router, prefix="/dashboard")

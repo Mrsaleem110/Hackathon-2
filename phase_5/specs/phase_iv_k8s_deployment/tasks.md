@@ -47,7 +47,7 @@ The MVP will include user story 1 (Basic recurring tasks), foundational setup, a
 
 - [x] T030 Create event schemas and validation for task events
 - [x] T031 Implement event publisher service for task operations
-- [ ] T032 Set up event consumer infrastructure pattern
+- [x] T032 Set up event consumer infrastructure pattern
 
 ---
 
@@ -60,22 +60,22 @@ The MVP will include user story 1 (Basic recurring tasks), foundational setup, a
 - [x] T101 Add recurrence fields to Task model (type, interval, end date) for [US1]
 - [x] T102 Create TaskSeries model for recurring task templates in [US1]
 - [x] T103 Add recurrence API endpoints to task router in [US1]
-- [ ] T104 Implement recurrence rule processing logic in [US1]
-- [ ] T105 Create task recurrence service methods in [US1]
-- [ ] T106 Implement event publishing for recurrence triggers in [US1]
+- [x] T104 Implement recurrence rule processing logic in [US1]
+- [x] T105 Create task recurrence service methods in [US1]
+- [x] T106 Implement event publishing for recurrence triggers in [US1]
 
 ### [US1] Recurring Task Consumer
 
-- [ ] T110 Create recurring task processing service in [US1]
-- [ ] T111 Implement event consumer for completed recurring tasks in [US1]
-- [ ] T112 Create new task occurrence based on recurrence pattern in [US1]
-- [ ] T113 Link new task to recurrence series in [US1]
+- [x] T110 Create recurring task processing service in [US1]
+- [x] T111 Implement event consumer for completed recurring tasks in [US1]
+- [x] T112 Create new task occurrence based on recurrence pattern in [US1]
+- [x] T113 Link new task to recurrence series in [US1]
 
 ### [US1] Frontend Integration
 
-- [ ] T120 Add recurrence form fields to frontend task creation UI in [US1]
-- [ ] T121 Display recurrence indicators in task list in [US1]
-- [ ] T122 Implement series management controls in frontend in [US1]
+- [x] T120 Add recurrence form fields to frontend task creation UI in [US1]
+- [x] T121 Display recurrence indicators in task list in [US1]
+- [x] T122 Implement series management controls in frontend in [US1]
 
 ---
 
@@ -85,29 +85,29 @@ The MVP will include user story 1 (Basic recurring tasks), foundational setup, a
 
 ### [US2] Due Date & Reminder Features
 
-- [ ] T201 Add due_date and reminder_time fields to Task model in [US2]
-- [ ] T202 Implement date/time validation in task model in [US2]
-- [ ] T203 Add due date and reminder API endpoints in [US2]
-- [ ] T204 Create reminder scheduling service in [US2]
+- [x] T201 Add due_date and reminder_time fields to Task model in [US2]
+- [x] T202 Implement date/time validation in task model in [US2]
+- [x] T203 Add due date and reminder API endpoints in [US2]
+- [x] T204 Create reminder scheduling service in [US2]
 
 ### [US2] Dapr Jobs Integration
 
-- [ ] T210 Configure and test Dapr Jobs API for reminder scheduling in [US2]
-- [ ] T211 Implement reminder scheduler in backend that uses Dapr Jobs in [US2]
-- [ ] T212 Create notification service job handler in [US2]
-- [ ] T213 Implement job cleanup when tasks are deleted/updated in [US2]
+- [x] T210 Configure and test Dapr Jobs API for reminder scheduling in [US2]
+- [x] T211 Implement reminder scheduler in backend that uses Dapr Jobs in [US2]
+- [x] T212 Create notification service job handler in [US2]
+- [x] T213 Implement job cleanup when tasks are deleted/updated in [US2]
 
 ### [US2] Notification Service
 
-- [ ] T220 Create notification service for handling reminders in [US2]
-- [ ] T221 Implement notification channels (console initially) in [US2]
-- [ ] T222 Add notification storage for audit trail in [US2]
+- [x] T220 Create notification service for handling reminders in [US2]
+- [x] T221 Implement notification channels (console initially) in [US2]
+- [x] T222 Add notification storage for audit trail in [US2]
 
 ### [US2] Frontend Integration
 
-- [ ] T230 Add due date and reminder time selectors to task UI in [US2]
-- [ ] T231 Display upcoming due dates in task list in [US2]
-- [ ] T232 Show reminder settings in task detail view in [US2]
+- [x] T230 Add due date and reminder time selectors to task UI in [US2]
+- [x] T231 Display upcoming due dates in task list in [US2]
+- [x] T232 Show reminder settings in task detail view in [US2]
 
 ---
 
@@ -125,18 +125,18 @@ The MVP will include user story 1 (Basic recurring tasks), foundational setup, a
 
 ### [US3] Search and Filter Features
 
-- [ ] T310 [P] Create search endpoint with full-text capabilities in [US3]
-- [ ] T311 Implement filtering by status, priority, and tags in [US3]
-- [ ] T312 [P] Add date range filtering for due dates in [US3]
-- [ ] T313 Implement sorting by due_date, priority, and creation date in [US3]
-- [ ] T314 Add pagination support to task queries in [US3]
+- [x] T310 [P] Create search endpoint with full-text capabilities in [US3]
+- [x] T311 Implement filtering by status, priority, and tags in [US3]
+- [x] T312 [P] Add date range filtering for due dates in [US3]
+- [x] T313 Implement sorting by due_date, priority, and creation date in [US3]
+- [x] T314 Add pagination support to task queries in [US3]
 
 ### [US3] Frontend Integration
 
-- [ ] T320 Add priority selection to task creation/edit UI in [US3]
-- [ ] T321 Implement tag management in frontend [US3]
-- [ ] T322 Add filtering and sorting controls to task list UI in [US3]
-- [ ] T323 [P] Create search functionality in frontend interface in [US3]
+- [x] T320 Add priority selection to task creation/edit UI in [US3]
+- [x] T321 Implement tag management in frontend [US3]
+- [x] T322 Add filtering and sorting controls to task list UI in [US3]
+- [x] T323 [P] Create search functionality in frontend interface in [US3]
 
 ---
 
@@ -180,12 +180,12 @@ The MVP will include user story 1 (Basic recurring tasks), foundational setup, a
 
 ### Deployment & Infrastructure
 
-- [ ] T510 Create Kubernetes manifests for all services with Dapr sidecars
+- [x] T510 Create Kubernetes manifests for all services with Dapr sidecars
 - [ ] T511 Configure Ingress with TLS for external access
 - [ ] T512 Set up monitoring with Prometheus and Grafana
-- [ ] T513 Implement health checks and readiness probes
+- [x] T513 Implement health checks and readiness probes
 - [ ] T514 Configure horizontal pod autoscaling
-- [ ] T515 Set up automated GitHub Actions deployment pipeline
+- [x] T515 Set up automated GitHub Actions deployment pipeline
 
 ### Quality & Testing
 
@@ -197,7 +197,7 @@ The MVP will include user story 1 (Basic recurring tasks), foundational setup, a
 
 ### Documentation
 
-- [ ] T530 Update architecture diagrams with new components
+- [x] T530 Update architecture diagrams with new components
 - [ ] T531 Create deployment documentation
 - [ ] T532 Write operational runbooks for system management
 - [ ] T533 Create user guides for advanced features

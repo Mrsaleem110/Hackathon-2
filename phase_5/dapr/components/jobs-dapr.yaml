@@ -1,0 +1,12 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: dapr-jobs
+spec:
+  type: jobsscheduler.dapr
+  version: v1
+  metadata:
+  - name: serverAddress
+    value: "dapr-jobs-server:50005"  # Placeholder - actual Dapr Jobs server address
+  - name: apiKey
+    value: "your-api-key-here"  # In real implementation, would be from secret store

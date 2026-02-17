@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redpanda
+spec:
+  serviceName: redpanda
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redpanda
+  template:
+    metadata:
+      labels:
+        app: redpanda
+    spec:
+      containers:
+      - name: redpanda
+        image: docker.redpanda.com/redpanda/redpanda:latest
+        ports:
+        - containerPort: 9092
+          name: kafka
+        - containerPort: 8081
+          name: admin
+        - containerPort: 9644
+          name: rpc
+        command:
+        - rpk
+        - redpanda
+        - start
+        - --smp=1
+        - --memory=1G
+        - --reserve-memory=0M
+        - --node-id=0
+        - --check=false
+        - --set redpanda.auto_create_topics_enabled=true
+        - --set redpanda.enable_transactions=true
+        - --set redpanda.enable_idempotence=true
+        - --set redpanda.default_topic_replications=1
+        - --set redpanda.default_topic_partitions=1
+        - --set redpanda.default_topic_cleanup_policy=delete
+        - --set redpanda.default_topic_retention_ms=604800000
+        - --set redpanda.default_topic_retention_bytes=1073741824
+        env:
+        - name: REDPANDA_ENVIRONMENT
+          value: "kubernetes"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+spec:
+  selector:
+    app: redpanda
+  ports:
+  - name: kafka
+    port: 9092
+    targetPort: 9092
+  - name: admin
+    port: 8081
+    targetPort: 8081
+  - name: rpc
+    port: 9644
+    targetPort: 9644
+  clusterIP: None

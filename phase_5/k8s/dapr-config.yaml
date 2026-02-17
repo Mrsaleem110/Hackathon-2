@@ -1,0 +1,48 @@
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: dapr-config
+  namespace: default
+spec:
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://zipkin.default.svc.cluster.local:9411/api/v2/spans"
+  metric:
+    enabled: true
+  secretStore:
+    name: kubernetes
+  accessControl:
+    defaultAction: allow
+    trustDomain: "hackathon2.org"
+    policies:
+    - appId: backend
+      defaultAction: allow
+      trustDomain: "hackathon2.org"
+      namespace: "default"
+      rules:
+      - name: allow-all
+        action: allow
+        operations:
+        - name: "*"
+          httpVerb: ["*"]
+    - appId: recurring-service
+      defaultAction: allow
+      trustDomain: "hackathon2.org"
+      namespace: "default"
+      rules:
+      - name: allow-all
+        action: allow
+        operations:
+        - name: "*"
+          httpVerb: ["*"]
+    - appId: notification-service
+      defaultAction: allow
+      trustDomain: "hackathon2.org"
+      namespace: "default"
+      rules:
+      - name: allow-all
+        action: allow
+        operations:
+        - name: "*"
+          httpVerb: ["*"]

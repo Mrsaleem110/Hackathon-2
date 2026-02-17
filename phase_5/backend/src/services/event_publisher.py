@@ -81,5 +81,28 @@ class EventPublisherService:
             print(f"Error publishing task update event: {e}")
             raise e
 
+    async def publish_recurring_task_event(self, event: TaskEvent) -> None:
+        """
+        Publish a recurring task event to the event stream
+        """
+        try:
+            # Serialize the event to JSON
+            event_data = event.dict()
+            event_json = json.dumps(event_data)
+
+            # Publish to Dapr pubsub
+            await self.dapr_client.publish_event_async(
+                pubsub_name=self.pubsub_name,
+                topic_name="recurring-tasks",
+                data=event_json,
+                data_content_type="application/json"
+            )
+
+            print(f"Published recurring task event: {event.event_type} for task {event.task_id}")
+
+        except Exception as e:
+            print(f"Error publishing recurring task event: {e}")
+            raise e
+
 # Global instance
 event_publisher_service = EventPublisherService()

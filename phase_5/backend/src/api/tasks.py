@@ -32,16 +32,61 @@ async def create_task(
     """
     Create a new task for the authenticated user.
     """
-    # Create the task with the authenticated user's ID
-    task_create = TaskCreate(
-        title=task_request.title,
-        description=task_request.description,
-        completed=task_request.completed,
-        user_id=current_user.id,  # Use authenticated user ID from auth
-        priority=task_request.priority,
-        due_date=task_request.due_date
+    # Check if this is a recurring task
+    if task_request.recurrence_pattern:
+        # Create a recurring task using the specialized method
+        task_create = TaskCreate(
+            title=task_request.title,
+            description=task_request.description,
+            user_id=current_user.id,
+            priority=task_request.priority,
+            due_date=task_request.due_date,
+            reminder_time=task_request.reminder_time,
+            recurrence_pattern=task_request.recurrence_pattern,
+            tags=task_request.tags
+        )
+        created_task = await TaskService.create_recurring_task(session, task_create)
+    else:
+        # Create a regular task
+        task_create = TaskCreate(
+            title=task_request.title,
+            description=task_request.description,
+            completed=False,  # Default to False
+            user_id=current_user.id,
+            priority=task_request.priority,
+            due_date=task_request.due_date,
+            reminder_time=task_request.reminder_time,
+            recurrence_pattern=task_request.recurrence_pattern,
+            tags=task_request.tags
+        )
+        created_task = await TaskService.create_task(session, task_create)
+
+    # Publish event for the new task
+    from ..services.event_publisher import event_publisher_service
+    from ..schemas.events import TaskCreatedEvent
+    import datetime
+
+    task_event = TaskCreatedEvent(
+        event_type="created",
+        task_id=created_task.id,
+        user_id=created_task.user_id,
+        timestamp=datetime.datetime.utcnow(),
+        payload={
+            "title": created_task.title,
+            "description": created_task.description,
+            "status": created_task.status,
+            "priority": created_task.priority,
+            "due_date": created_task.due_date,
+            "tags": created_task.tags,
+            "recurrence_info": {
+                "has_recurrence": bool(created_task.recurrence_pattern),
+                "series_id": str(created_task.series_id) if created_task.series_id else None
+            }
+        }
     )
-    created_task = TaskService.create_task(session, task_create)
+
+    await event_publisher_service.publish_task_event(task_event)
+
     return created_task
 
 @router.get("/{task_id}", response_model=Task)
@@ -109,12 +154,64 @@ async def update_task(
             detail="Access denied: You can only update your own tasks"
         )
 
-    updated_task = TaskService.update_task(session, task_uuid, task_update)
+    # Store original values to check for changes
+    original_completed = task.completed
+    original_series_id = task.series_id
+    original_reminder_time = task.reminder_time
+
+    updated_task = await TaskService.update_task(session, task_uuid, task_update)
     if not updated_task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Task not found"
         )
+
+    # If the task was marked as completed and it's a recurring task, process it
+    if updated_task.completed and not original_completed and updated_task.series_id:
+        updated_task = await TaskService.process_completed_recurring_task(session, task_uuid)
+
+        # Publish recurring task event
+        from ..services.event_publisher import event_publisher_service
+        from ..schemas.events import RecurringEvent
+        import datetime
+
+        recurring_event = RecurringEvent(
+            event_type="task_completed_trigger",
+            task_id=updated_task.id,
+            user_id=updated_task.user_id,
+            timestamp=datetime.datetime.utcnow(),
+            payload={
+                "action": "next_occurrence_processed",
+                "series_id": str(updated_task.series_id) if updated_task.series_id else None,
+                "original_task_id": str(task_uuid)
+            }
+        )
+
+        await event_publisher_service.publish_recurring_task_event(recurring_event)
+
+    # Publish update event
+    from ..services.event_publisher import event_publisher_service
+    from ..schemas.events import TaskUpdatedEvent
+    import datetime
+
+    task_event = TaskUpdatedEvent(
+        event_type="updated",
+        task_id=updated_task.id,
+        user_id=updated_task.user_id,
+        timestamp=datetime.datetime.utcnow(),
+        payload={
+            "title": updated_task.title,
+            "description": updated_task.description,
+            "status": updated_task.status,
+            "priority": updated_task.priority,
+            "completed": updated_task.completed,
+            "due_date": updated_task.due_date,
+            "tags": updated_task.tags,
+            "reminder_time_changed": original_reminder_time != updated_task.reminder_time
+        }
+    )
+
+    await event_publisher_service.publish_task_event(task_event)
 
     return updated_task
 

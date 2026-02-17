@@ -11,7 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import LandingPage from './pages/LandingPage';
 import DashboardLayout from './components/DashboardLayout';
 import Dashboard from './components/Dashboard';
-import TasksDashboard from './components/TasksDashboard';
+import TaskDashboard from './components/TaskDashboard';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import './App.css';
 
@@ -74,7 +74,7 @@ const MainApp = () => {
 
       {/* Protected routes - only accessible when authenticated */}
       <Route path="/dashboard" element={user ? <ProtectedLayout user={user}><Dashboard /></ProtectedLayout> : <Navigate to="/login" replace />} />
-      <Route path="/tasks" element={user ? <ProtectedLayout user={user}><TasksDashboard /></ProtectedLayout> : <Navigate to="/login" replace />} />
+      <Route path="/tasks" element={user ? <ProtectedLayout user={user}><TaskDashboard /></ProtectedLayout> : <Navigate to="/login" replace />} />
       <Route path="/analytics" element={user ? <ProtectedLayout user={user}><AnalyticsDashboard /></ProtectedLayout> : <Navigate to="/login" replace />} />
       <Route path="/chat" element={user && user.id ? <ProtectedLayout user={user}><ChatInterface userId={user.id} /></ProtectedLayout> : <Navigate to="/login" replace />} />
 
