@@ -10,5 +10,6 @@ psycopg2-binary==2.9.9
 PyJWT==2.8.0 # Added for JWT token handling in FastAPI
 requests==2.31.0 # Added for making HTTP requests from the backend
 openai==1.30.0
+
 httpx==0.27.0
 
