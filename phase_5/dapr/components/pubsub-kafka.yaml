@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "redpanda:9092"
+  - name: consumerGroup
+    value: "dapr-kafka-consumer-group"
+  - name: authRequired
+    value: "false"
+  - name: initialOffset
+    value: "newest"

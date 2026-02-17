@@ -17,21 +17,58 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Python 3.11+ (Backend), Node.js (Frontend)
+**Primary Dependencies**: FastAPI (Backend), OpenAI ChatKit UI (Frontend), Dapr SDK, MCP SDK, SQLModel, Kafka/Redpanda client
+**Storage**: Neon PostgreSQL database with SQLModel ORM
+**Testing**: pytest with minimum 80% coverage, Kafka event schema validation
+**Target Platform**: Kubernetes (Minikube local → AKS/GKE/OKE cloud), Linux containers
+**Project Type**: Web (three-tier architecture: Frontend + Backend + MCP Server)
+**Performance Goals**: Async/await patterns throughout, sub-second response times, event-driven processing
+**Constraints**: Stateless backend services, Dapr-first integration, JWT-based authentication, TLS required for all external communications
+**Scale/Scope**: Event-driven architecture supporting horizontal scaling, Kubernetes-native deployment
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+### Architecture Integrity Compliance
+- [ ] Three-Tier Separation maintained: Frontend (ChatKit UI), Backend (FastAPI), MCP Server remain decoupled
+- [ ] All major operations publish events to Kafka/Redpanda (Event-Driven Core)
+- [ ] Dapr building blocks used instead of direct client libraries
+- [ ] Backend services remain stateless; state goes to Dapr or Neon
+
+### Technology Stack (Locked) Compliance
+- [ ] Frontend uses OpenAI ChatKit UI (Node.js) - Deployed as static assets
+- [ ] Backend uses FastAPI (Python) - Serverless/Vercel ready
+- [ ] MCP Server uses Official MCP SDK (Python) - Containerized
+- [ ] Database uses Neon PostgreSQL with SQLModel ORM
+- [ ] Event Streaming uses Kafka/Redpanda (Cloud or Self-hosted)
+- [ ] Runtime uses Dapr sidecar for all services
+- [ ] Orchestration uses Kubernetes (Minikube local → AKS/GKE/OKE cloud)
+
+### Security & Compliance Check
+- [ ] Authentication via BETTER_AUTH with JWT tokens
+- [ ] All secrets in Dapr secret store or Kubernetes secrets
+- [ ] No hardcoded credentials in code or environment files
+- [ ] TLS for all external communications
+
+### Performance Standards Verification
+- [ ] Async/await pattern throughout Python code
+- [ ] Database queries optimized with proper indexing
+- [ ] Event publishing non-blocking
+- [ ] Reminder accuracy within 1 second (using Dapr Jobs API)
+
+### Testing & Quality Assurance
+- [ ] Minimum 80% test coverage (pytest)
+- [ ] All Kafka event schemas validated
+- [ ] Error handling for all async operations
+- [ ] Structured logging for all services
+
+### Deployment Requirements Check
+- [ ] Local: Minikube with Dapr fully configured
+- [ ] Cloud: AKS/GKE/OKE with production-grade setup
+- [ ] CI/CD: GitHub Actions automated pipeline
+- [ ] Monitoring: Basic metrics and logging configured
 
 ## Project Structure
 
@@ -56,43 +93,73 @@ specs/[###-feature]/
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
+# Three-Tier Architecture Structure (REQUIRED by Constitution)
 frontend/
 ├── src/
 │   ├── components/
 │   ├── pages/
 │   └── services/
+├── public/
+├── package.json
 └── tests/
 
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
+backend/
+├── src/
+│   ├── models/          # SQLModel ORM models
+│   ├── services/        # Business logic
+│   ├── api/             # FastAPI endpoints
+│   ├── events/          # Kafka/Redpanda event handling
+│   └── dapr/            # Dapr integration
+├── requirements.txt
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── contract/
+└── Dockerfile
 
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+mcp-server/
+├── src/
+│   ├── providers/       # MCP provider implementations
+│   ├── models/          # Task models for MCP
+│   └── services/
+├── requirements.txt
+├── tests/
+└── Dockerfile
+
+k8s/
+├── backend/
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── dapr-component.yaml
+├── frontend/
+│   ├── deployment.yaml
+│   └── service.yaml
+├── mcp-server/
+│   ├── deployment.yaml
+│   └── service.yaml
+├── kafka/
+│   ├── deployment.yaml
+│   └── topics.yaml
+├── dapr/
+│   ├── config.yaml
+│   └── components/
+├── ingress/
+│   └── ingress.yaml
+└── monitoring/
+    ├── prometheus.yaml
+    └── grafana.yaml
+
+.infra/
+├── docker-compose.yml   # Local development environment
+├── terraform/           # Cloud infrastructure (if needed)
+└── scripts/
+    ├── local-setup.sh
+    ├── deploy.sh
+    └── ci-cd/
+        └── github-actions.yaml
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Three-tier architecture with Frontend (ChatKit UI), Backend (FastAPI), and MCP Server (MCP SDK) as required by constitution. Kubernetes-native deployment with Dapr sidecars, event-driven architecture using Kafka/Redpanda, and proper separation of concerns.
 
 ## Complexity Tracking
 
@@ -102,3 +169,12 @@ directories captured above]
 |-----------|------------|-------------------------------------|
 | [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
 | [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+
+> **Constitution-Specific Complexity Considerations**
+> These are NOT violations but required complexities by the constitution:
+>
+> - **Event-Driven Architecture**: Required by constitution instead of direct API calls
+> - **Dapr Integration**: Required by constitution instead of direct service communication
+> - **Three-Tier Architecture**: Required by constitution instead of monolithic design
+> - **Kubernetes Deployment**: Required by constitution instead of simple container deployment
+> - **Stateless Backend**: Required by constitution requiring external state management

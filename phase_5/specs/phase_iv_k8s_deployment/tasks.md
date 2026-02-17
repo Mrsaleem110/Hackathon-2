@@ -1,169 +1,222 @@
-# Todo Chatbot - Phase IV: Local Kubernetes Deployment Tasks
+# Implementation Tasks: Advanced Cloud Deployment
 
-## Sprint 1: Containerization (Days 1-2)
+## Implementation Strategy
 
-### Task 1.1: Create Backend Dockerfile
-- **Description:** Create Dockerfile for FastAPI backend service
-- **Acceptance Criteria:**
-  - Dockerfile builds successfully
-  - Image size is reasonable (< 500MB)
-  - Application runs correctly in container
-- **Dependencies:** None
-- **Priority:** High
-- **Time Estimate:** 1 day
+This implementation follows a phased approach where each phase builds upon the previous one. The highest priority user stories (P1) are implemented first, with each phase producing independently testable functionality.
 
-### Task 1.2: Create Frontend Dockerfile
-- **Description:** Create Dockerfile for React frontend service with nginx
-- **Acceptance Criteria:**
-  - Dockerfile builds successfully
-  - Static assets served correctly
-  - Proxy configuration for API calls
-- **Dependencies:** Task 1.1
-- **Priority:** High
-- **Time Estimate:** 1 day
+### MVP Scope
+The MVP will include user story 1 (Basic recurring tasks), foundational setup, and core task management functionality with event publishing. This provides a working foundation that can be extended with additional features.
 
-### Task 1.3: Create MCP Server Dockerfile
-- **Description:** Create Dockerfile for MCP server
-- **Acceptance Criteria:**
-  - Dockerfile builds successfully
-  - Service runs correctly in container
-- **Dependencies:** Task 1.1
-- **Priority:** High
-- **Time Estimate:** 0.5 days
+---
 
-## Sprint 2: Helm Chart Development (Days 2-3)
+## Phase 1: Foundation & Setup
 
-### Task 2.1: Create Helm Chart Structure
-- **Description:** Initialize Helm chart with proper directory structure
-- **Acceptance Criteria:**
-  - Chart.yaml created with proper metadata
-  - values.yaml created with default values
-  - templates directory created
-- **Dependencies:** Sprint 1
-- **Priority:** High
-- **Time Estimate:** 0.5 days
+**Goal**: Establish project infrastructure, directory structure, and development environment with Dapr and Kafka.
 
-### Task 2.2: Create Backend Templates
-- **Description:** Create Kubernetes deployment and service for backend
-- **Acceptance Criteria:**
-  - Deployment creates pods successfully
-  - Service exposes the application
-  - Environment variables properly configured
-- **Dependencies:** Task 2.1, Task 1.1
-- **Priority:** High
-- **Time Estimate:** 1 day
+### Setup Tasks
 
-### Task 2.3: Create Frontend Templates
-- **Description:** Create Kubernetes deployment and service for frontend
-- **Acceptance Criteria:**
-  - Deployment creates pods successfully
-  - Service exposes the application
-  - Proper ingress/routing configuration
-- **Dependencies:** Task 2.1, Task 1.2
-- **Priority:** High
-- **Time Estimate:** 1 day
+- [x] T001 Create Phase V project structure in /services/, /k8s/, /dapr/, and /scripts/
+- [ ] T002 Install and initialize Dapr for local development environment
+- [ ] T003 Configure Kafka/Redpanda for local development with required topics
+- [x] T004 Set up GitHub Actions workflow directory structure in /.github/workflows/
+- [x] T005 Create docker-compose configuration for local development services
+- [x] T006 Initialize backend service structure with FastAPI and SQLModel
+- [x] T007 Initialize frontend service structure with ChatKit UI integration
+- [x] T008 Set up MCP server service structure with Python SDK
 
-### Task 2.4: Create MCP Server Templates
-- **Description:** Create Kubernetes deployment and service for MCP server
-- **Acceptance Criteria:**
-  - Deployment creates pods successfully
-  - Service exposes the application
-  - Proper configuration
-- **Dependencies:** Task 2.1, Task 1.3
-- **Priority:** High
-- **Time Estimate:** 0.5 days
+---
 
-### Task 2.5: Create Additional Helm Templates
-- **Description:** Create helper templates, ingress, and NOTES.txt
-- **Acceptance Criteria:**
-  - _helpers.tpl created with reusable templates
-  - ingress.yaml created if needed
-  - NOTES.txt provides post-install instructions
-- **Dependencies:** Tasks 2.2, 2.3, 2.4
-- **Priority:** Medium
-- **Time Estimate:** 1 day
+## Phase 2: Foundational Components
 
-## Sprint 3: AI Tool Integration (Days 3-4)
+**Goal**: Establish core infrastructure components that all user stories depend on.
 
-### Task 3.1: Implement kubectl-ai Integration
-- **Description:** Add kubectl-ai examples and integration
-- **Acceptance Criteria:**
-  - kubectl-ai commands documented
-  - Examples provided for common operations
-- **Dependencies:** Sprint 2
-- **Priority:** Medium
-- **Time Estimate:** 0.5 days
+### Dapr Components Setup
 
-### Task 3.2: Implement kagent Integration
-- **Description:** Add kagent examples and integration
-- **Acceptance Criteria:**
-  - kagent commands documented
-  - Examples provided for cluster analysis
-- **Dependencies:** Sprint 2
-- **Priority:** Medium
-- **Time Estimate:** 0.5 days
+- [x] T010 Configure Dapr pub/sub component for Kafka integration
+- [x] T011 Create Dapr state store configuration for PostgreSQL
+- [x] T012 Create Dapr secrets configuration for secure credential storage
+- [ ] T013 Configure Dapr service invocation for inter-service communication
 
-### Task 3.3: Implement Gordon Integration
-- **Description:** Add Gordon (Docker AI) integration with fallback
-- **Acceptance Criteria:**
-  - Gordon functionality documented
-  - Docker CLI fallback provided
-- **Dependencies:** Sprint 1
-- **Priority:** Medium
-- **Time Estimate:** 0.5 days
+### Database Setup
 
-## Sprint 4: Deployment Automation (Days 4-5)
+- [x] T020 Set up Neon PostgreSQL schema with SQLModel for Task entity
+- [x] T021 Create database migration system with Alembic for task schema
+- [ ] T022 Set up database connection pooling and configuration in backend
 
-### Task 4.1: Create Linux/Mac Deployment Script
-- **Description:** Create shell script for Linux/Mac/WSL deployment
-- **Acceptance Criteria:**
-  - Script validates required tools
-  - Builds Docker images for all services
-  - Deploys using Helm
-  - Handles errors appropriately
-- **Dependencies:** Sprint 2, Sprint 3
-- **Priority:** High
-- **Time Estimate:** 1 day
+### Event Infrastructure
 
-### Task 4.2: Create Windows Deployment Script
-- **Description:** Create PowerShell script for Windows deployment
-- **Acceptance Criteria:**
-  - Script validates required tools
-  - Builds Docker images for all services
-  - Deploys using Helm
-  - Handles errors appropriately
-- **Dependencies:** Sprint 2, Sprint 3
-- **Priority:** High
-- **Time Estimate:** 1 day
+- [x] T030 Create event schemas and validation for task events
+- [x] T031 Implement event publisher service for task operations
+- [ ] T032 Set up event consumer infrastructure pattern
 
-### Task 4.3: Test Deployment Scripts
-- **Description:** Verify deployment scripts work as expected
-- **Acceptance Criteria:**
-  - Scripts deploy application successfully
-  - All services accessible
-  - Error handling works properly
-- **Dependencies:** Tasks 4.1, 4.2
-- **Priority:** High
-- **Time Estimate:** 1 day
+---
 
-## Sprint 5: Documentation & Validation (Day 5)
+## Phase 3: User Story 1 - Recurring Task Management
 
-### Task 5.1: Create Deployment Guide
-- **Description:** Write comprehensive deployment documentation
-- **Acceptance Criteria:**
-  - Deployment process clearly explained
-  - Troubleshooting guide included
-  - Prerequisites documented
-- **Dependencies:** Sprint 4
-- **Priority:** High
-- **Time Estimate:** 0.5 days
+**Goal**: Enable users to create tasks that repeat automatically. The user can create task with recurrence pattern, and system automatically creates next occurrence when current task completed. Independent test criteria: User can create a daily recurring task and see a new occurrence after completing the current one.
 
-### Task 5.2: Validate Complete Deployment
-- **Description:** Perform end-to-end validation of deployment
-- **Acceptance Criteria:**
-  - All services deployed and functional
-  - Documentation accurate
-  - Scripts work across platforms
-- **Dependencies:** Task 5.1
-- **Priority:** High
-- **Time Estimate:** 0.5 days
+### [US1] Core Recurring Task Features
+
+- [x] T101 Add recurrence fields to Task model (type, interval, end date) for [US1]
+- [x] T102 Create TaskSeries model for recurring task templates in [US1]
+- [x] T103 Add recurrence API endpoints to task router in [US1]
+- [ ] T104 Implement recurrence rule processing logic in [US1]
+- [ ] T105 Create task recurrence service methods in [US1]
+- [ ] T106 Implement event publishing for recurrence triggers in [US1]
+
+### [US1] Recurring Task Consumer
+
+- [ ] T110 Create recurring task processing service in [US1]
+- [ ] T111 Implement event consumer for completed recurring tasks in [US1]
+- [ ] T112 Create new task occurrence based on recurrence pattern in [US1]
+- [ ] T113 Link new task to recurrence series in [US1]
+
+### [US1] Frontend Integration
+
+- [ ] T120 Add recurrence form fields to frontend task creation UI in [US1]
+- [ ] T121 Display recurrence indicators in task list in [US1]
+- [ ] T122 Implement series management controls in frontend in [US1]
+
+---
+
+## Phase 4: User Story 2 - Smart Due Dates & Reminders
+
+**Goal**: Allow users to set due dates and receive timely reminders. Independent test criteria: User can set a due date and reminder time, and receives notification at the specified time.
+
+### [US2] Due Date & Reminder Features
+
+- [ ] T201 Add due_date and reminder_time fields to Task model in [US2]
+- [ ] T202 Implement date/time validation in task model in [US2]
+- [ ] T203 Add due date and reminder API endpoints in [US2]
+- [ ] T204 Create reminder scheduling service in [US2]
+
+### [US2] Dapr Jobs Integration
+
+- [ ] T210 Configure and test Dapr Jobs API for reminder scheduling in [US2]
+- [ ] T211 Implement reminder scheduler in backend that uses Dapr Jobs in [US2]
+- [ ] T212 Create notification service job handler in [US2]
+- [ ] T213 Implement job cleanup when tasks are deleted/updated in [US2]
+
+### [US2] Notification Service
+
+- [ ] T220 Create notification service for handling reminders in [US2]
+- [ ] T221 Implement notification channels (console initially) in [US2]
+- [ ] T222 Add notification storage for audit trail in [US2]
+
+### [US2] Frontend Integration
+
+- [ ] T230 Add due date and reminder time selectors to task UI in [US2]
+- [ ] T231 Display upcoming due dates in task list in [US2]
+- [ ] T232 Show reminder settings in task detail view in [US2]
+
+---
+
+## Phase 5: User Story 3 - Advanced Task Organization
+
+**Goal**: Enable users to organize tasks with priorities, tags, and filters. Independent test criteria: User can create tasks with priorities and tags, then filter and sort by these attributes.
+
+### [US3] Priority and Tag Features
+
+- [ ] T301 Add priority field (enum: high/medium/low) to Task model in [US3]
+- [ ] T302 [P] Add tags field (array of strings) to Task model in [US3]
+- [ ] T303 Create Tag entity model with user relationships in [US3]
+- [ ] T304 Implement tag management API endpoints in [US3]
+- [ ] T305 Add priority and tag fields to task API schemas in [US3]
+
+### [US3] Search and Filter Features
+
+- [ ] T310 [P] Create search endpoint with full-text capabilities in [US3]
+- [ ] T311 Implement filtering by status, priority, and tags in [US3]
+- [ ] T312 [P] Add date range filtering for due dates in [US3]
+- [ ] T313 Implement sorting by due_date, priority, and creation date in [US3]
+- [ ] T314 Add pagination support to task queries in [US3]
+
+### [US3] Frontend Integration
+
+- [ ] T320 Add priority selection to task creation/edit UI in [US3]
+- [ ] T321 Implement tag management in frontend [US3]
+- [ ] T322 Add filtering and sorting controls to task list UI in [US3]
+- [ ] T323 [P] Create search functionality in frontend interface in [US3]
+
+---
+
+## Phase 6: User Story 4 - Real-time Multi-device Sync
+
+**Goal**: Enable changes to appear instantly across all user devices. Independent test criteria: When user updates a task on one device, the change appears on other connected devices within 2 seconds.
+
+### [US4] WebSocket Service
+
+- [ ] T401 Create WebSocket service for real-time communication in [US4]
+- [ ] T402 Implement connection manager for tracking active clients in [US4]
+- [ ] T403 Add authentication for WebSocket connections in [US4]
+- [ ] T404 Implement message broadcasting functionality in [US4]
+
+### [US4] Real-time Task Updates
+
+- [ ] T410 Create task update event publishing in [US4]
+- [ ] T411 Implement WebSocket event consumer for task updates in [US4]
+- [ ] T412 Add broadcasting logic for relevant clients in [US4]
+- [ ] T413 Implement conflict resolution for concurrent updates in [US4]
+
+### [US4] Frontend Integration
+
+- [ ] T420 Add WebSocket connection management in frontend in [US4]
+- [ ] T421 Implement reconnection logic when connection is lost in [US4]
+- [ ] T422 Update UI reactively when remote changes are received in [US4]
+- [ ] T423 [P] Add sync status indicators to UI in [US4]
+
+---
+
+## Phase 7: Cross-cutting Concerns & Polish
+
+**Goal**: Complete the implementation with security, monitoring, deployment, and quality assurance.
+
+### Security Implementation
+
+- [ ] T501 Integrate BETTER_AUTH for user authentication in backend
+- [ ] T502 Implement JWT token management and validation
+- [ ] T503 Secure all API endpoints with authentication
+- [ ] T504 Configure TLS for all external communications
+
+### Deployment & Infrastructure
+
+- [ ] T510 Create Kubernetes manifests for all services with Dapr sidecars
+- [ ] T511 Configure Ingress with TLS for external access
+- [ ] T512 Set up monitoring with Prometheus and Grafana
+- [ ] T513 Implement health checks and readiness probes
+- [ ] T514 Configure horizontal pod autoscaling
+- [ ] T515 Set up automated GitHub Actions deployment pipeline
+
+### Quality & Testing
+
+- [ ] T520 Create comprehensive unit tests achieving 80% coverage
+- [ ] T521 Implement integration tests for service communication
+- [ ] T522 Add contract tests for API endpoints
+- [ ] T523 Validate all Kafka event schemas
+- [ ] T524 Add structured logging to all services
+
+### Documentation
+
+- [ ] T530 Update architecture diagrams with new components
+- [ ] T531 Create deployment documentation
+- [ ] T532 Write operational runbooks for system management
+- [ ] T533 Create user guides for advanced features
+
+---
+
+## Dependencies
+
+### User Story Completion Order
+1. **User Story 1** (Recurring Tasks) - Foundation for all task features
+2. **User Story 2** (Due Dates & Reminders) - Depends on basic task model
+3. **User Story 3** (Advanced Organization) - Depends on basic task model
+4. **User Story 4** (Real-time Sync) - Depends on event infrastructure from previous stories
+
+### Parallel Execution Opportunities
+- Tasks with [P] marker can be executed in parallel when they modify different files
+- Frontend integration tasks can be developed in parallel with backend API implementation
+- Multiple event consumer services can be developed simultaneously
+- Database schema updates can be done in parallel with service implementations
+
+### Critical Path
+T001 → T002 → T003 → T006 → T010 → T011 → T020 → T021 → T101 → T102 → T103 → T110 → T111 → T112

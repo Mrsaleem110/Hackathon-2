@@ -16,6 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 # Import all models to register them with SQLModel
 from models.user import User
 from models.task import Task
+from models.task_series import TaskSeries
 from models.conversation import Conversation
 from models.message import Message
 

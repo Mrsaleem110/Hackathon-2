@@ -1,73 +1,169 @@
-# Todo Chatbot - Phase IV: Local Kubernetes Deployment Plan
+# Implementation Plan: Advanced Cloud Deployment
 
-## 1. Architecture & Design Decisions
+**Branch**: `5-phase-v-advanced-cloud-deployment` | **Date**: 2026-02-17 | **Spec**: [link to spec.md]
 
-### Decision 1: Containerization Approach
-**Options Considered:**
-- Multi-stage Docker builds
-- Simple Docker builds
-- Pre-built images
+**Input**: Feature specification from `/specs/phase_iv_k8s_deployment/spec.md`
 
-**Selected:** Simple Docker builds for initial deployment
-**Rationale:** Simpler to implement and maintain for this phase
-**Trade-offs:** Larger image sizes vs. development speed
+**Note**: This template is filled in by the `/sp.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
-### Decision 2: Service Discovery
-**Options Considered:**
-- Kubernetes Services
-- Service Mesh
-- External load balancer
+## Summary
 
-**Selected:** Kubernetes Services
-**Rationale:** Built-in Kubernetes functionality, sufficient for this use case
-**Trade-offs:** Basic service discovery vs. advanced traffic management
+Implementation of a cloud-native, event-driven todo chatbot system using Kubernetes, Dapr, and Kafka/Redpanda for advanced scalability and reliability. The system follows a three-tier architecture with frontend (ChatKit UI), backend (FastAPI), and MCP server (MCP SDK) deployed on Kubernetes with event-driven processing and Dapr integration. This includes recurring tasks, smart reminders, advanced task organization, and real-time synchronization capabilities.
 
-## 2. Implementation Strategy
+## Technical Context
 
-### Phase 1: Containerization
-1. Create Dockerfiles for each service (frontend, backend, mcp-server)
-2. Implement multi-platform support
-3. Optimize images for size and security
+**Language/Version**: Python 3.11+ (Backend), Node.js (Frontend)
+**Primary Dependencies**: FastAPI (Backend), OpenAI ChatKit UI (Frontend), Dapr SDK, MCP SDK, SQLModel, Kafka/Redpanda client
+**Storage**: Neon PostgreSQL database with SQLModel ORM
+**Testing**: pytest with minimum 80% coverage, Kafka event schema validation
+**Target Platform**: Kubernetes (Minikube local → AKS/GKE/OKE cloud), Linux containers
+**Project Type**: Web (three-tier architecture: Frontend + Backend + MCP Server)
+**Performance Goals**: Async/await patterns throughout, sub-second response times, event-driven processing
+**Constraints**: Stateless backend services, Dapr-first integration, JWT-based authentication, TLS required for all external communications
+**Scale/Scope**: Event-driven architecture supporting horizontal scaling, Kubernetes-native deployment
 
-### Phase 2: Helm Chart Creation
-1. Define Helm chart structure
-2. Create Kubernetes manifest templates
-3. Implement parameterized configurations
-4. Add dependency management
+## Constitution Check
 
-### Phase 3: AI Tool Integration
-1. Implement kubectl-ai integration
-2. Implement kagent integration
-3. Implement Gordon (Docker AI) integration with fallback
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-### Phase 4: Deployment Scripts
-1. Create cross-platform deployment scripts
-2. Implement tool validation and setup
-3. Add post-deployment verification
+### Architecture Integrity Compliance
+- [x] Three-Tier Separation maintained: Frontend (ChatKit UI), Backend (FastAPI), MCP Server remain decoupled
+- [x] All major operations publish events to Kafka/Redpanda (Event-Driven Core)
+- [x] Dapr building blocks used instead of direct client libraries
+- [x] Backend services remain stateless; state goes to Dapr or Neon
 
-## 3. Interfaces & API Contracts
+### Technology Stack (Locked) Compliance
+- [x] Frontend uses OpenAI ChatKit UI (Node.js) - Deployed as static assets
+- [x] Backend uses FastAPI (Python) - Serverless/Vercel ready
+- [x] MCP Server uses Official MCP SDK (Python) - Containerized
+- [x] Database uses Neon PostgreSQL with SQLModel ORM
+- [x] Event Streaming uses Kafka/Redpanda (Cloud or Self-hosted)
+- [x] Runtime uses Dapr sidecar for all services
+- [x] Orchestration uses Kubernetes (Minikube local → AKS/GKE/OKE cloud)
 
-### Helm Values Interface
-- `backend.image.repository` - Backend image repository
-- `backend.service.port` - Backend service port
-- `frontend.image.repository` - Frontend image repository
-- `frontend.service.port` - Frontend service port
+### Security & Compliance Check
+- [x] Authentication via BETTER_AUTH with JWT tokens
+- [x] All secrets in Dapr secret store or Kubernetes secrets
+- [x] No hardcoded credentials in code or environment files
+- [x] TLS for all external communications
 
-## 4. Risk Analysis & Mitigation
+### Performance Standards Verification
+- [x] Async/await pattern throughout Python code
+- [x] Database queries optimized with proper indexing
+- [x] Event publishing non-blocking
+- [x] Reminder accuracy within 1 second (using Dapr Jobs API)
 
-### Risk 1: AI Tool Availability
-**Impact:** High - Gordon may not be available in all regions
-**Mitigation:** Provide Docker CLI fallback commands
-**Owner:** Deployment team
+### Testing & Quality Assurance
+- [x] Minimum 80% test coverage (pytest)
+- [x] All Kafka event schemas validated
+- [x] Error handling for all async operations
+- [x] Structured logging for all services
 
-### Risk 2: Resource Constraints
-**Impact:** Medium - Minikube may run out of resources
-**Mitigation:** Implement resource optimization in charts
-**Owner:** Infrastructure team
+### Deployment Requirements Check
+- [x] Local: Minikube with Dapr fully configured
+- [x] Cloud: AKS/GKE/OKE with production-grade setup
+- [x] CI/CD: GitHub Actions automated pipeline
+- [x] Monitoring: Basic metrics and logging configured
 
-## 5. Deployment Architecture
-- Kubernetes cluster: Minikube
-- Service mesh: Kubernetes native services
-- Load balancing: Kubernetes service load balancing
-- Configuration: Helm values
-- Networking: Kubernetes ingress (optional)
+## Project Structure
+
+### Documentation (this feature)
+
+```text
+specs/phase_iv_k8s_deployment/
+├── plan.md              # This file (/sp.plan command output)
+├── research.md          # Phase 0 output (/sp.plan command)
+├── data-model.md        # Phase 1 output (/sp.plan command)
+├── quickstart.md        # Phase 1 output (/sp.plan command)
+├── contracts/           # Phase 1 output (/sp.plan command)
+└── tasks.md             # Phase 2 output (/sp.tasks command - NOT created by /sp.plan)
+```
+
+### Source Code (repository root)
+
+```text
+# Three-Tier Architecture Structure (REQUIRED by Constitution)
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+├── public/
+├── package.json
+└── tests/
+
+backend/
+├── src/
+│   ├── models/          # SQLModel ORM models
+│   ├── services/        # Business logic
+│   ├── api/             # FastAPI endpoints
+│   ├── events/          # Kafka/Redpanda event handling
+│   └── dapr/            # Dapr integration
+├── requirements.txt
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── contract/
+└── Dockerfile
+
+mcp-server/
+├── src/
+│   ├── providers/       # MCP provider implementations
+│   ├── models/          # Task models for MCP
+│   └── services/
+├── requirements.txt
+├── tests/
+└── Dockerfile
+
+k8s/
+├── backend/
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── dapr-component.yaml
+├── frontend/
+│   ├── deployment.yaml
+│   └── service.yaml
+├── mcp-server/
+│   ├── deployment.yaml
+│   └── service.yaml
+├── kafka/
+│   ├── deployment.yaml
+│   └── topics.yaml
+├── dapr/
+│   ├── config.yaml
+│   └── components/
+├── ingress/
+│   └── ingress.yaml
+└── monitoring/
+    ├── prometheus.yaml
+    └── grafana.yaml
+
+.infra/
+├── docker-compose.yml   # Local development environment
+├── terraform/           # Cloud infrastructure (if needed)
+└── scripts/
+    ├── local-setup.sh
+    ├── deploy.sh
+    └── ci-cd/
+        └── github-actions.yaml
+```
+
+**Structure Decision**: Three-tier architecture with Frontend (ChatKit UI), Backend (FastAPI), and MCP Server (MCP SDK) as required by constitution. Kubernetes-native deployment with Dapr sidecars, event-driven architecture using Kafka/Redpanda, and proper separation of concerns.
+
+## Complexity Tracking
+
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+
+> **Constitution-Specific Complexity Considerations**
+> These are NOT violations but required complexities by the constitution:
+>
+> - **Event-Driven Architecture**: Required by constitution instead of direct API calls
+> - **Dapr Integration**: Required by constitution instead of direct service communication
+> - **Three-Tier Architecture**: Required by constitution instead of monolithic design
+> - **Kubernetes Deployment**: Required by constitution instead of simple container deployment
+> - **Stateless Backend**: Required by constitution requiring external state management

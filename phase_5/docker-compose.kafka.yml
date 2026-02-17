@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.2.15
+    command:
+      - redpanda
+      - start
+      - --smp
+      - '1'
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 100M
+      - --node-id
+      - '0'
+      - --check
+      - --overprovisioned
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.3.5
+    depends_on:
+      - redpanda
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: todoapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  redpanda_data:
+  postgres_data:

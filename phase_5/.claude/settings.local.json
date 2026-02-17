@@ -34,7 +34,11 @@
       "Bash(docker-compose build:*)",
       "Bash(findstr:*)",
       "Bash(docker build:*)",
-      "Bash(node test-api.js)"
+      "Bash(node test-api.js)",
+      "Bash(git config:*)",
+      "Bash(.specify/scripts/powershell/setup-plan.ps1:*)",
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1:*)",
+      "Bash(python -m alembic revision:*)"
     ]
   }
 }

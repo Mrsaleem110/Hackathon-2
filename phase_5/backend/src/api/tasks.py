@@ -157,3 +157,62 @@ async def delete_task(
         )
 
     return {"message": "Task deleted successfully"}
+
+# Recurring task endpoints
+@router.post("/{task_id}/recurring", response_model=Task)
+async def create_recurring_task(
+    task_id: str,
+    task_update: TaskUpdate,
+    current_user: User = Depends(require_auth()),
+    session: Session = Depends(get_session)
+):
+    """
+    Create or update a recurring task pattern.
+    """
+    try:
+        task_uuid = uuid.UUID(task_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid task ID format"
+        )
+
+    task = TaskService.get_task_by_id(session, task_uuid)
+
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found"
+        )
+
+    if task.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You can only modify your own tasks"
+        )
+
+    # Update the task with recurrence pattern
+    updated_task = TaskService.update_task(session, task_uuid, task_update)
+    if not updated_task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found"
+        )
+
+    return updated_task
+
+@router.get("/recurring/{series_id}", response_model=List[Task])
+async def get_recurring_task_occurrences(
+    series_id: str,
+    current_user: User = Depends(require_auth()),
+    session: Session = Depends(get_session)
+):
+    """
+    Get all occurrences of a recurring task series.
+    """
+    # This would require a more complex implementation to track task series
+    # For now, this is a placeholder
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Recurring task series tracking not fully implemented yet"
+    )
