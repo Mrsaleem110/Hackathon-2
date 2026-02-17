@@ -13,7 +13,7 @@ class TaskBase(SQLModel):
     due_date: Optional[datetime] = None
     reminder_time: Optional[datetime] = None
     recurrence_pattern: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
-    tags: Optional[List[str]] = []
+    tags: Optional[List[str]] = Field(default_factory=list, sa_column=Column(JSON))
     user_id: str
 
     def model_post_init(self, __context):
@@ -44,7 +44,7 @@ class TaskCreateRequest(SQLModel):
     due_date: Optional[datetime] = None
     reminder_time: Optional[datetime] = None
     recurrence_pattern: Optional[dict] = Field(default=None, sa_column=Column(JSON))
-    tags: Optional[List[str]] = []
+    tags: Optional[List[str]] = Field(default_factory=list, sa_column=Column(JSON))
 
 
 class TaskCreate(TaskBase):

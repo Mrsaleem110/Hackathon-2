@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 import requests
 try:
@@ -296,6 +296,81 @@ def authenticate_user(email: str, password: str, session: Session) -> Optional[U
             name=db_user.name
         )
     return None
+
+
+def decode_jwt_token(token: str) -> Optional[dict]:
+    """
+    Decode a JWT token and verify its signature and expiration.
+    Returns the payload if the token is validly formatted, has a valid signature, and is not expired, None otherwise.
+    """
+    if not token:
+        return None
+
+    # Handle "Bearer " prefix if present
+    if token.startswith("Bearer "):
+        token = token[7:]
+
+    # Try multiple possible secret keys in order of preference
+    possible_secrets = [
+        os.getenv("JWT_SECRET_KEY", "test-secret-key"),  # Primary test key with fallback
+        os.getenv("BETTER_AUTH_SECRET"),  # Better Auth secret
+        SECRET_KEY,  # Main application secret
+    ]
+
+    # Remove None values
+    possible_secrets = [secret for secret in possible_secrets if secret is not None]
+
+    algorithm = "HS256"
+
+    # Try each secret until one works
+    for secret_key in possible_secrets:
+        try:
+            # Decode and verify the token with this secret key
+            # This will automatically handle expiration checking
+            payload = jwt.decode(token, secret_key, algorithms=[algorithm], options={"verify_exp": True})
+            # If successful, return the payload
+            return payload
+        except jwt.ExpiredSignatureError:
+            # Token is expired - don't try other secrets, just return None
+            return None
+        except (jwt.InvalidSignatureError, jwt.DecodeError):
+            # Invalid signature or format with this key, try next one
+            continue
+        except Exception:
+            # Some other error with this key, try next one
+            continue
+
+    # If we get here, all possible secrets failed
+    return None
+
+
+def validate_token_payload(payload: Optional[dict]) -> tuple[bool, Optional[dict]]:
+    """
+    Validate a decoded JWT payload.
+    Returns (is_valid, validated_payload) where validated_payload is normalized.
+    """
+    if not payload:
+        return False, None
+
+    try:
+        # Check for expiration
+        exp = payload.get("exp")
+        if exp:
+            if isinstance(exp, (int, float)):
+                if datetime.fromtimestamp(exp, tz=timezone.utc).timestamp() < datetime.utcnow().timestamp():
+                    return False, None
+
+        # Normalize the payload to ensure consistent user identification
+        normalized_payload = normalize_jwt_payload(payload)
+
+        # Check that we can identify the user
+        user_id = normalized_payload.get("user_id")
+        if not user_id:
+            return False, None
+
+        return True, normalized_payload
+    except Exception:
+        return False, None
 
 
 def register_user(user_data: UserCreate, session: Session) -> User:
